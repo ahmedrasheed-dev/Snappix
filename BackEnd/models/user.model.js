@@ -1,5 +1,5 @@
 import Mongoose from "mongoose";
-import bcrypt from "bcrypt.js";
+import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
 const UserSchema = new Mongoose.Schema(
@@ -15,6 +15,7 @@ const UserSchema = new Mongoose.Schema(
       trim: true,
       match: /^[A-Za-z0-9$_]+$/,
       index: true,
+      unique: true,
     },
     email: {
       type: String,
@@ -23,6 +24,7 @@ const UserSchema = new Mongoose.Schema(
       trim: true,
       index: true,
       match: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+      unique: true,
     },
     fullName: {
       type: String,
@@ -46,8 +48,7 @@ const UserSchema = new Mongoose.Schema(
       required: [true, "Password is required"],
     },
     refreshToken: {
-      type: String,
-      required: true,
+      type: String
     },
   },
   { timestamps: true }
@@ -91,4 +92,4 @@ UserSchema.methods.generateAccessToken = function () {
   );
 };
 
-export const user = Mongoose.model("user", UserSchema);
+export const User = Mongoose.model("user", UserSchema);
