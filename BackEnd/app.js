@@ -1,7 +1,6 @@
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-import {User} from "./models/user.model.js";
 
 const app = express();
 
@@ -20,13 +19,12 @@ app.use(express.static("public")); // Serve static files from the 'public' direc
 app.use(cookieParser());
 
 //routes import
-import userRoutes from "./routes/user.routes.js";
-
+import userRouter from "./routes/user.routes.js";
 
 //routes declaration
-app.use("/api/v1/users", userRoutes);
-
-
-
+app.use("/api/v1/users", userRouter);
+app.post("/echo", (req, res) => {
+  res.json({ body: req.body });
+});
 
 export default app;
