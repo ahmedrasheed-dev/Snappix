@@ -21,8 +21,12 @@ const uploadToCloudinary = async function (localFilePath) {
     );
     //delete file from db after saving
     fs.unlinkSync(localFilePath);
+
+    return uploadResult.url;
   } catch (error) {
     fs.unlinkSync(localFilePath);
     return null;
   }
 };
+
+export {uploadToCloudinary}
