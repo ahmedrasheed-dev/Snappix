@@ -4,6 +4,10 @@ import jwt from "jsonwebtoken";
 
 const UserSchema = new Mongoose.Schema(
   {
+    watchHistory: {
+        type : Mongoose.Schema.Types.ObjectId,
+        ref: "video",
+    },
     username: {
       type: String,
       required: [true, "Username is required"],
