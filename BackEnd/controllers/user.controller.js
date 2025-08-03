@@ -61,7 +61,7 @@ const registerUser = asyncHandler(async (req, res) => {
   // }
 
   const avatar = await uploadToCloudinary(avatarlocalFilePath);
-  console.log("avatarClodudinray", avatar)
+  console.log("avatarClodudinray", avatar);
 
   let coverImage = "";
   if (coverImagelocalFilePath) {
@@ -76,22 +76,20 @@ const registerUser = asyncHandler(async (req, res) => {
     fullName,
     email,
     password,
-    avatar: avatar?.url,
-    coverImage: coverImage?.url || "",
+    avatar: avatar?.secure_url,
+    coverImage: coverImage?.secure_url || "",
   });
 
   if (!newUser) {
     throw new ApiError(500, "Failed to create user");
   }
 
-  const responseuser = User.findById(newUser._id).select(
+  const responseuser = await User.findById(newUser._id).select(
     "-password -refreshToken"
   );
-  res.status(201).json(
-    new ApiResponse(201, "User registered successfully", {
-      user: responseuser,
-    })
-  );
+  res
+    .status(201)
+    .json(new ApiResponse(201, responseuser, "User registered successfully"));
 });
 
 export { registerUser };

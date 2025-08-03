@@ -5,8 +5,8 @@ import jwt from "jsonwebtoken";
 const UserSchema = new Mongoose.Schema(
   {
     watchHistory: {
-        type : Mongoose.Schema.Types.ObjectId,
-        ref: "video",
+      type: Mongoose.Schema.Types.ObjectId,
+      ref: "video",
     },
     username: {
       type: String,
@@ -31,10 +31,7 @@ const UserSchema = new Mongoose.Schema(
       required: [true, "FullName is required"],
       lowercase: true,
       trim: true,
-      minlength: [
-        4,
-        "FullName can't be Shorter than 4 characters",
-      ],
+      minlength: [4, "FullName can't be Shorter than 4 characters"],
     },
     avatar: {
       type: String,
@@ -48,7 +45,7 @@ const UserSchema = new Mongoose.Schema(
       required: [true, "Password is required"],
     },
     refreshToken: {
-      type: String
+      type: String,
     },
   },
   { timestamps: true }
