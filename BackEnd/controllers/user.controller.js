@@ -5,6 +5,7 @@ import { User } from "../models/user.model.js";
 import { uploadToCloudinary } from "../utils/cloudinary.js";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
+import bcrypt from "bcrypt";
 
 dotenv.config({
   path: "../env",
@@ -48,10 +49,16 @@ const registerUser = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Username or email already exists");
   }
 
-  if (password.length < 6) {
+  if (password.length < 8) {
     throw new ApiError(400, "Password must be at least 6 characters long");
   }
-  const avatarlocalFilePath = req.files.avatar[0].path;
+
+  const avatarlocalFilePath = req.files?.avatar?.[0]?.path;
+
+  if (!avatarlocalFilePath) {
+    throw new ApiError(400, "Avatar is required");
+  }
+
   let coverImagelocalFilePath = "";
   if (
     req.files &&
@@ -202,4 +209,39 @@ const refreshToken = asyncHandler(async (req, res) => {
     );
 });
 
-export { registerUser, login, logout, refreshToken };
+const changePassword = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user._id);
+
+  if (!user) {
+    throw new ApiError(401, "Unauthorized");
+  }
+  const { currentPassword, newPassword } = req.body;
+
+  if (currentPassword === newPassword) {
+    throw new ApiError(400, "New password cannot be same as current password");
+  }
+  if (!currentPassword || !newPassword) {
+    throw new ApiError(400, "Current password and new password are required");
+  }
+  if (newPassword.length < 8) {
+    throw new ApiError(400, "Password must be at least 8 characters long");
+  }
+
+  const isPasswordValid = await user.isPasswordCorrect(currentPassword);
+  if (!isPasswordValid) {
+    throw new ApiError(401, "Invalid current password");
+  }
+
+  user.password = newPassword;
+  user.save({ validateBeforeSave: false }, { new: true });
+
+  const responseUser = await User.findById(user._id).select(
+    "-password -refreshToken"
+  );
+
+  res
+    .status(200)
+    .json(new ApiResponse(200, responseUser, "Password changed successfully"));
+});
+
+export { registerUser, login, logout, refreshToken, changePassword };
