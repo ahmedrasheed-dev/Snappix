@@ -269,6 +269,14 @@ const updateProfile = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, responseUser, "Profile updated successfully"));
 });
 
+const getCurrentUser = asyncHandler(async (req, res) => {
+  const user = req.user;
+  const responseUser = await User.findById(user._id).select(
+    "-password -refreshToken"
+  );
+  res.status(200).json(new ApiResponse(200, responseUser));
+});
+
 export {
   registerUser,
   login,
@@ -276,4 +284,5 @@ export {
   refreshToken,
   changePassword,
   updateProfile,
+  getCurrentUser,
 };
