@@ -3,6 +3,12 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { User } from "../models/user.model.js";
 import { uploadToCloudinary } from "../utils/cloudinary.js";
+import jwt from "jsonwebtoken";
+import dotenv from "dotenv";
+
+dotenv.config({
+  path: "../env",
+});
 
 const cookieOptions = {
   httpOnly: true,
@@ -152,6 +158,7 @@ const login = asyncHandler(async (req, res) => {
       )
     );
 });
+
 const logout = asyncHandler(async (req, res) => {
   const user = req.user;
   if (!user) {
@@ -164,4 +171,35 @@ const logout = asyncHandler(async (req, res) => {
     .clearCookie("accessToken", cookieOptions)
     .json(new ApiResponse(200, {}, "Logout successful"));
 });
-export { registerUser, login, logout };
+
+const refreshToken = asyncHandler(async (req, res) => {
+  const incomingRefreshToken =
+    req.cookies.refreshToken || req.body.refreshToken;
+
+  const decodedRefreshToken = jwt.verify(
+    incomingRefreshToken,
+    process.env.REFRESH_TOKEN_SECRET
+  );
+  const user = await User.findById(decodedRefreshToken._id).select(
+    "-password -refreshToken"
+  );
+  if (!user) {
+    throw new ApiError(401, "Unauthorized");
+  }
+  const { refreshToken, accessToken } = await generateAccessAndRefereshTokens(
+    user._id
+  );
+  user.refreshToken = refreshToken;
+  user.accessToken = accessToken;
+  await user.save({ validateBeforeSave: false });
+
+  res
+    .status(200)
+    .cookie("refreshToken", refreshToken, cookieOptions)
+    .cookie("accessToken", accessToken, cookieOptions)
+    .json(
+      new ApiResponse(200, { user, accessToken }, "Token updated successfully")
+    );
+});
+
+export { registerUser, login, logout, refreshToken };
