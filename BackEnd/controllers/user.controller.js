@@ -2,7 +2,10 @@ import asyncHandler from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { User } from "../models/user.model.js";
-import { uploadToCloudinary } from "../utils/cloudinary.js";
+import {
+  uploadToCloudinary,
+  deleteFromCloudinary,
+} from "../utils/cloudinary.js";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import bcrypt from "bcrypt";
@@ -15,6 +18,13 @@ const cookieOptions = {
   httpOnly: true,
   secure: true,
 };
+
+function extractPublicId(url) {
+  const parts = url.split("/");
+  const filename = parts[parts.length - 1]; // hzolidxtxqijwdwzcvhq.jpg
+  const publicId = filename.split(".")[0]; // hzolidxtxqijwdwzcvhq
+  return publicId;
+}
 
 const generateAccessAndRefereshTokens = async (userId) => {
   try {
@@ -277,6 +287,58 @@ const getCurrentUser = asyncHandler(async (req, res) => {
   res.status(200).json(new ApiResponse(200, responseUser));
 });
 
+const updateAvatar = asyncHandler(async (req, res) => {
+  const user = req.user;
+  const avatarLocalPath = req.file?.path;
+
+  if (!avatarLocalPath) {
+    throw new ApiError(400, "Avatar is required");
+  }
+  const existingAvatar = user.avatar;
+
+  if (existingAvatar) {
+    const publicId = extractPublicId(existingAvatar);
+    await deleteFromCloudinary(publicId);
+  }
+  const avatar = await uploadToCloudinary(avatarLocalPath);
+  user.avatar = avatar.secure_url;
+
+  user.save({ validateBeforeSave: false }, { new: true });
+  const responseUser = await User.findById(user._id).select(
+    "-password -refreshToken"
+  );
+  res
+    .status(200)
+    .json(new ApiResponse(200, responseUser, "Avatar updated successfully"));
+});
+
+const updateCoverImage = asyncHandler(async (req, res) => {
+  const user = req.user;
+  const coverLocalPath = req.file?.path;
+
+  if (!coverLocalPath) {
+    throw new ApiError(400, "Cover is required");
+  }
+  const existingCover = user.coverImage;
+
+  if (existingCover) {
+    const publicId = extractPublicId(existingCover);
+    await deleteFromCloudinary(publicId);
+  }
+  const coverImage = await uploadToCloudinary(coverLocalPath);
+  user.coverImage = coverImage.secure_url;
+
+  user.save({ validateBeforeSave: false }, { new: true });
+  const responseUser = await User.findById(user._id).select(
+    "-password -refreshToken"
+  );
+  res
+    .status(200)
+    .json(
+      new ApiResponse(200, responseUser, "coverImage updated successfully")
+    );
+});
+
 export {
   registerUser,
   login,
@@ -285,4 +347,6 @@ export {
   changePassword,
   updateProfile,
   getCurrentUser,
+  updateAvatar,
+  updateCoverImage,
 };

@@ -1,6 +1,8 @@
 import { v2 as cloudinary } from "cloudinary";
 import fs from "fs";
 import dotenv from "dotenv";
+import { ApiError } from "../utils/ApiError.js";
+
 dotenv.config();
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -14,7 +16,7 @@ const uploadToCloudinary = async function (localFilePath) {
       resource_type: "auto",
     });
     fs.unlinkSync(localFilePath);
-    
+
     // console.log("upload result: ", uploadResult);
     //     upload result:  {
     //   asset_id: 'd1ce7a00f08056318a59f97c4b7fe7bb',
@@ -41,8 +43,22 @@ const uploadToCloudinary = async function (localFilePath) {
     return uploadResult;
   } catch (error) {
     fs.unlinkSync(localFilePath);
-    return null;
+    throw new ApiError(
+      500,
+      "Something went wrong while uploading image to cloudinary"
+    );
   }
 };
 
-export { uploadToCloudinary };
+const deleteFromCloudinary = async (publicId) => {
+  try {
+    return await cloudinary.uploader.destroy(publicId);
+  } catch (error) {
+    throw new ApiError(
+      500,
+      "Something went wrong while deleting image from cloudinary"
+    );
+  }
+};
+
+export { uploadToCloudinary, deleteFromCloudinary };
