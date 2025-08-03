@@ -1,35 +1,24 @@
 import { v2 as cloudinary } from "cloudinary";
 import fs from "fs";
-import path from "path";
-
+import dotenv from "dotenv";
+dotenv.config();
 cloudinary.config({
-  cloud_name: process.env.CLOUDINRAY_CLOUD_NAME,
-  api_key: process.env.CLOUDINRAY_API_KEY,
-  api_secret: process.env.CLOUDINRAY_API_SECRET,
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
 const uploadToCloudinary = async function (localFilePath) {
-  if (localFilePath?.trim() == "") {
-    return null;
-  }
-
-  // Always resolve the full path
-  const fullPath = path.resolve(
-    "public/temp",
-    localFilePath
-  );
-
   try {
-    const uploadResult = await cloudinary.uploader.upload(
-      fullPath,
-      {
-        resource_type: "auto",
-      }
-    );
-    fs.unlinkSync(fullPath);
+    const uploadResult = await cloudinary.uploader.upload(localFilePath, {
+      resource_type: "auto",
+    });
+    fs.unlinkSync(localFilePath);
+    console.log("upload result: ", uploadResult);
     return uploadResult;
   } catch (error) {
-    fs.unlinkSync(fullPath);
+    console.error("Cloudinary upload error:", error);
+    if (fs.existsSync(localFilePath)) fs.unlinkSync(localFilePath);
     return null;
   }
 };
