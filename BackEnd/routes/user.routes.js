@@ -4,6 +4,7 @@ import {
   logout,
   refreshToken,
   changePassword,
+  updateProfile,
 } from "../controllers/user.controller.js";
 import { Router } from "express";
 import { upload } from "../middlewares/multer.middleware.js";
@@ -25,5 +26,6 @@ router.post("/login", login);
 router.post("/logout", veriftJWT, logout);
 router.post("/refresh-token", refreshToken);
 router.post("/change-password", veriftJWT, changePassword);
+router.post("/update-profile", veriftJWT, updateProfile);
 
 export default router;

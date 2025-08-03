@@ -244,4 +244,36 @@ const changePassword = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, responseUser, "Password changed successfully"));
 });
 
-export { registerUser, login, logout, refreshToken, changePassword };
+const updateProfile = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user._id);
+  const { fullName, email } = req.body;
+  if (!fullName || !email) {
+    throw new ApiError(400, "Full name and email are required");
+  }
+
+  if (email === user.email) {
+    throw new ApiError(400, "Email cannot be same as previous email");
+  }
+  const existingUser = await User.findOne({ email });
+  if (existingUser) {
+    throw new ApiError(400, "Email already in use");
+  }
+  user.fullName = fullName;
+  user.email = email;
+  user.save({ validateBeforeSave: false }, { new: true });
+  const responseUser = await User.findById(user._id).select(
+    "-password -refreshToken"
+  );
+  res
+    .status(200)
+    .json(new ApiResponse(200, responseUser, "Profile updated successfully"));
+});
+
+export {
+  registerUser,
+  login,
+  logout,
+  refreshToken,
+  changePassword,
+  updateProfile,
+};
