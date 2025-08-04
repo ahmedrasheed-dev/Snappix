@@ -46,7 +46,7 @@ const uploadToCloudinary = async function (localFilePath) {
     throw new ApiError(
       500,
       "Something went wrong while uploading image to cloudinary"
-    );
+    ).send(res);
   }
 };
 
@@ -57,8 +57,15 @@ const deleteFromCloudinary = async (publicId) => {
     throw new ApiError(
       500,
       "Something went wrong while deleting image from cloudinary"
-    );
+    ).send(res);
   }
 };
 
-export { uploadToCloudinary, deleteFromCloudinary };
+function extractPublicId(url) {
+  const parts = url.split("/");
+  const filename = parts[parts.length - 1]; // hzolidxtxqijwdwzcvhq.jpg
+  const publicId = filename.split(".")[0]; // hzolidxtxqijwdwzcvhq
+  return publicId;
+}
+
+export { uploadToCloudinary, deleteFromCloudinary, extractPublicId };

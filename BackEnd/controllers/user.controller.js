@@ -5,6 +5,7 @@ import { User } from "../models/user.model.js";
 import {
   uploadToCloudinary,
   deleteFromCloudinary,
+  extractPublicId,
 } from "../utils/cloudinary.js";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
@@ -17,13 +18,6 @@ const cookieOptions = {
   httpOnly: true,
   secure: true,
 };
-
-function extractPublicId(url) {
-  const parts = url.split("/");
-  const filename = parts[parts.length - 1]; // hzolidxtxqijwdwzcvhq.jpg
-  const publicId = filename.split(".")[0]; // hzolidxtxqijwdwzcvhq
-  return publicId;
-}
 
 const generateAccessAndRefereshTokens = async (userId) => {
   try {
