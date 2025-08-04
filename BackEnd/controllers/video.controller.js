@@ -7,7 +7,6 @@ import {
   deleteFromCloudinary,
   extractPublicId,
 } from "../utils/cloudinary.js";
-import dotenv from "dotenv";
 
 const getAllVideos = asyncHandler(async (req, res) => {
   const {
@@ -142,6 +141,18 @@ const deleteVideo = asyncHandler(async (req, res) => {
 
 const togglePublishStatus = asyncHandler(async (req, res) => {
   const { videoId } = req.params;
+  if (!videoId) {
+    throw new ApiError(400, "Video id is required").send(res);
+  }
+  const video = await Video.findById(videoId);
+  if (!video) {
+    throw new ApiError(404, "Video not found").send(res);
+  }
+  video.isPublished = !video.isPublished;
+  await video.save({ validateBeforeSave: false });
+  return res
+    .status(201)
+    .json(new ApiResponse(200, video, "Video status updated successfully"));
 });
 
 export {
