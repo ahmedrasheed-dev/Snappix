@@ -8,7 +8,6 @@ import {
 } from "../utils/cloudinary.js";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
-import bcrypt from "bcrypt";
 
 dotenv.config({
   path: "../env",
@@ -40,7 +39,7 @@ const generateAccessAndRefereshTokens = async (userId) => {
     throw new ApiError(
       500,
       "Something went wrong while generating referesh and access token"
-    );
+    ).send(res);
   }
 };
 
@@ -49,24 +48,26 @@ const registerUser = asyncHandler(async (req, res) => {
   if (
     [username, fullName, email, password].some((field) => field.trim() === "")
   ) {
-    throw new ApiError(400, "All fields are required");
+    throw new ApiError(400, "All fields are required").send(res);
   }
 
   const existingUser = await User.findOne({
     $or: [{ username }, { email }],
   });
   if (existingUser) {
-    throw new ApiError(400, "Username or email already exists");
+    throw new ApiError(400, "Username or email already exists").send(res);
   }
 
   if (password.length < 8) {
-    throw new ApiError(400, "Password must be at least 6 characters long");
+    throw new ApiError(400, "Password must be at least 6 characters long").send(
+      res
+    );
   }
 
   const avatarlocalFilePath = req.files?.avatar?.[0]?.path;
 
   if (!avatarlocalFilePath) {
-    throw new ApiError(400, "Avatar is required");
+    throw new ApiError(400, "Avatar is required").send(res);
   }
 
   let coverImagelocalFilePath = "";
@@ -114,7 +115,7 @@ const registerUser = asyncHandler(async (req, res) => {
   }
 
   if (!avatar) {
-    throw new ApiError(500, "Failed to upload avatar image");
+    throw new ApiError(500, "Failed to upload avatar image").send(res);
   }
   const newUser = await User.create({
     username: username.toLowerCase(),
@@ -126,7 +127,7 @@ const registerUser = asyncHandler(async (req, res) => {
   });
 
   if (!newUser) {
-    throw new ApiError(500, "Failed to create user");
+    throw new ApiError(500, "Failed to create user").send(res);
   }
 
   const responseuser = await User.findById(newUser._id).select(
@@ -134,23 +135,27 @@ const registerUser = asyncHandler(async (req, res) => {
   );
   res
     .status(201)
-    .json(new ApiResponse(201, responseuser, "User registered successfully"));
+    .json(
+      new ApiResponse(201, responseuser, "User registered successfully").send(
+        res
+      )
+    );
 });
 
 const login = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) {
-    throw new ApiError(400, "Email and password are required");
+    throw new ApiError(400, "Email and password are required").send(res);
   }
 
   const user = await User.findOne({ email });
   if (!user) {
-    throw new ApiError(404, "User not found");
+    throw new ApiError(404, "User not found").send(res);
   }
 
   const isPasswordValid = await user.isPasswordCorrect(password);
   if (!isPasswordValid) {
-    throw new ApiError(401, "Invalid email or password");
+    throw new ApiError(401, "Invalid email or password").send(res);
   }
   const { refreshToken, accessToken } = await generateAccessAndRefereshTokens(
     user._id
@@ -179,7 +184,7 @@ const login = asyncHandler(async (req, res) => {
 const logout = asyncHandler(async (req, res) => {
   const user = req.user;
   if (!user) {
-    throw new ApiError(401, "Unauthorized");
+    throw new ApiError(401, "Unauthorized").send(res);
   }
 
   res
@@ -193,6 +198,9 @@ const refreshToken = asyncHandler(async (req, res) => {
   const incomingRefreshToken =
     req.cookies.refreshToken || req.body.refreshToken;
 
+  if (!incomingRefreshToken) {
+    throw new ApiError(401, "Unauthorized").send(res);
+  }
   const decodedRefreshToken = jwt.verify(
     incomingRefreshToken,
     process.env.REFRESH_TOKEN_SECRET
@@ -201,7 +209,7 @@ const refreshToken = asyncHandler(async (req, res) => {
     "-password -refreshToken"
   );
   if (!user) {
-    throw new ApiError(401, "Unauthorized");
+    throw new ApiError(401, "Unauthorized").send(res);
   }
   const { refreshToken, accessToken } = await generateAccessAndRefereshTokens(
     user._id
@@ -223,23 +231,31 @@ const changePassword = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user._id);
 
   if (!user) {
-    throw new ApiError(401, "Unauthorized");
+    throw new ApiError(401, "Unauthorized").send(res);
   }
   const { currentPassword, newPassword } = req.body;
 
   if (currentPassword === newPassword) {
-    throw new ApiError(400, "New password cannot be same as current password");
+    throw new ApiError(
+      400,
+      "New password cannot be same as current password"
+    ).send(res);
   }
   if (!currentPassword || !newPassword) {
-    throw new ApiError(400, "Current password and new password are required");
+    throw new ApiError(
+      400,
+      "Current password and new password are required"
+    ).send(res);
   }
   if (newPassword.length < 8) {
-    throw new ApiError(400, "Password must be at least 8 characters long");
+    throw new ApiError(400, "Password must be at least 8 characters long").send(
+      res
+    );
   }
 
   const isPasswordValid = await user.isPasswordCorrect(currentPassword);
   if (!isPasswordValid) {
-    throw new ApiError(401, "Invalid current password");
+    throw new ApiError(401, "Invalid current password").send(res);
   }
 
   user.password = newPassword;
@@ -258,15 +274,15 @@ const updateProfile = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user._id);
   const { fullName, email } = req.body;
   if (!fullName || !email) {
-    throw new ApiError(400, "Full name and email are required");
+    throw new ApiError(400, "Full name and email are required").send(res);
   }
 
   if (email === user.email) {
-    throw new ApiError(400, "Email cannot be same as previous email");
+    throw new ApiError(400, "Email cannot be same as previous email").send(res);
   }
   const existingUser = await User.findOne({ email });
   if (existingUser) {
-    throw new ApiError(400, "Email already in use");
+    throw new ApiError(400, "Email already in use").send(res);
   }
   user.fullName = fullName;
   user.email = email;
@@ -292,7 +308,7 @@ const updateAvatar = asyncHandler(async (req, res) => {
   const avatarLocalPath = req.file?.path;
 
   if (!avatarLocalPath) {
-    throw new ApiError(400, "Avatar is required");
+    throw new ApiError(400, "Avatar is required").send(res);
   }
   const existingAvatar = user.avatar;
 
@@ -317,7 +333,7 @@ const updateCoverImage = asyncHandler(async (req, res) => {
   const coverLocalPath = req.file?.path;
 
   if (!coverLocalPath) {
-    throw new ApiError(400, "Cover is required");
+    throw new ApiError(400, "Cover is required").send(res);
   }
   const existingCover = user.coverImage;
 

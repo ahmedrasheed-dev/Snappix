@@ -6,5 +6,12 @@ class ApiResponse {
     this.data = data;
     this.success = statusCode < 400;
   }
+  send(res) {
+    return res.status(this.statusCode).json({
+      success: true,
+      message: this.message,
+      data: this.data,
+    });
+  }
 }
 export { ApiResponse };
