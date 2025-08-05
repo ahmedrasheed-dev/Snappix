@@ -129,11 +129,7 @@ const registerUser = asyncHandler(async (req, res) => {
   );
   res
     .status(201)
-    .json(
-      new ApiResponse(201, responseuser, "User registered successfully").send(
-        res
-      )
-    );
+    .json(new ApiResponse(201, responseuser, "User registered successfully"));
 });
 
 const login = asyncHandler(async (req, res) => {
