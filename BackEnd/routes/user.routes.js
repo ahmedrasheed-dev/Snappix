@@ -8,6 +8,7 @@ import {
   getCurrentUser,
   updateAvatar,
   updateCoverImage,
+  getUserChannelProfile,
 } from "../controllers/user.controller.js";
 import { Router } from "express";
 import { upload } from "../middlewares/multer.middleware.js";
@@ -43,4 +44,6 @@ router.post(
   upload.single("coverImage"),
   updateCoverImage)
 
+
+router.get("/c/:username", veriftJWT, getUserChannelProfile)  
 export default router;
