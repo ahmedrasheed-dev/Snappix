@@ -1,14 +1,24 @@
 import asyncHandler from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
-import { Like } from "../models/likes.model.js";
-import { Mongoose } from "mongoose";
+import { Like } from "../models/like.model.js";
+import { mongoose } from "mongoose";
 
 const toggleVideoLike = asyncHandler(async (req, res) => {
   const { videoId } = req.params;
   //TODO: toggle like on video
-  if (!videoId || Mongoose.Types.ObjectId.isValid(videoId)) {
+  if (!videoId || !mongoose.Types.ObjectId.isValid(videoId)) {
     throw new ApiError(400, "Video id is required and must be Valid").send(res);
+  }
+
+  const existingLike = await Like.findOne({
+    video: videoId,
+    likedBy: req.user._id,
+  });
+
+  if (existingLike) {
+    await Like.deleteOne({ _id: existingLike._id });
+    return new ApiResponse(200, null, "Video unliked successfully").send(res);
   }
 
   const like = await Like.create({
@@ -21,10 +31,20 @@ const toggleVideoLike = asyncHandler(async (req, res) => {
 const toggleCommentLike = asyncHandler(async (req, res) => {
   const { commentId } = req.params;
   //TODO: toggle like on comment
-  if (!commentId || Mongoose.Types.ObjectId.isValid(commentId)) {
+  if (!commentId || !mongoose.Types.ObjectId.isValid(commentId)) {
     throw new ApiError(400, "commentId id is required and must be Valid").send(
       res
     );
+  }
+
+  const existingLike = await Like.findOne({
+    comment: commentId,
+    likedBy: req.user._id,
+  });
+
+  if (existingLike) {
+    await Like.deleteOne({ _id: existingLike._id });
+    return new ApiResponse(200, null, "Comment unliked successfully").send(res);
   }
 
   const like = await Like.create({
@@ -37,8 +57,18 @@ const toggleCommentLike = asyncHandler(async (req, res) => {
 const toggleTweetLike = asyncHandler(async (req, res) => {
   const { tweetId } = req.params;
   //TODO: toggle like on tweet
-  if (!tweetId || Mongoose.Types.ObjectId.isValid(tweetId)) {
+  if (!tweetId || !mongoose.Types.ObjectId.isValid(tweetId)) {
     throw new ApiError(400, "tweet Id is required and must be Valid").send(res);
+  }
+
+  const existingLike = await Like.findOne({
+    tweet: tweetId,
+    likedBy: req.user._id,
+  });
+
+  if (existingLike) {
+    await Like.deleteOne({ _id: existingLike._id });
+    return new ApiResponse(200, null, "Tweet unliked successfully").send(res);
   }
 
   const like = await Like.create({

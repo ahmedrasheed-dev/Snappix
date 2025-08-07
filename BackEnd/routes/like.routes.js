@@ -7,10 +7,11 @@ import {
   toggleVideoLike,
   getLikedVideos,
 } from "../controllers/likes.controller.js";
+import { verifyJWT } from "../middlewares/auth.middleware.js";
 
-router.get("/videos", getLikedVideos);
-router.post("/v/:videoId", toggleVideoLike);
-router.post("/c/:videoId", toggleCommentLike);
-router.post("/t/:videoId", toggleTweetLike);
+router.get("/videos", verifyJWT, getLikedVideos);
+router.post("/v/:videoId", verifyJWT, toggleVideoLike);
+router.post("/c/:commentId", verifyJWT, toggleCommentLike);
+router.post("/t/:tweetId", verifyJWT, toggleTweetLike);
 
 export default router;

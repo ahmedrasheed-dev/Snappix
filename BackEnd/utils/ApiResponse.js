@@ -5,6 +5,7 @@ class ApiResponse {
     //data will be an object
     this.data = data;
     this.success = statusCode < 400;
+    this.message = message;
   }
   send(res) {
     return res.status(this.statusCode).json({
