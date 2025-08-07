@@ -1,6 +1,5 @@
 # 📺 Snappix API Documentation
 
-**Base URL:** `https://api.snappix.com`
 
 Most endpoints require **Bearer Token** authentication in the `Authorization` header:  
 `Authorization: Bearer <token>`
