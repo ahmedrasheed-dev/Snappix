@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import mongoosePaginate from "mongoose-paginate-v2";
+import mongoosePaginate from "mongoose-aggregate-paginate-v2";
 const commentSchema = mongoose.Schema({
   content: {
     type: String,
@@ -21,5 +21,5 @@ const commentSchema = mongoose.Schema({
     default: null, //for top level comments parent is null
   },
 });
-commentSchema.plugins(mongoosePaginate);
+commentSchema.plugin(mongoosePaginate);
 export const Comment = mongoose.model("comment", commentSchema);

@@ -1,7 +1,7 @@
 import asyncHandler from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
-import { Comment } from "../models/comment.model.js";
+import { Comment } from "../models/comments.model.js";
 import mongoose from "mongoose";
 
 const getVideoComments = asyncHandler(async (req, res) => {
@@ -13,11 +13,11 @@ const getVideoComments = asyncHandler(async (req, res) => {
     sortBy = "createdAt",
     sortType = "desc",
   } = req.query;
-  const commentsWithReplies = await Comment.aggregate([
+  const commentsWithRepliesPipeLine = [
     {
       $match: {
-        video: mongoose.Types.ObjectId(videoId),
-        parent: null,
+        video: new mongoose.Types.ObjectId(videoId),
+        parentComment: null,
       },
     },
     {
@@ -44,7 +44,7 @@ const getVideoComments = asyncHandler(async (req, res) => {
       $lookup: {
         from: "comments",
         localField: "_id",
-        foreignField: "parent",
+        foreignField: "parentComment",
         as: "replies",
         pipeline: [
           {
@@ -97,8 +97,8 @@ const getVideoComments = asyncHandler(async (req, res) => {
         replies: 1,
       },
     },
-  ]);
-  if (!commentsWithReplies) {
+  ];
+  if (!commentsWithRepliesPipeLine) {
     throw new ApiError(404, "Comments not found").send(res);
   }
   const options = {
@@ -106,20 +106,25 @@ const getVideoComments = asyncHandler(async (req, res) => {
     limit: parseInt(limit),
     sort: { [sortBy]: sortType === "desc" ? -1 : 1 },
   };
-  Comment.aggregatePaginate(null, options);
-  return new ApiResponse(
-    200,
-    commentsWithReplies,
-    "Comments fetched successfully"
-  ).send(res);
+  const result = await Comment.aggregatePaginate(
+    Comment.aggregate(commentsWithRepliesPipeLine),
+    options
+  );
+
+  return new ApiResponse(200, result, "Comments fetched successfully").send(
+    res
+  );
 });
 
 const addComment = asyncHandler(async (req, res) => {
   // TODO: add a comment to a video
   const { videoId } = req.params;
   const userId = req.user._id;
+  if (!userId) {
+    throw new ApiError(401, "Unauthorized Access").send(res);
+  }
   const { content, parentComponent } = req.body;
-  if (!content.trim().length === "") {
+  if (!content || !content.trim().length === "") {
     throw new ApiError(400, "Content is required").send(res);
   }
   if (!videoId) {
@@ -140,7 +145,7 @@ const addComment = asyncHandler(async (req, res) => {
     video: videoId,
     owner: userId,
     content,
-    parentComment: parentComment || null,
+    parentComment: parentComponent || null,
   });
   if (!comment) {
     throw new ApiError(500, "Failed to add comment").send(res);
@@ -197,6 +202,21 @@ const updateComment = asyncHandler(async (req, res) => {
     res
   );
 });
+const deleteCommentAndReplies = async (commentId) => {
+  const comment = await Comment.findById(commentId);
+  if (!comment) return;
+
+  // Find replies to this comment
+  const replies = await Comment.find({ parentComment: commentId });
+
+  // Recursively delete replies
+  for (const reply of replies) {
+    await deleteCommentAndReplies(reply._id);
+  }
+
+  // Delete this comment
+  await Comment.findByIdAndDelete(commentId);
+};
 
 const deleteComment = asyncHandler(async (req, res) => {
   // TODO: delete a comment
@@ -211,10 +231,11 @@ const deleteComment = asyncHandler(async (req, res) => {
   if (!comment) {
     throw new ApiError(404, "Comment not found").send(res);
   }
-  await comment.remove();
+  await deleteCommentAndReplies(commentId);
   return new ApiResponse(200, comment, "Comment deleted successfully").send(
     res
   );
+
 });
 
 export {

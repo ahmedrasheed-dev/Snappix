@@ -40,12 +40,14 @@ const getAllVideos = asyncHandler(async (req, res) => {
     sort: { [sortBy]: sortType === "desc" ? -1 : 1 },
   };
 
-  const filter = {};
+  const matchStage = {};
   if (query) {
-    filter.title = { $regex: query, $options: "i" };
+    matchStage.title = { $regex: query, $options: "i" };
   }
 
-  const videos = await Video.aggregatePaginate(filter, options);
+  const aggregate = Video.aggregate([{ $match: matchStage }]);
+  const videos = await Video.aggregatePaginate(aggregate, options);
+
   return new ApiResponse(200, videos, "Videos fetched successfully").send(res);
 });
 

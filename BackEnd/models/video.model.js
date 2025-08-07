@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import mongoosePaginate from "mongoose-paginate-v2";
+import mongoosePaginate from "mongoose-aggregate-paginate-v2";
 
 const VideoSchema = new mongoose.Schema({
   //will be stored in cloudinary
