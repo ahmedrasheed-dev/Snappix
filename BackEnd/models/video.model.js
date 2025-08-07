@@ -42,7 +42,7 @@ const VideoSchema = new mongoose.Schema({
     type: Boolean,
     default: true,
   },
-});
+},{timestamps: true});
 
 VideoSchema.plugin(mongoosePaginate);
 export const Video = mongoose.model("video", VideoSchema);
