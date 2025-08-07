@@ -2,11 +2,26 @@ import asyncHandler from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { Video } from "../models/video.model.js";
+import ffmpeg from "fluent-ffmpeg";
 import {
   uploadToCloudinary,
   deleteFromCloudinary,
   extractPublicId,
 } from "../utils/cloudinary.js";
+
+const compressVideo = (inputPath, outputPath) => {
+  return new Promise((resolve, reject) => {
+    ffmpeg(inputPath)
+      .videoCodec("libx264")
+      .size("?x720")
+      .outputOptions("-crf 28")
+      .outputOptions("-preset veryfast")
+      .save(outputPath)
+      .on("end", () => resolve(outputPath))
+      .on("error", (err) => reject(err));
+  });
+};
+
 
 const getAllVideos = asyncHandler(async (req, res) => {
   const {
@@ -36,40 +51,40 @@ const getAllVideos = asyncHandler(async (req, res) => {
 
 const publishAVideo = asyncHandler(async (req, res) => {
   const { title, description } = req.body;
-  // TODO: get video, upload to cloudinary, create video
-  if (!title || !description) {
+
+  if (!title || !description || title.trim() === "" || description.trim() === "") {
     throw new ApiError(400, "Title and description are required").send(res);
   }
-  if (
-    [title, description].some((val) => {
-      val.trim() == "";
-    })
-  ) {
-    throw new ApiError(400, "Title and description cannot be empty").send(res);
-  }
 
-  const videoLocalPath = req.files?.video?.[0].path;
-  const thumbnailLocalPath = req.files?.thumbnail?.[0].path;
+  const videoLocalPath = req.files?.video?.[0]?.path;
+  const thumbnailLocalPath = req.files?.thumbnail?.[0]?.path;
 
   if (!videoLocalPath || !thumbnailLocalPath) {
     throw new ApiError(400, "Video and thumbnail are required").send(res);
   }
 
-  const video = await uploadToCloudinary(videoLocalPath);
-  const thumbnail = await uploadToCloudinary(thumbnailLocalPath);
+  const compressedVideoPath = `${videoLocalPath}-compressed.mp4`;
 
-  await Video.create({
-    videoFile: video.secure_url,
-    thumbnail: thumbnail.secure_url,
-    owner: req.user._id,
-    title,
-    description,
-    duration: video.duration,
-  });
+  try {
+    await compressVideo(videoLocalPath, compressedVideoPath);
 
-  res
-    .status(201)
-    .json(new ApiResponse(201, video, "Video published successfully"));
+    const video = await uploadToCloudinary(compressedVideoPath);
+    const thumbnail = await uploadToCloudinary(thumbnailLocalPath);
+    await deleteFromCloudinary(videoLocalPath)
+    const newVideo = await Video.create({
+      videoFile: video.secure_url,
+      thumbnail: thumbnail.secure_url,
+      owner: req.user._id,
+      title,
+      description,
+      duration: video.duration || 0, // handle undefined
+    });
+
+    res.status(201).json(new ApiResponse(201, newVideo, "Video published successfully"));
+  } catch (err) {
+    console.error("Compression/upload error: ", err);
+    res.status(500).json(new ApiError(500, "Video processing failed", err).send(res));
+  }
 });
 
 const getVideoById = asyncHandler(async (req, res) => {
