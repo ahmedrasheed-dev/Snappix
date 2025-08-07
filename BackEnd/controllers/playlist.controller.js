@@ -3,6 +3,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { Playlist } from "../models/playlist.model.js";
 import { isValidObjectId } from "mongoose";
+import mongoose from "mongoose";
 
 const createPlaylist = asyncHandler(async (req, res) => {
   const { name, description } = req.body;
@@ -145,11 +146,11 @@ const addVideoToPlaylist = asyncHandler(async (req, res) => {
     ).send(res);
   }
 
-  const alreadyExists = playlist.videos.includes(videoId);
+  const playlist = await Playlist.findById(playlistId);
+  const alreadyExists = playlist?.videos?.includes(videoId);
   if (alreadyExists) {
     throw new ApiError(400, "Video already in playlist").send(res);
   }
-  const playlist = await Playlist.findById(playlistId);
   if (!playlist) {
     throw new ApiError(404, "Playlist not found").send(res);
   }

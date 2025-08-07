@@ -18,7 +18,7 @@ const playlistSchema = new mongoose.Schema(
     },
     videos: [
       {
-        type: Schema.Types.ObjectId,
+        type: mongoose.Schema.Types.ObjectId,
         ref: "video",
       },
     ],
@@ -26,6 +26,6 @@ const playlistSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-likeSchema.plugin(playlistSchema);
+playlistSchema.plugin(mongoosePaginate);
 
 export const Playlist = mongoose.model("playlist", playlistSchema);
