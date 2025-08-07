@@ -45,7 +45,7 @@ const getAllVideos = asyncHandler(async (req, res) => {
     filter.title = { $regex: query, $options: "i" };
   }
 
-  const videos = await Video.paginate(filter, options);
+  const videos = await Video.aggregatePaginate(filter, options);
   return new ApiResponse(200, videos, "Videos fetched successfully").send(res);
 });
 
