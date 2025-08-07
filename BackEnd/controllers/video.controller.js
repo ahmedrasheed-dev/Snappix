@@ -1,4 +1,5 @@
 import asyncHandler from "../utils/asyncHandler.js";
+import fs from "fs";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { Video } from "../models/video.model.js";
@@ -21,7 +22,6 @@ const compressVideo = (inputPath, outputPath) => {
       .on("error", (err) => reject(err));
   });
 };
-
 
 const getAllVideos = asyncHandler(async (req, res) => {
   const {
@@ -52,7 +52,12 @@ const getAllVideos = asyncHandler(async (req, res) => {
 const publishAVideo = asyncHandler(async (req, res) => {
   const { title, description } = req.body;
 
-  if (!title || !description || title.trim() === "" || description.trim() === "") {
+  if (
+    !title ||
+    !description ||
+    title.trim() === "" ||
+    description.trim() === ""
+  ) {
     throw new ApiError(400, "Title and description are required").send(res);
   }
 
@@ -70,7 +75,7 @@ const publishAVideo = asyncHandler(async (req, res) => {
 
     const video = await uploadToCloudinary(compressedVideoPath);
     const thumbnail = await uploadToCloudinary(thumbnailLocalPath);
-    await deleteFromCloudinary(videoLocalPath)
+    fs.unlinkSync(videoLocalPath);
     const newVideo = await Video.create({
       videoFile: video.secure_url,
       thumbnail: thumbnail.secure_url,
@@ -80,10 +85,14 @@ const publishAVideo = asyncHandler(async (req, res) => {
       duration: video.duration || 0, // handle undefined
     });
 
-    res.status(201).json(new ApiResponse(201, newVideo, "Video published successfully"));
+    res
+      .status(201)
+      .json(new ApiResponse(201, newVideo, "Video published successfully"));
   } catch (err) {
     console.error("Compression/upload error: ", err);
-    res.status(500).json(new ApiError(500, "Video processing failed", err).send(res));
+    res
+      .status(500)
+      .json(new ApiError(500, "Video processing failed", err).send(res));
   }
 });
 
