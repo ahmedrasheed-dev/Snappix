@@ -1,8 +1,12 @@
 import nodemailer from "nodemailer";
 import dotenv from "dotenv";
-import { ApiError } from "./ApiError";
-dotenv.config();
+import { ApiError } from "./ApiError.js";
+import path from "path";
+import fs from "fs";
+import { fileURLToPath } from "url";
+import { dirname } from "path";
 
+dotenv.config();
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
@@ -14,10 +18,14 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
 const sendOTPEmail = async (
   toEmail,
-  subject = "Your One-Time Password (OTP)",
-  otp
+  otp,
+  OTP_EXPIRY,
+  subject = "Your One-Time Password (OTP)"
 ) => {
   try {
     const templatePath = path.join(
@@ -27,7 +35,9 @@ const sendOTPEmail = async (
       "OTP-template.html"
     );
     const rawTemp = fs.readFileSync(templatePath, "utf8");
-    const finalTemplate = rawTemp.replace("{{OTP_CODE}}", otp);
+    const finalTemplate = rawTemp
+      .replace("{{OTP_CODE}}", otp)
+      .replace("{{OTP_EXPIRY}}", OTP_EXPIRY);
     const mailOptions = {
       from: process.env.GMAIL_USER, // The sender's email address
       to: toEmail, // The recipient's email address
@@ -41,11 +51,16 @@ const sendOTPEmail = async (
     return info;
   } catch (error) {
     console.error("Error sending email:", error);
-    throw new ApiError(500, "Failed to send email").send(res);
+    throw new ApiError(500, "Failed to send email");
   }
 };
 
-const sendPasswordResetEmail = async (userEmail, username, otpCode) => {
+const sendPasswordResetEmail = async (
+  userEmail,
+  username,
+  otpCode,
+  OTP_EXPIRY
+) => {
   try {
     const templatePath = path.join(
       __dirname,
@@ -58,6 +73,7 @@ const sendPasswordResetEmail = async (userEmail, username, otpCode) => {
     // Replace the placeholders
     htmlTemplate = htmlTemplate.replace("{{USERNAME}}", username);
     htmlTemplate = htmlTemplate.replace("{{OTP_CODE}}", otpCode);
+    htmlTemplate = htmlTemplate.replace("{{OTP_EXPIRY}}", OTP_EXPIRY);
 
     const mailOptions = {
       from: process.env.GMAIL_USER,
@@ -71,7 +87,7 @@ const sendPasswordResetEmail = async (userEmail, username, otpCode) => {
     return info;
   } catch (error) {
     console.error("Error sending email:", error);
-    throw new ApiError(500, "Failed to send email").send(res);
+    throw new ApiError(500, "Failed to send email");
   }
 };
 

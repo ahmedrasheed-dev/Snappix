@@ -47,8 +47,27 @@ const UserSchema = new Mongoose.Schema(
     refreshToken: {
       type: String,
     },
-    otp: { type: String },
-    otpExpiresAt: { type: Date },
+    isEmailVerified: {
+        type: Boolean,
+        default: false
+    },
+    emailVerificationOtp: {
+      type: String,
+      required: false,
+    },
+    emailVerificationOtpExpiresAt: {
+      type: Date,
+      required: false,
+    },
+    // Separate fields for password reset OTP
+    passwordResetOtp: {
+      type: String,
+      required: false,
+    },
+    passwordResetOtpExpiresAt: {
+      type: Date,
+      required: false,
+    }
   },
   { timestamps: true }
 );
@@ -91,4 +110,4 @@ UserSchema.methods.generateAccessToken = function () {
   );
 };
 
-export const User = Mongoose.model("user", UserSchema);
+export const User = Mongoose.models.User || Mongoose.model("user", UserSchema);

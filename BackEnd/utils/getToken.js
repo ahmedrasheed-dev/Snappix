@@ -9,8 +9,8 @@ dotenv.config();
 const OAuth2 = google.auth.OAuth2;
 
 const credentials = {
-  client_id: GOOGLE_CLIENT_ID,
-  client_secret: GOOGLE_CLIENT_SECRET,
+  client_id: process.env.GOOGLE_CLIENT_ID,
+  client_secret: process.env.GOOGLE_CLIENT_SECRET,
   redirect_uris: ["urn:ietf:wg:oauth:2.0:oob", "http://localhost"],
 };
 

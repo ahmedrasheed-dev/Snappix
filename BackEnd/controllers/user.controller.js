@@ -3,6 +3,9 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { User } from "../models/user.model.js";
 import mongoose from "mongoose";
+import crypto from "crypto";
+import { sendOTPEmail, sendPasswordResetEmail } from "../utils/NodeMailer.js";
+import bcrypt from "bcrypt";
 import {
   uploadToCloudinary,
   deleteFromCloudinary,
@@ -18,6 +21,14 @@ dotenv.config({
 const cookieOptions = {
   httpOnly: true,
   secure: true,
+};
+
+const convertMillisToMinutes = (milliseconds) => {
+  if (typeof milliseconds !== "number" || milliseconds < 0) {
+    return 0; // Handle invalid input
+  }
+  const minutes = milliseconds / (1000 * 60);
+  return minutes;
 };
 
 const generateAccessAndRefereshTokens = async (userId) => {
@@ -138,10 +149,167 @@ const registerUser = asyncHandler(async (req, res) => {
     .json(new ApiResponse(201, responseuser, "User registered successfully"));
 });
 
-const sendVerifyOtp = asyncHandler((req, req) => {
-  const user = req.user._id;
+const sendEmailVerifyOtp = asyncHandler(async (req, res) => {
+  const userId = req.user._id;
+  const userEmail = req.user.email;
+
   const otp = generateOTP();
-  
+  const salt = await bcrypt.genSalt(10);
+  const hashedOtp = await bcrypt.hash(otp.toString(), salt);
+
+  try {
+    const otpExpiresAt = Date.now() + 3 * 60 * 1000; // 60 second
+    const otpExpiresAtInMinutes = Math.ceil(
+      convertMillisToMinutes(3 * 60 * 1000)
+    );
+    const userUpdate = await User.updateOne(
+      { _id: userId },
+      {
+        emailVerificationOtp: hashedOtp,
+        emailVerificationOtpExpiresAt: otpExpiresAt,
+      }
+    );
+
+    if (userUpdate.modifiedCount === 0) {
+      throw new ApiError(404, "User not found or update failed");
+    }
+
+    await sendOTPEmail(userEmail, otp, otpExpiresAtInMinutes);
+
+    return new ApiResponse(
+      200,
+      {},
+      "OTP sent successfully. Please check your email."
+    ).send(res);
+  } catch (error) {
+    if (error instanceof ApiError) {
+      throw new ApiError(500, "Error in sendVerifyOtp.").send(res);
+    } else {
+      throw new ApiError(500, "An internal server error occurred.").send(res);
+    }
+  }
+});
+
+const verifyEmailOtp = asyncHandler(async (req, res) => {
+  const user = req.user;
+  const { otp } = req.body;
+  if (!otp.trim()) {
+    throw new ApiError(400, "OTP is required").send(res);
+  }
+  try {
+    const dbUser = await User.findById(user._id);
+    if (!dbUser) {
+      throw new ApiError(404, "User not found").send(res);
+    }
+    if (dbUser.emailVerificationOtpExpiresAt < Date.now()) {
+      throw new ApiError(400, "OTP has expired").send(res);
+    }
+    const isOtpValid = await bcrypt.compare(otp, dbUser.emailVerificationOtp);
+    if (!isOtpValid) {
+      throw new ApiError(400, "Invalid OTP").send(res);
+    }
+
+    dbUser.isEmailVerified = true;
+    dbUser.emailVerificationOtp = "";
+    dbUser.emailVerificationOtpExpiresAt = 0;
+    await dbUser.save({ validateBeforeSave: false });
+    const sanitizedUser = {
+      _id: dbUser._id,
+      fullName: dbUser.fullName,
+      email: dbUser.email,
+      isEmailVerified: dbUser.isEmailVerified,
+      // Add other fields you want to return
+    };
+    res.status(200).json(new ApiResponse(200, sanitizedUser, "Email verified"));
+  } catch (error) {
+    throw new ApiError(500, "Error in Verifying Email OTP.");
+  }
+});
+
+const sendPasswordResetOtp = asyncHandler(async (req, res) => {
+  const userId = req.user._id;
+  const userEmail = req.user.email;
+
+  const otp = generateOTP();
+  const salt = await bcrypt.genSalt(10);
+  const hashedOtp = await bcrypt.hash(otp.toString(), salt);
+
+  try {
+    const otpExpiresAt = Date.now() + 5 * 60 * 1000; // 5 min
+    const otpExpiresAtInMinutes = Math.ceil(
+      convertMillisToMinutes(5 * 60 * 1000)
+    );
+
+    const userUpdate = await User.updateOne(
+      { _id: userId },
+      {
+        passwordResetOtp: hashedOtp,
+        passwordResetOtpExpiresAt: otpExpiresAt,
+      }
+    );
+
+    if (userUpdate.modifiedCount === 0) {
+      throw new ApiError(404, "User not found or update failed");
+    }
+
+    await sendPasswordResetEmail(
+      userEmail,
+      userUpdate.username,
+      otp,
+      otpExpiresAtInMinutes
+    );
+
+    return new ApiResponse(
+      200,
+      {},
+      "OTP sent successfully. Please check your email."
+    ).send(res);
+  } catch (error) {
+    if (error instanceof ApiError) {
+      throw new ApiError(500, "Error in sending Password Reset OTP.").send(res);
+    } else {
+      throw new ApiError(500, "An internal server error occurred.").send(res);
+    }
+  }
+});
+
+const verifyPasswordResetOtp = asyncHandler(async (req, res) => {
+  const user = req.user;
+  const { otp, newPassword } = req.body;
+  if (!otp.trim()) {
+    throw new ApiError(400, "OTP is required").send(res);
+  }
+  try {
+    const dbUser = await User.findById(user._id);
+    if (!dbUser) {
+      throw new ApiError(404, "User not found").send(res);
+    }
+    if (user.passwordResetOtpExpiresAt < Date.now()) {
+      throw new ApiError(400, "OTP has expired").send(res);
+    }
+    const isOtpValid = await bcrypt.compare(otp, dbUser.passwordResetOtp);
+    if (!isOtpValid) {
+      throw new ApiError(400, "Invalid OTP").send(res);
+    }
+
+    dbUser.password = newPassword;
+
+    dbUser.passwordResetOtp = "";
+    dbUser.passwordResetOtpExpiresAt = 0;
+    await dbUser.save({ validateBeforeSave: false });
+    const responseUser = await User.findById(user._id).select(
+      "-password -refreshToken -passwordResetOtp - passwordResetOtpExpiresAt"
+    );
+    res
+      .status(200)
+      .json(new ApiResponse(200, responseUser, "Pasword reset Successfully"));
+  } catch (error) {
+    if (error instanceof ApiError) {
+      throw new ApiError(500, "Error in verifing Pasword reset OTP.").send(res);
+    } else {
+      throw new ApiError(500, "An internal server error occurred.").send(res);
+    }
+  }
 });
 
 const login = asyncHandler(async (req, res) => {
@@ -510,4 +678,8 @@ export {
   updateCoverImage,
   getUserChannelProfile,
   getWatchHistory,
+  sendEmailVerifyOtp,
+  verifyEmailOtp,
+  sendPasswordResetOtp,
+  verifyPasswordResetOtp,
 };
