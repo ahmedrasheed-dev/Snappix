@@ -7,3 +7,6 @@
 *.env
 .env
 .env.*
+
+*/.gitignore
+*/eslint.config.js
