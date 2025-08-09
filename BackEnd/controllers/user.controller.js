@@ -38,6 +38,11 @@ const generateAccessAndRefereshTokens = async (userId) => {
   }
 };
 
+function generateOTP() {
+  // crypto.randomInt(min, max) generates an integer in [min, max)
+  return crypto.randomInt(100000, 1000000).toString();
+}
+
 const registerUser = asyncHandler(async (req, res) => {
   const { username, fullName, email, password } = req.body;
   if (
@@ -131,6 +136,12 @@ const registerUser = asyncHandler(async (req, res) => {
   res
     .status(201)
     .json(new ApiResponse(201, responseuser, "User registered successfully"));
+});
+
+const sendVerifyOtp = asyncHandler((req, req) => {
+  const user = req.user._id;
+  const otp = generateOTP();
+  
 });
 
 const login = asyncHandler(async (req, res) => {
