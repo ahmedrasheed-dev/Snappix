@@ -13,6 +13,8 @@ import {
 } from "../utils/cloudinary.js";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
+import { capitalizeFirstLetter, convertMillisToMinutes } from "../utils/utilFunctions.js";
+
 
 dotenv.config({
   path: "../env",
@@ -23,13 +25,7 @@ const cookieOptions = {
   secure: true,
 };
 
-const convertMillisToMinutes = (milliseconds) => {
-  if (typeof milliseconds !== "number" || milliseconds < 0) {
-    return 0; // Handle invalid input
-  }
-  const minutes = milliseconds / (1000 * 60);
-  return minutes;
-};
+
 
 const generateAccessAndRefereshTokens = async (userId) => {
   try {
@@ -254,7 +250,7 @@ const sendPasswordResetOtp = asyncHandler(async (req, res) => {
 
     await sendPasswordResetEmail(
       userEmail,
-      userUpdate.username,
+      capitalizeFirstLetter(req.user.username),
       otp,
       otpExpiresAtInMinutes
     );
@@ -284,7 +280,7 @@ const verifyPasswordResetOtp = asyncHandler(async (req, res) => {
     if (!dbUser) {
       throw new ApiError(404, "User not found").send(res);
     }
-    if (user.passwordResetOtpExpiresAt < Date.now()) {
+    if (dbUser.passwordResetOtpExpiresAt < Date.now()) {
       throw new ApiError(400, "OTP has expired").send(res);
     }
     const isOtpValid = await bcrypt.compare(otp, dbUser.passwordResetOtp);
@@ -297,12 +293,16 @@ const verifyPasswordResetOtp = asyncHandler(async (req, res) => {
     dbUser.passwordResetOtp = "";
     dbUser.passwordResetOtpExpiresAt = 0;
     await dbUser.save({ validateBeforeSave: false });
-    const responseUser = await User.findById(user._id).select(
-      "-password -refreshToken -passwordResetOtp - passwordResetOtpExpiresAt"
-    );
+    const sanitizedUser = {
+      _id: dbUser._id,
+      fullName: dbUser.fullName,
+      email: dbUser.email,
+      isEmailVerified: dbUser.isEmailVerified,
+      // Add other fields you want to return
+    };
     res
       .status(200)
-      .json(new ApiResponse(200, responseUser, "Pasword reset Successfully"));
+      .json(new ApiResponse(200, sanitizedUser, "Pasword reset Successfully"));
   } catch (error) {
     if (error instanceof ApiError) {
       throw new ApiError(500, "Error in verifing Pasword reset OTP.").send(res);
