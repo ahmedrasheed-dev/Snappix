@@ -1,5 +1,12 @@
 import { Navigate } from "react-router-dom";
-import { Homeicon, Profileicon, Logo } from "../../assets/index.js";
+import {
+  Homeicon,
+  Profileicon,
+  Logo,
+  WatchHistory,
+  SubscriptionsIcon,
+  Settingsicon,
+} from "../../assets/index.js";
 import SidebarItem from "./SidebarItem.jsx";
 
 const Sidebar = () => {
@@ -13,12 +20,18 @@ const Sidebar = () => {
       <div className="flex flex-col gap-4">
         <SidebarItem to="/" icon={Homeicon} text="Home" />
         <SidebarItem to="/profile" icon={Profileicon} text="Profile" />
-        
-        {/* <SidebarItem
+        <SidebarItem to="/history" icon={WatchHistory} text="history" />
+
+        <SidebarItem
           to="/subscriptions"
-          icon={Subscriptionsicon}
+          icon={SubscriptionsIcon}
           text="Subscriptions"
-        /> */}
+        />
+        <SidebarItem
+          to="/settings"
+          icon={Settingsicon}
+          text="Settings"
+        />
 
         {/* Spacer to push items to the bottom */}
         <div className="flex-grow"></div>

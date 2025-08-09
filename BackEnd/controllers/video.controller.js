@@ -30,7 +30,6 @@ const getAllVideos = asyncHandler(async (req, res) => {
     query,
     sortBy = "createdAt",
     sortType = "desc",
-    userId,
   } = req.query;
   //TODO: get all videos based on query, sort, pagination
 
@@ -44,6 +43,7 @@ const getAllVideos = asyncHandler(async (req, res) => {
   if (query) {
     matchStage.title = { $regex: query, $options: "i" };
   }
+  matchStage.isPublished = true;
 
   const aggregate = Video.aggregate([{ $match: matchStage }]);
   const videos = await Video.aggregatePaginate(aggregate, options);
@@ -180,6 +180,32 @@ const togglePublishStatus = asyncHandler(async (req, res) => {
     .status(201)
     .json(new ApiResponse(200, video, "Video status updated successfully"));
 });
+
+const increaseVideoViews = asyncHandler(async (req, res) => {
+  const { videoId } = req.params;
+
+  if (!videoId) {
+    throw new ApiError(400, "Video ID is required");
+  }
+
+  const video = await Video.findByIdAndUpdate(
+    videoId,
+    {
+      $inc: { views: 1 },
+    },
+    { new: true }
+  );
+
+  if (!video) {
+    throw new ApiError(404, "Video not found");
+  }
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, video, "Video view count increased successfully")
+    );
+});
 export {
   getAllVideos,
   publishAVideo,
@@ -187,4 +213,5 @@ export {
   updateVideo,
   deleteVideo,
   togglePublishStatus,
+  increaseVideoViews,
 };

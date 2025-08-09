@@ -10,10 +10,6 @@ import {
   updateCoverImage,
   getUserChannelProfile,
   getWatchHistory,
-  sendEmailVerifyOtp,
-  verifyEmailOtp,
-  sendPasswordResetOtp,
-  verifyPasswordResetOtp,
 } from "../controllers/user.controller.js";
 import { Router } from "express";
 import { upload } from "../middlewares/multer.middleware.js";

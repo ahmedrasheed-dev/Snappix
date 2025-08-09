@@ -9,7 +9,8 @@
 @theme {
   --color-main-black: #0d1113;
   --color-pink: #e8317e;
-  --color-grey: #8193a0;
+  --color-custom-grey: #8193a0;
+  --color-video-section: #272727;
   --color-offWhite: #fbf9f9;
   --font-clash-display: "ClashDisplay", sans-serif;
 }

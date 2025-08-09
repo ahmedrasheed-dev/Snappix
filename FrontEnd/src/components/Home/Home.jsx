@@ -1,11 +1,14 @@
-import React from 'react'
+import React from "react";
+import HeroSection from "./HeroSection";
+import VideoSection from "./VideoSection";
 
 const Home = () => {
   return (
-    <div>
-      Home Compnent
-    </div>
-  )
-}
+    <>
+      <HeroSection />
+      <VideoSection />
+    </>
+  );
+};
 
-export default Home
+export default Home;

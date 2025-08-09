@@ -4,13 +4,13 @@ import { Outlet } from "react-router-dom";
 
 function App() {
   return (
-    <div className="flex">
-      <Sidebar />
+      <div className="flex bg-gradient-to-tl from-[#071d2b] to-main-black">
+        <Sidebar />
 
-      <main className="flex-1 overflow-auto p-8">
-        <Outlet /> {/* This is where the child routes will be rendered */}
-      </main>
-    </div>
+        <main className="flex-1 overflow-auto">
+          <Outlet /> {/* This is where the child routes will be rendered */}
+        </main>
+      </div>
   );
 }
 
