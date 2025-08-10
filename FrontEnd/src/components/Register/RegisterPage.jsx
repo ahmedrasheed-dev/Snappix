@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useForm, Controller } from "react-hook-form";
-import { Link } from "react-router-dom"; // Assuming you use React Router
+import { Link, useNavigate } from "react-router-dom"; // Assuming you use React Router
 import { Separator } from "@/components/ui/separator"; // Assuming you have Shadcn Separator
 import { Input } from "@/components/ui/input"; // Assuming you have Shadcn Input
 import { Label } from "@/components/ui/label"; // Assuming you have Shadcn Label
@@ -10,6 +10,7 @@ import { useDispatch } from "react-redux";
 import { setLoggedInUser } from "../../store/features/userSlice";
 
 const RegisterPage = () => {
+  const navigate = useNavigate();
   const dispatch = useDispatch();
   const intialState = {
     username: "",
@@ -66,6 +67,7 @@ const RegisterPage = () => {
         avatar: data.avatar,
       }));
       dispatch(setLoggedInUser(user));
+      navigate("/");
     } catch (error) {
       console.error("Registration Error:", error);
     }

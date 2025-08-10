@@ -20,6 +20,9 @@ import {
   capitalizeFirstLetter,
   convertMillisToMinutes,
 } from "../utils/utilFunctions.js";
+import { imageComp } from "../utils/ImageCompressionUtils.js";
+import path from "path";
+import fs from "fs";
 
 dotenv.config({
   path: "../env",
@@ -122,7 +125,20 @@ const registerUser = asyncHandler(async (req, res) => {
   //   ]
   // }
 
-  const avatar = await uploadToCloudinary(avatarlocalFilePath);
+  const compressedAvatarImagePath = path.join(
+    path.dirname(avatarlocalFilePath),
+    `compressed-${req.files?.avatar?.[0]?.filename}`
+  );
+
+  await imageComp(avatarlocalFilePath, compressedAvatarImagePath)
+    .then(() => {
+      console.log("Compression process completed successfully.");
+      fs.unlinkSync(avatarlocalFilePath);
+    })
+    .catch((err) => {
+      console.error("Failed to compress image:", err);
+    });
+  const avatar = await uploadToCloudinary(compressedAvatarImagePath);
 
   let coverImage = "";
   if (coverImagelocalFilePath) {
@@ -193,10 +209,6 @@ const sendEmailVerifyOtp = asyncHandler(async (req, res) => {
   user.emailVerificationOtp = hashedOtp;
   user.emailVerificationOtpExpiresAt = otpExpiresAt;
   const savedUser = await user.save({ validateBeforeSave: false });
-  console.log(
-    "OTP Sent - Saved Expiration Time:",
-    savedUser.emailVerificationOtpExpiresAt
-  );
 
   await sendOTPEmail(user.email, otp, otpExpiresAtInMinutes);
 
@@ -222,13 +234,6 @@ const verifyEmailOtp = asyncHandler(async (req, res) => {
     if (!dbUser) {
       throw new ApiError(404, "User not found").send(res);
     }
-    console.log("User Retrieved for Verification:", dbUser);
-
-    console.log(
-      "Database Expiration Time:",
-      dbUser.emailVerificationOtpExpiresAt
-    );
-    console.log("Current Server Time:", Date.now());
 
     if (dbUser.emailVerificationOtpExpiresAt < Date.now()) {
       throw new ApiError(400, "OTP has expired").send(res);

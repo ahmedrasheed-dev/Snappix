@@ -9,6 +9,7 @@ import {
   AvatarFallback,
   AvatarImage,
 } from "@/components/ui/avatar";
+import { AddVideoicon } from "../../assets/index.js";
 const Topbar = () => {
   const isLoggedIn = useSelector((state) => state.user.isLoggedIn);
   const user = useSelector((state) => state.user.user);
@@ -42,45 +43,69 @@ const Topbar = () => {
         </div>
       )}
 
-      {isLoggedIn && user && (
-        <div className="relative group">
-          <Avatar>
-            <AvatarImage src={user.avatar} />
-            <AvatarFallback>
-              {user.username.split("")[0]}
-            </AvatarFallback>
-          </Avatar>
-
-          <div
-            className={`absolute hidden group-hover:flex flex-col bg-gray-100 rounded-sm p-2 gap-2 cursor-pointer
-                   w-58 right-0 shadow-lg transition-all`}
-          >
-            {!user.isEmailVerified && (
+      <div
+        className="flex justify-center items-center gap-4"
+        title="Add a Video"
+      >
+        {isLoggedIn && user && (
+          <div className="group relative">
+            <AddVideoicon className={"cursor-pointer fill-pink"} />
+            <div
+              className={`absolute  hidden group-hover:flex flex-col bg-gray-100 rounded-sm p-2 gap-2 cursor-pointer
+                   w-40 right-0 shadow-lg transition-all`}
+            >
               <>
-                <NavLink to={"/verify-email"}>
+                <NavLink to={"/upload"}>
                   <p className="hover:text-pink-600 transition-colors duration-200">
-                    Verify Email
+                    Upload a Video
                   </p>
                 </NavLink>
                 <Separator />
               </>
-            )}
-
-            <NavLink to={"/logout"}>
-              <p className="hover:text-pink-600 transition-colors duration-200">
-                Logout
-              </p>
-            </NavLink>
-
-            <Separator />
-            <NavLink to={"/change-password"}>
-              <p className="hover:text-pink-600 transition-colors duration-700">
-                Change Password
-              </p>
-            </NavLink>
+            </div>
           </div>
-        </div>
-      )}
+        )}
+
+        {isLoggedIn && user && (
+          <div className="relative group">
+            <Avatar>
+              <AvatarImage src={user.avatar} />
+              <AvatarFallback>
+                {user.username.split("")[0]}
+              </AvatarFallback>
+            </Avatar>
+
+            <div
+              className={`absolute hidden group-hover:flex flex-col bg-gray-100 rounded-sm p-2 gap-2 cursor-pointer
+                   w-58 right-0 shadow-lg transition-all`}
+            >
+              {!user.isEmailVerified && (
+                <>
+                  <NavLink to={"/verify-email"}>
+                    <p className="hover:text-pink-600 transition-colors duration-200">
+                      Verify Email
+                    </p>
+                  </NavLink>
+                  <Separator />
+                </>
+              )}
+
+              <NavLink to={"/logout"}>
+                <p className="hover:text-pink-600 transition-colors duration-200">
+                  Logout
+                </p>
+              </NavLink>
+
+              <Separator />
+              <NavLink to={"/change-password"}>
+                <p className="hover:text-pink-600 transition-colors duration-700">
+                  Change Password
+                </p>
+              </NavLink>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

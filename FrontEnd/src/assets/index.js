@@ -7,6 +7,7 @@ import Settingsicon from "./icons/Settingsicon.jsx";
 import Verifiedicon from "./icons/Verifiedicon.jsx";
 import SearchIcon from "./icons/SearchIcon.jsx";
 import Loadericon from './icons/Loadericon.jsx'
+import AddVideoicon from "./icons/AddVideoicon.jsx";
 export {
   Homeicon,
   Profileicon,
@@ -16,5 +17,6 @@ export {
   Settingsicon,
   Verifiedicon,
   SearchIcon,
-  Loadericon
+  Loadericon,
+  AddVideoicon
 };

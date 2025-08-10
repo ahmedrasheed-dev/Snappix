@@ -26,6 +26,7 @@ const VideoItem = ({
   return (
     <Link to={`/video/${videoId}`} className="block group">
       <div className="flex flex-col w-full h-full cursor-pointer transition-transform duration-200 hover:scale-105">
+        
         {!imageLoaded && <Skeleton className="w-full h-full" />}
         {/* Thumbnail */}
         <div className="relative w-full h-48 bg-gray-800 rounded-xl overflow-hidden">
