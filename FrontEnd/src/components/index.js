@@ -1,7 +1,14 @@
 import Home from "./Home/Home.jsx";
 import Profile from "./Profile/Profile.jsx";
-
+import {RegisterPage} from "./Register/RegisterPage.jsx"
+import LoginPage from "./Login/LoginPage.jsx";
+import LogoutPage from "./Logout/LogoutPage.jsx";
+import VerifyEmailPage from "./VerifyEmail/VerifyEmailPage.jsx";
 export {
     Home,
-    Profile
+    Profile,
+    RegisterPage,
+    LoginPage,
+    LogoutPage,
+    VerifyEmailPage
 }

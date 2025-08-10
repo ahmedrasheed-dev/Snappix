@@ -4,6 +4,9 @@ import Logo from "./icons/Logo.jsx";
 import WatchHistory from "./icons/WatchHistory.jsx";
 import SubscriptionsIcon from "./icons/SubscriptionsIcon.jsx";
 import Settingsicon from "./icons/Settingsicon.jsx";
+import Verifiedicon from "./icons/Verifiedicon.jsx";
+import SearchIcon from "./icons/SearchIcon.jsx";
+import Loadericon from './icons/Loadericon.jsx'
 export {
   Homeicon,
   Profileicon,
@@ -11,4 +14,7 @@ export {
   WatchHistory,
   SubscriptionsIcon,
   Settingsicon,
+  Verifiedicon,
+  SearchIcon,
+  Loadericon
 };

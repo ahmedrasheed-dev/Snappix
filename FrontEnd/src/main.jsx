@@ -4,24 +4,52 @@ import App from "./App.jsx";
 import { Provider } from "react-redux";
 import { store } from "./store";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { Home, Profile } from "./components";
+import {
+  Home,
+  Profile,
+  RegisterPage,
+  LoginPage,
+  LogoutPage,
+  VerifyEmailPage,
+} from "./components";
+import {
+  QueryClient,
+  QueryClientProvider,
+} from "@tanstack/react-query";
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      // Set the global staleTime for all queries to 10 seconds (10000 milliseconds)
+      staleTime: 10000,
+    },
+  },
+});
 
 createRoot(document.getElementById("root")).render(
   <BrowserRouter>
-    <StrictMode>
-      <Provider store={store}>
-        <Routes>
-          
-          <Route path="/" element={<App />}>
-            {/* Child routes that will be rendered inside the Outlet */}
-            <Route index element={<Home />} />
-            <Route path="profile" element={<Profile />} />
-            <Route path="history" element={<Home />} />
-            <Route path="subscriptions" element={<Home />} />
-            <Route path="settings" element={<Home />} />
-          </Route>
-        </Routes>
-      </Provider>
-    </StrictMode>
+    <QueryClientProvider client={queryClient}>
+      <StrictMode>
+        <Provider store={store}>
+          <Routes>
+            <Route path="/" element={<App />}>
+              {/* Child routes that will be rendered inside the Outlet */}
+              <Route index element={<Home />} />
+              <Route path="profile" element={<Profile />} />
+              <Route path="history" element={<Home />} />
+              <Route path="subscriptions" element={<Home />} />
+              <Route path="settings" element={<Home />} />
+              <Route path="register" element={<RegisterPage />} />
+              <Route path="login" element={<LoginPage />} />
+              <Route path="logout" element={<LogoutPage />} />
+              <Route
+                path="verify-email"
+                element={<VerifyEmailPage />}
+              />
+            </Route>
+          </Routes>
+        </Provider>
+      </StrictMode>
+    </QueryClientProvider>
   </BrowserRouter>
 );

@@ -48,8 +48,8 @@ const UserSchema = new Mongoose.Schema(
       type: String,
     },
     isEmailVerified: {
-        type: Boolean,
-        default: false
+      type: Boolean,
+      default: false,
     },
     emailVerificationOtp: {
       type: String,
@@ -67,7 +67,7 @@ const UserSchema = new Mongoose.Schema(
     passwordResetOtpExpiresAt: {
       type: Date,
       required: false,
-    }
+    },
   },
   { timestamps: true }
 );
@@ -80,7 +80,7 @@ UserSchema.pre("save", async function (next) {
   next();
 });
 
-UserSchema.methods.isPasswordCorrect = async function (password) {
+UserSchema.methods.isPasswordrect = async function (password) {
   return await bcrypt.compare(password, this.password);
 };
 
@@ -110,4 +110,5 @@ UserSchema.methods.generateAccessToken = function () {
   );
 };
 
-export const User = Mongoose.models.User || Mongoose.model("user", UserSchema);
+export const User =
+  Mongoose.models.User || Mongoose.model("user", UserSchema);

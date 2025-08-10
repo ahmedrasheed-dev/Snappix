@@ -1,9 +1,10 @@
 import axios from "axios";
 const BASE_URL = import.meta.env.VITE_server_url;
+import { useQuery } from '@tanstack/react-query';
 
 export const getVideos = async (params = {}) => {
   try {
-    const res = await axios.get(`${BASE_URL}/api/v1/videos`, {
+    const res = await axios.get(`/api/v1/videos?page=1&limit=12`, {
       params: {
         page: params.page,
         limit: params.limit,
@@ -18,4 +19,12 @@ export const getVideos = async (params = {}) => {
     console.error("Failed to fetch videos:", error);
     throw error;
   }
+};
+
+export const useGetVideos = (params) => {
+  return useQuery({
+    queryKey: ['videos', params],
+    queryFn: () => getVideos(params),
+    staleTime: 10000,
+  });
 };

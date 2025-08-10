@@ -30,6 +30,7 @@ const getAllVideos = asyncHandler(async (req, res) => {
     query,
     sortBy = "createdAt",
     sortType = "desc",
+    title,
   } = req.query;
   //TODO: get all videos based on query, sort, pagination
 
@@ -45,7 +46,38 @@ const getAllVideos = asyncHandler(async (req, res) => {
   }
   matchStage.isPublished = true;
 
-  const aggregate = Video.aggregate([{ $match: matchStage }]);
+  const aggregate = Video.aggregate([
+    { $match: matchStage },
+    {
+      $lookup: {
+        from: "users",
+        localField: "owner",
+        foreignField: "_id",
+        as: "ownerInfo",
+      },
+    },
+    {
+      $unwind: "$ownerInfo",
+    },
+    {
+      $project: {
+        _id: 1,
+        videoFile: 1,
+        thumbnail: 1,
+        owner: 1,
+        title: 1,
+        description: 1,
+        duration: 1,
+        views: 1,
+        isPublished: 1,
+        createdAt: 1,
+        // The `ownerInfo` field will now only contain the `username`
+        "ownerInfo.username": 1,
+        "ownerInfo.isEmailVerified":1,
+        "ownerInfo.avatar": 1,
+      },
+    },
+  ]);
   const videos = await Video.aggregatePaginate(aggregate, options);
 
   return new ApiResponse(200, videos, "Videos fetched successfully").send(res);
