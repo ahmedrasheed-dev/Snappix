@@ -14,7 +14,7 @@ const HeroSection = () => {
         <div className="absolute inset-x-0 bottom-0 h-1/4 bg-gradient-to-t from-main-black to-transparent"></div>
 
         {/* Text content, placed on top of all overlays */}
-        <div className="relative z-10 flex flex-col justify-center h-full text-white mt-16 scroll-m-0">
+        <div className="relative z-10 flex flex-col justify-center h-full text-white py-4 scroll-m-0">
           <div className="relative z-10 flex flex-col items-left justify-center h-full text-white">
             <div className="max-w-xl">
               <h1 className="text-4xl font-bold md:text-6xl">

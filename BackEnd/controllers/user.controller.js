@@ -606,9 +606,6 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
   if (!username?.trim()) {
     throw new ApiError(400, "Username is required").send(res);
   }
-  if (!mongoose.Types.ObjectId.isValid(username)) {
-    throw new ApiError(400, "invalid User ID").send(res);
-  }
 
   const channel = await User.aggregate([
     {

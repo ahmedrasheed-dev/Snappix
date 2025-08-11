@@ -8,26 +8,24 @@ import useInitialAuthCheck from "./hooks/useAuthCheck.js";
 function App() {
   useInitialAuthCheck();
   return (
-    <div className="flex bg-gray-900">
+    <div className="grid grid-cols-[80px_1fr] bg-gray-900">
       <Sidebar />
-
-      <ToastContainer
-        position="top-right"
-        autoClose={5000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick={false}
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        theme="colored"
-        transition={Bounce}
-      />
-      <main className="flex flex-col overflow-auto justify-center w-full">
-        <Outlet />{" "}
-        {/* This is where the child routes will be rendered */}
-      </main>
+        <ToastContainer
+          position="top-right"
+          autoClose={5000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick={false}
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+          theme="colored"
+          transition={Bounce}
+        />
+        <main className="flex flex-col overflow-auto justify-center">
+          <Outlet />{" "}
+        </main>
     </div>
   );
 }

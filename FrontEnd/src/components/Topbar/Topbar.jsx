@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect, useRef } from "react";
 import SearchBar from "./SearchBar";
 import { Separator } from "@/components/ui/separator";
 import { useSelector } from "react-redux";
@@ -10,15 +10,54 @@ import {
   AvatarImage,
 } from "@/components/ui/avatar";
 import { AddVideoicon } from "../../assets/index.js";
+
 const Topbar = ({ classes }) => {
   const isLoggedIn = useSelector((state) => state.user.isLoggedIn);
   const user = useSelector((state) => state.user.user);
+  
+  // State for the user avatar dropdown
+  const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
+  // State for the add video dropdown
+  const [isAddVideoDropdownOpen, setIsAddVideoDropdownOpen] = useState(false);
+
+  const userDropdownRef = useRef(null);
+  const addVideoDropdownRef = useRef(null);
+  const userAvatarRef = useRef(null);
+  const addVideoIconRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        userDropdownRef.current &&
+        !userDropdownRef.current.contains(event.target) &&
+        userAvatarRef.current &&
+        !userAvatarRef.current.contains(event.target)
+      ) {
+        setIsUserDropdownOpen(false);
+      }
+      
+      // Check for add video dropdown
+      if (
+        addVideoDropdownRef.current &&
+        !addVideoDropdownRef.current.contains(event.target) &&
+        addVideoIconRef.current &&
+        !addVideoIconRef.current.contains(event.target)
+      ) {
+        setIsAddVideoDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   return (
     <div className={`flex justify-between items-center ${classes}`}>
       <SearchBar />
 
-      <div>
+      <div className="flex items-center gap-4">
         {!isLoggedIn && (
           <div className="flex rounded-sm p-2 gap-2 w-48 transition-all">
             <NavLink to="/login">
@@ -42,41 +81,49 @@ const Topbar = ({ classes }) => {
           </div>
         )}
 
-        <div
-          className="flex justify-center items-center gap-4"
-          title="Add a Video"
-        >
-          {isLoggedIn && user && (
-            <div className="group relative">
-              <AddVideoicon className={"cursor-pointer fill-pink"} />
-              <div
-                className={`absolute  hidden group-hover:flex flex-col bg-gray-100 rounded-sm p-2 gap-2 cursor-pointer
-                   w-40 right-0 shadow-lg transition-all`}
-              >
-                <>
-                  <NavLink to={"/upload-video"}>
-                    <p className="hover:text-pink-600 transition-colors duration-200">
-                      Upload a Video
-                    </p>
-                  </NavLink>
-                  <Separator />
-                </>
-              </div>
+        {isLoggedIn && user && (
+          <div className="relative">
+            <div
+              className="cursor-pointer"
+              onClick={() => setIsAddVideoDropdownOpen(!isAddVideoDropdownOpen)}
+              ref={addVideoIconRef}
+              title="Add a Video"
+            >
+              <AddVideoicon className={"fill-pink-500"} />
             </div>
-          )}
-
-          {isLoggedIn && user && (
-            <div className="relative group ">
-              <Avatar>
-                <AvatarImage src={user.avatar} />
-                <AvatarFallback>
-                  {user.username.split("")[0]}
-                </AvatarFallback>
-              </Avatar>
-
+            {isAddVideoDropdownOpen && (
               <div
-                className={`absolute hidden group-hover:flex flex-col gap-2 bg-gray-100 rounded-sm p-4 cursor-pointer
-                   w-58 right-0 shadow-lg transition-all`}
+                ref={addVideoDropdownRef}
+                className={`absolute flex flex-col bg-gray-100 text-gray-900 rounded-sm p-2 gap-2 cursor-pointer w-40 right-0 shadow-lg transition-all z-20`}
+              >
+                <NavLink to={"/upload-video"}>
+                  <p className="hover:text-pink-600 transition-colors duration-200">
+                    Upload a Video
+                  </p>
+                </NavLink>
+                <Separator />
+              </div>
+            )}
+          </div>
+        )}
+
+        {isLoggedIn && user && (
+          <div className="relative">
+            <Avatar
+              ref={userAvatarRef}
+              onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
+              className="cursor-pointer"
+            >
+              <AvatarImage src={user.avatar} />
+              <AvatarFallback>
+                {user.username.charAt(0).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+
+            {isUserDropdownOpen && (
+              <div
+                ref={userDropdownRef}
+                className={`absolute flex flex-col gap-2 bg-gray-100 text-gray-900 rounded-sm p-4 cursor-pointer w-58 right-0 shadow-lg transition-all z-20`}
               >
                 {!user.isEmailVerified && (
                   <>
@@ -108,9 +155,9 @@ const Topbar = ({ classes }) => {
                   </p>
                 </NavLink>
               </div>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

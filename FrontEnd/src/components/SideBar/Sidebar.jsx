@@ -8,30 +8,37 @@ import {
   Settingsicon,
 } from "../../assets/index.js";
 import SidebarItem from "./SidebarItem.jsx";
+import { useSelector } from "react-redux";
 
 const Sidebar = () => {
+  const user = useSelector((state) => state.user.user);
   return (
-    <section className="flex flex-col items-center min-h-screen bg-main-black w-20">
-      <div className="mb-16">
-        <Logo color="#e8317e" />
-      </div>
+    <section className="fixed left-0 z-20 justify-between flex flex-col items-center min-h-screen bg-main-black w-20">
+      <div>
+        <div className="mb-16 flex flex-col items-center ">
+          <Logo color="#e8317e" />
+        </div>
 
-      {/* Navigation items */}
-      <div className="flex flex-col gap-4">
-        <SidebarItem to="/" icon={Homeicon} text="Home" />
-        <SidebarItem to="/profile" icon={Profileicon} text="Profile" />
-        <SidebarItem to="/history" icon={WatchHistory} text="history" />
+        {/* Navigation items */}
+        <div className="flex flex-col gap-4">
+          <SidebarItem to="/" icon={Homeicon} text="Home" />
+          <SidebarItem
+            to={`/profile/`}
+            icon={Profileicon}
+            text="Profile"
+          />
+          <SidebarItem
+            to="/history"
+            icon={WatchHistory}
+            text="history"
+          />
 
-        <SidebarItem
-          to="/subscriptions"
-          icon={SubscriptionsIcon}
-          text="Subscriptions"
-        />
-        <SidebarItem
-          to="/settings"
-          icon={Settingsicon}
-          text="Settings"
-        />
+          <SidebarItem
+            to="/subscriptions"
+            icon={SubscriptionsIcon}
+            text="Subscriptions"
+          />
+        </div>
 
         {/* Spacer to push items to the bottom */}
         <div className="flex-grow"></div>
@@ -39,6 +46,11 @@ const Sidebar = () => {
         {/* Settings/etc. at the bottom */}
         {/* <SidebarItem to="/settings" icon={Settingsicon} text="Settings" /> */}
       </div>
+      <SidebarItem
+        to="/settings"
+        icon={Settingsicon}
+        text="Settings"
+      />
     </section>
   );
 };
