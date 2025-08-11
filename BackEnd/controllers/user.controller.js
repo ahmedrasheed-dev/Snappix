@@ -23,6 +23,7 @@ import {
 import { imageComp } from "../utils/ImageCompressionUtils.js";
 import path from "path";
 import fs from "fs";
+import { deleteLocalFile } from "../utils/DeleteLocalfile.js";
 
 dotenv.config({
   path: "../env",
@@ -58,123 +59,83 @@ function generateOTP() {
 
 const registerUser = asyncHandler(async (req, res) => {
   const { username, fullName, email, password } = req.body;
+
+  // COMMENT: All fields validation, without the incorrect .send(res)
   if (
     [username, fullName, email, password].some(
-      (field) => field.trim() === ""
+      (field) => field?.trim() === ""
     )
   ) {
-    throw new ApiError(400, "All fields are required").send(res);
-  }
-
-  const existingUser = await User.findOne({
-    $or: [{ username }, { email }],
-  });
-  if (existingUser) {
-    throw new ApiError(400, "Username or email already exists").send(
-      res
-    );
-  }
-
-  if (password.length < 8) {
-    throw new ApiError(
-      400,
-      "Password must be at least 6 characters long"
-    ).send(res);
+    throw new ApiError(400, "All fields are required");
   }
 
   const avatarlocalFilePath = req.files?.avatar?.[0]?.path;
-
-  if (!avatarlocalFilePath) {
-    throw new ApiError(400, "Avatar is required").send(res);
-  }
-
-  let coverImagelocalFilePath = "";
-  if (
-    req.files &&
-    Array.isArray(req.files.coverImage) &&
-    req.files.coverImage.length > 0
-  ) {
-    coverImagelocalFilePath = req.files.coverImage[0].path;
-  }
-
-  // console.log("req.files: ", req.files);
-  //   {
-  //   avatar: [
-  //     {
-  //       fieldname: 'avatar',
-  //       originalname: 'Screenshot_20250622_185853.png',
-  //       encoding: '7bit',
-  //       mimetype: 'image/png',
-  //       destination: '/home/ahmed/Desktop/Snappix-Project/BackEnd/public/temp',
-  //       filename: 'Screenshot_20250622_185853.png',
-  //       path: '/home/ahmed/Desktop/Snappix-Project/BackEnd/public/temp/Screenshot_20250622_185853.png',
-  //       size: 47646
-  //     }
-  //   ],
-  //   coverImage: [
-  //     {
-  //       fieldname: 'coverImage',
-  //       originalname: 'picture_2025-07-01_21-57-16.jpg',
-  //       encoding: '7bit',
-  //       mimetype: 'image/jpeg',
-  //       destination: '/home/ahmed/Desktop/Snappix-Project/BackEnd/public/temp',
-  //       filename: 'picture_2025-07-01_21-57-16.jpg',
-  //       path: '/home/ahmed/Desktop/Snappix-Project/BackEnd/public/temp/picture_2025-07-01_21-57-16.jpg',
-  //       size: 36498
-  //     }
-  //   ]
-  // }
-
   const compressedAvatarImagePath = path.join(
     path.dirname(avatarlocalFilePath),
-    `compressed-${req.files?.avatar?.[0]?.filename}`
+    `compressed-${path.basename(avatarlocalFilePath)}`
   );
+  let coverImagelocalFilePath = req.files?.coverImage?.[0]?.path;
 
-  await imageComp(avatarlocalFilePath, compressedAvatarImagePath)
-    .then(() => {
-      console.log("Compression process completed successfully.");
-      fs.unlinkSync(avatarlocalFilePath);
-    })
-    .catch((err) => {
-      console.error("Failed to compress image:", err);
+  try {
+    const existingUser = await User.findOne({
+      $or: [{ username }, { email }],
     });
-  const avatar = await uploadToCloudinary(compressedAvatarImagePath);
+    if (existingUser) {
+      throw new ApiError(400, "Username or email already exists");
+    }
 
-  let coverImage = "";
-  if (coverImagelocalFilePath) {
-    coverImage = await uploadToCloudinary(coverImagelocalFilePath);
-  }
+    if (password.length < 8) {
+      throw new ApiError(
+        400,
+        "Password must be at least 8 characters long"
+      );
+    }
 
-  if (!avatar) {
-    throw new ApiError(500, "Failed to upload avatar image").send(
-      res
+    await imageComp(avatarlocalFilePath, compressedAvatarImagePath);
+    const avatar = await uploadToCloudinary(
+      compressedAvatarImagePath
     );
-  }
-  const newUser = await User.create({
-    username: username.toLowerCase(),
-    fullName,
-    email,
-    password,
-    avatar: avatar?.secure_url,
-    coverImage: coverImage?.secure_url || "",
-  });
 
-  if (!newUser) {
-    throw new ApiError(500, "Failed to create user").send(res);
-  }
+    let coverImage = null;
+    if (coverImagelocalFilePath) {
+      coverImage = await uploadToCloudinary(coverImagelocalFilePath);
+    }
 
-  const responseuser = await User.findById(newUser._id).select(
-    "-password -refreshToken"
-  );
-  res
-    .status(201)
-    .json(
-      new ApiResponse(
-        201,
-        responseuser,
-        "User registered successfully"
-      )
+    if (!avatar) {
+      throw new ApiError(500, "Failed to upload avatar image");
+    }
+
+    const newUser = await User.create({
+      username: username.toLowerCase(),
+      fullName,
+      email,
+      password,
+      avatar: avatar?.secure_url,
+      coverImage: coverImage?.secure_url || "",
+    });
+
+    if (!newUser) {
+      throw new ApiError(500, "Failed to create user");
+    }
+
+    const responseuser = await User.findById(newUser._id).select(
+      "-password -refreshToken"
     );
+
+    res
+      .status(201)
+      .json(
+        new ApiResponse(
+          201,
+          responseuser,
+          "User registered successfully"
+        )
+      );
+  } finally {
+    await deleteLocalFile(avatarlocalFilePath);
+    await deleteLocalFile(coverImagelocalFilePath);
+    await deleteLocalFile(compressedAvatarImagePath);
+  }
 });
 
 const sendEmailVerifyOtp = asyncHandler(async (req, res) => {

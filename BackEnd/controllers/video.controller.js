@@ -9,6 +9,9 @@ import {
   deleteFromCloudinary,
   extractPublicId,
 } from "../utils/cloudinary.js";
+import path from "path";
+import { imageComp } from "../utils/ImageCompressionUtils.js";
+import { deleteLocalFile } from "../utils/DeleteLocalfile.js";
 
 const compressVideo = (inputPath, outputPath) => {
   return new Promise((resolve, reject) => {
@@ -73,14 +76,18 @@ const getAllVideos = asyncHandler(async (req, res) => {
         createdAt: 1,
         // The `ownerInfo` field will now only contain the `username`
         "ownerInfo.username": 1,
-        "ownerInfo.isEmailVerified":1,
+        "ownerInfo.isEmailVerified": 1,
         "ownerInfo.avatar": 1,
       },
     },
   ]);
   const videos = await Video.aggregatePaginate(aggregate, options);
 
-  return new ApiResponse(200, videos, "Videos fetched successfully").send(res);
+  return new ApiResponse(
+    200,
+    videos,
+    "Videos fetched successfully"
+  ).send(res);
 });
 
 const publishAVideo = asyncHandler(async (req, res) => {
@@ -92,24 +99,34 @@ const publishAVideo = asyncHandler(async (req, res) => {
     title.trim() === "" ||
     description.trim() === ""
   ) {
-    throw new ApiError(400, "Title and description are required").send(res);
+    throw new ApiError(
+      400,
+      "Title and description are required"
+    ).send(res);
   }
 
   const videoLocalPath = req.files?.video?.[0]?.path;
   const thumbnailLocalPath = req.files?.thumbnail?.[0]?.path;
 
   if (!videoLocalPath || !thumbnailLocalPath) {
-    throw new ApiError(400, "Video and thumbnail are required").send(res);
+    throw new ApiError(400, "Video and thumbnail are required");
   }
 
   const compressedVideoPath = `${videoLocalPath}-compressed.mp4`;
+  const compressedThumbnailPath = path.join(
+    path.dirname(thumbnailLocalPath),
+    `${path.parse(thumbnailLocalPath).name}-compressed.jpg`
+  );
 
   try {
     await compressVideo(videoLocalPath, compressedVideoPath);
+    await imageComp(thumbnailLocalPath, compressedThumbnailPath);
 
     const video = await uploadToCloudinary(compressedVideoPath);
-    const thumbnail = await uploadToCloudinary(thumbnailLocalPath);
-    fs.unlinkSync(videoLocalPath);
+    const thumbnail = await uploadToCloudinary(
+      compressedThumbnailPath
+    );
+
     const newVideo = await Video.create({
       videoFile: video.secure_url,
       thumbnail: thumbnail.secure_url,
@@ -121,12 +138,21 @@ const publishAVideo = asyncHandler(async (req, res) => {
 
     res
       .status(201)
-      .json(new ApiResponse(201, newVideo, "Video published successfully"));
+      .json(
+        new ApiResponse(201, newVideo, "Video published successfully")
+      );
   } catch (err) {
     console.error("Compression/upload error: ", err);
     res
       .status(500)
-      .json(new ApiError(500, "Video processing failed", err).send(res));
+      .json(
+        new ApiError(500, "Video processing failed", err).send(res)
+      );
+  } finally {
+    await deleteLocalFile(videoLocalPath);
+    await deleteLocalFile(compressedVideoPath);
+    await deleteLocalFile(thumbnailLocalPath);
+    await deleteLocalFile(compressedThumbnailPath);
   }
 });
 
@@ -140,7 +166,11 @@ const getVideoById = asyncHandler(async (req, res) => {
   if (!video) {
     throw new ApiError(404, "Video not found").send(res);
   }
-  return new ApiResponse(200, video, "Video fetched successfully").send(res);
+  return new ApiResponse(
+    200,
+    video,
+    "Video fetched successfully"
+  ).send(res);
 });
 
 const updateVideo = asyncHandler(async (req, res) => {
@@ -173,9 +203,11 @@ const updateVideo = asyncHandler(async (req, res) => {
   video.thumbnail = thumbnail.secure_url;
   await video.save();
   const responeVideo = await Video.findById(videoId);
-  return new ApiResponse(200, responeVideo, "Video updated successfully").send(
-    res
-  );
+  return new ApiResponse(
+    200,
+    responeVideo,
+    "Video updated successfully"
+  ).send(res);
 });
 
 const deleteVideo = asyncHandler(async (req, res) => {
@@ -194,7 +226,9 @@ const deleteVideo = asyncHandler(async (req, res) => {
   publicId = extractPublicId(video.thumbnail);
   await deleteFromCloudinary(publicId);
   await Video.findByIdAndDelete(videoId);
-  return new ApiResponse(200, {}, "Video deleted successfully").send(res);
+  return new ApiResponse(200, {}, "Video deleted successfully").send(
+    res
+  );
 });
 
 const togglePublishStatus = asyncHandler(async (req, res) => {
@@ -210,7 +244,9 @@ const togglePublishStatus = asyncHandler(async (req, res) => {
   await video.save({ validateBeforeSave: false });
   return res
     .status(201)
-    .json(new ApiResponse(200, video, "Video status updated successfully"));
+    .json(
+      new ApiResponse(200, video, "Video status updated successfully")
+    );
 });
 
 const increaseVideoViews = asyncHandler(async (req, res) => {
@@ -235,7 +271,11 @@ const increaseVideoViews = asyncHandler(async (req, res) => {
   return res
     .status(200)
     .json(
-      new ApiResponse(200, video, "Video view count increased successfully")
+      new ApiResponse(
+        200,
+        video,
+        "Video view count increased successfully"
+      )
     );
 });
 export {

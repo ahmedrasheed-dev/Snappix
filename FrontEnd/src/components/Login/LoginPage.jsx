@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import { useForm, Controller } from "react-hook-form";
-import { Link, useNavigate } from "react-router-dom"; // Assuming you use React Router
-import { Separator } from "@/components/ui/separator"; // Assuming you have Shadcn Separator
-import { Input } from "@/components/ui/input"; // Assuming you have Shadcn Input
-import { Label } from "@/components/ui/label"; // Assuming you have Shadcn Label
-import { Button } from "@/components/ui/button"; // Assuming you have Shadcn Button
+import { Link, useNavigate } from "react-router-dom";
+import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import axios from "axios";
 import { useDispatch } from "react-redux";
 import { setLoggedInUser } from "../../store/features/userSlice";

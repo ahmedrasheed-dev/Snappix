@@ -11,6 +11,7 @@ import {
   LoginPage,
   LogoutPage,
   VerifyEmailPage,
+  UploadVideo,
 } from "./components";
 import {
   QueryClient,
@@ -46,6 +47,7 @@ createRoot(document.getElementById("root")).render(
                 path="verify-email"
                 element={<VerifyEmailPage />}
               />
+              <Route path="upload-video" element={<UploadVideo />} />
             </Route>
           </Routes>
         </Provider>
