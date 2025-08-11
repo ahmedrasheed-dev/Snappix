@@ -10,12 +10,12 @@ import {
   AvatarImage,
 } from "@/components/ui/avatar";
 import { AddVideoicon } from "../../assets/index.js";
-const Topbar = () => {
+const Topbar = ({ classes }) => {
   const isLoggedIn = useSelector((state) => state.user.isLoggedIn);
   const user = useSelector((state) => state.user.user);
 
   return (
-    <div className="flex justify-between items-center pb-28">
+    <div className={`flex justify-between items-center ${classes}`}>
       <SearchBar />
 
       <div>

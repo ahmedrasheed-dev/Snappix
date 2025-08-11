@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
-import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -9,7 +8,7 @@ import axios from "axios";
 import { useDispatch } from "react-redux";
 import { setLoggedInUser } from "../../store/features/userSlice";
 import { Loadericon } from "../../assets/index.js";
-
+import {toast, Bounce } from 'react-toastify';
 const LoginPage = () => {
   const navigate = useNavigate();
 
@@ -32,6 +31,32 @@ const LoginPage = () => {
   };
 
   const onSubmit = async (data) => {
+    const notifySuccess = (success) => {
+      toast.success(success, {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: false,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "colored",
+        transition: Bounce,
+      });
+    };
+    const notifyError = (error) => {
+      toast.error(error, {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: false,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "colored",
+        transition: Bounce,
+      });
+    };
     try {
       const loginData = {
         email: data.email,
@@ -50,8 +75,10 @@ const LoginPage = () => {
       const { user, accessToken } = response.data.data;
 
       dispatch(setLoggedInUser({ user, token: accessToken }));
+      notifySuccess("Login Successfull");
       navigate("/");
     } catch (error) {
+      notifyError("Login Failed");
       console.log(
         "Registration error:",
         error?.response?.data?.message

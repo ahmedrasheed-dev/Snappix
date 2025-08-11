@@ -12,6 +12,7 @@ import {
 import path from "path";
 import { imageComp } from "../utils/ImageCompressionUtils.js";
 import { deleteLocalFile } from "../utils/DeleteLocalfile.js";
+import mongoose from "mongoose";
 
 const compressVideo = (inputPath, outputPath) => {
   return new Promise((resolve, reject) => {
@@ -158,19 +159,59 @@ const publishAVideo = asyncHandler(async (req, res) => {
 
 const getVideoById = asyncHandler(async (req, res) => {
   const { videoId } = req.params;
-  //TODO: get video by id
-  if (!videoId) {
-    throw new ApiError(400, "Video id is required").send(res);
+
+  if (!videoId || !mongoose.isValidObjectId(videoId)) {
+    throw new ApiError(400, "Invalid video ID");
   }
-  const video = await Video.findById(videoId);
-  if (!video) {
-    throw new ApiError(404, "Video not found").send(res);
+
+  const video = await Video.aggregate([
+    {
+      $match: {
+        _id: new mongoose.Types.ObjectId(videoId),
+      },
+    },
+    {
+      $lookup: {
+        from: "users",
+        localField: "owner",
+        foreignField: "_id",
+        as: "owner",
+      },
+    },
+    {
+      $unwind: "$owner",
+    },
+    {
+      $project: {
+        _id: 1,
+        videoFile: 1,
+        thumbnail: 1,
+        title: 1,
+        description: 1,
+        duration: 1,
+        views: 1,
+        isPublished: 1,
+        createdAt: 1,
+        updatedAt: 1,
+        ownerId: "$owner._id",
+        owner: {
+          _id: "$owner._id",
+          avatar: "$owner.avatar",
+          username: "$owner.username",
+        },
+      },
+    },
+  ]);
+
+  if (!video[0]) {
+    throw new ApiError(404, "Video not found");
   }
-  return new ApiResponse(
-    200,
-    video,
-    "Video fetched successfully"
-  ).send(res);
+
+  res
+    .status(200)
+    .json(
+      new ApiResponse(200, video[0], "Video fetched successfully")
+    );
 });
 
 const updateVideo = asyncHandler(async (req, res) => {

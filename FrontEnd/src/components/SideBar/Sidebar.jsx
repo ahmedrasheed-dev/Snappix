@@ -11,7 +11,7 @@ import SidebarItem from "./SidebarItem.jsx";
 
 const Sidebar = () => {
   return (
-    <section className="flex flex-col items-center h-screen bg-main-black w-20">
+    <section className="flex flex-col items-center min-h-screen bg-main-black w-20">
       <div className="mb-16">
         <Logo color="#e8317e" />
       </div>

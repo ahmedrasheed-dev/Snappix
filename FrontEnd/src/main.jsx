@@ -17,6 +17,7 @@ import {
   QueryClient,
   QueryClientProvider,
 } from "@tanstack/react-query";
+import VideoPage from "./components/VideoPage/VideoPage.jsx";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -48,6 +49,7 @@ createRoot(document.getElementById("root")).render(
                 element={<VerifyEmailPage />}
               />
               <Route path="upload-video" element={<UploadVideo />} />
+              <Route path="video/:videoId" element={<VideoPage />} />
             </Route>
           </Routes>
         </Provider>

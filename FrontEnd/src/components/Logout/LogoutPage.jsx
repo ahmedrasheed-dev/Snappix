@@ -4,8 +4,35 @@ import { useNavigate } from "react-router-dom";
 import { logoutUser } from "../../store/features/userSlice";
 import { Loadericon } from "../../assets/index.js";
 import axios from "axios";
+import { toast, Bounce } from "react-toastify";
 
 const LogoutPage = () => {
+    const notifySuccess = (success) => {
+      toast.success(success, {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: false,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "colored",
+        transition: Bounce,
+      });
+    };
+    const notifyError = (error) => {
+      toast.error(error, {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: false,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "colored",
+        transition: Bounce,
+      });
+    };
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -24,13 +51,15 @@ const LogoutPage = () => {
         if (res?.data?.statusCode === 200) {
           dispatch(logoutUser());
           redirectTimeout = setTimeout(() => {
+            notifySuccess("Logout Successfull");
             navigate("/");
-          }, 1500);
+          }, 1200);
         }
       } catch (error) {
         console.error("Logout error:", error);
         dispatch(logoutUser());
         redirectTimeout = setTimeout(() => {
+          notifyError("Logout Failed");
           navigate("/");
         }, 1500);
       }

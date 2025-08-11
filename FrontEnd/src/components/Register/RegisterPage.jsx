@@ -1,15 +1,43 @@
 import React, { useState } from "react";
 import { useForm, Controller } from "react-hook-form";
-import { Link, useNavigate } from "react-router-dom"; // Assuming you use React Router
-import { Separator } from "@/components/ui/separator"; // Assuming you have Shadcn Separator
-import { Input } from "@/components/ui/input"; // Assuming you have Shadcn Input
-import { Label } from "@/components/ui/label"; // Assuming you have Shadcn Label
-import { Button } from "@/components/ui/button"; // Assuming you have Shadcn Button
+import { Link, useNavigate } from "react-router-dom";
+import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import axios from "axios";
 import { useDispatch } from "react-redux";
 import { setLoggedInUser } from "../../store/features/userSlice";
+import { Loadericon } from "../../assets/index.js";
+import { toast, Bounce } from "react-toastify";
 
 const RegisterPage = () => {
+  const notifySuccess = (success) => {
+    toast.success(success, {
+      position: "top-right",
+      autoClose: 5000,
+      hideProgressBar: false,
+      closeOnClick: false,
+      pauseOnHover: true,
+      draggable: true,
+      progress: undefined,
+      theme: "colored",
+      transition: Bounce,
+    });
+  };
+  const notifyError = (error) => {
+    toast.error(error, {
+      position: "top-right",
+      autoClose: 5000,
+      hideProgressBar: false,
+      closeOnClick: false,
+      pauseOnHover: true,
+      draggable: true,
+      progress: undefined,
+      theme: "colored",
+      transition: Bounce,
+    });
+  };
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const intialState = {
@@ -66,9 +94,11 @@ const RegisterPage = () => {
         password: data.password,
         avatar: data.avatar,
       }));
+      notifySuccess("Registration Successfull");
       dispatch(setLoggedInUser(user));
       navigate("/");
     } catch (error) {
+      notifyError("Registration Failed");
       console.error("Registration Error:", error);
     }
   };
@@ -84,7 +114,7 @@ const RegisterPage = () => {
           className="mt-8 space-y-6"
           onSubmit={handleSubmit(onSubmit)}
         >
-          {/* Avatar Upload Field (no Shadcn) */}
+          {/* Avatar Uplo Field (no Shadcn) */}
           <div className="flex flex-col items-center gap-4">
             <Label
               htmlFor="avatar"
@@ -261,7 +291,14 @@ const RegisterPage = () => {
               disabled={isSubmitting}
               className="w-full flex justify-center py-3 px-4 rounded-md shadow-sm text-white bg-pink-600 hover:bg-pink-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-pink-500"
             >
-              {isSubmitting ? "Submiting.." : "Sign up"}
+              {isSubmitting ? (
+                <>
+                  {<Loadericon className="animate-spin" />}
+                  <span>Submitting...</span>
+                </>
+              ) : (
+                "Register"
+              )}
             </Button>
           </div>
         </form>
