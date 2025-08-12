@@ -5,7 +5,6 @@ import { logoutUser } from "../../store/features/userSlice";
 import { Loadericon } from "../../assets/index.js";
 import axios from "axios";
 import { toast, Bounce } from "react-toastify";
-
 const LogoutPage = () => {
     const notifySuccess = (success) => {
       toast.success(success, {
@@ -56,7 +55,6 @@ const LogoutPage = () => {
           }, 1200);
         }
       } catch (error) {
-        console.error("Logout error:", error);
         dispatch(logoutUser());
         redirectTimeout = setTimeout(() => {
           notifyError("Logout Failed");

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, NavLink, useParams } from "react-router-dom";
 import { useSelector } from "react-redux";
-import { FaPlay, FaRegEdit, FaPencilAlt } from "react-icons/fa";
+import { FaPlay } from "react-icons/fa";
 import {
   Avatar,
   AvatarFallback,
@@ -19,75 +19,66 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Pencil, FileInput } from "lucide-react";
 import axios from "axios";
+import Playlists from "./Playlists";
 
-// Dummy data for a user profile
-const dummyUserData = {
-  _id: "user123",
-  username: "johndoe",
-  fullName: "John Doe",
-  email: "john@example.com",
-  avatar:
-    "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=2080&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-  coverImage:
-    "https://images.unsplash.com/photo-1582213782179-e0d2919f9024?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-  subscribers: 1500,
-  videos: [
-    {
-      _id: "video1",
-      title: "My First Vlog in San Francisco",
-      thumbnail:
-        "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=2073&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-      views: 12000,
-      createdAt: "2023-01-15T10:00:00Z",
-    },
-    {
-      _id: "video2",
-      title: "Cooking a Delicious Italian Dish",
-      thumbnail:
-        "https://images.unsplash.com/photo-1506354674715-e2a21e4b85d9?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-      views: 8500,
-      createdAt: "2023-02-20T12:00:00Z",
-    },
-    {
-      _id: "video3",
-      title: "Exploring the Alps: A Hiking Adventure",
-      thumbnail:
-        "https://images.unsplash.com/photo-1549880338-65ddcdfd017b?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-      views: 21000,
-      createdAt: "2023-03-10T14:00:00Z",
-    },
-  ],
-};
 
 const UserProfilePage = () => {
-  const [profile, setProfile] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [newUsername, setNewUsername] = useState("");
   const [newFullName, setNewFullName] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+
+  const [activeTab, setActiveTab] = useState("videos");
+  const [playlists, setPlaylists] = useState([])
 
   const isLoggedIn = useSelector((state) => state.user.isLoggedIn);
   const reduxUser = useSelector((state) => state.user.user);
 
   const [channelProfile, setChannelProfile] = useState(null);
+  const [videos, setVideos] = useState([]);
 
   useEffect(() => {
-    const getUserChannelProfile = async () => {
-      if (reduxUser && reduxUser.username) {
+    const fetchUserProfileAndVideosAndPlaylists = async () => {
+      setIsLoading(true);
+
+      if (isLoggedIn && reduxUser && reduxUser.username) {
         try {
-          const res = await axios.get(
+          // Fetch user channel profile first
+          const profileRes = await axios.get(
             `/api/v1/users/c/${reduxUser.username}`
           );
-          setChannelProfile(res.data.data);
+          console.log("user channel profile: ", profileRes.data.data);
+          setChannelProfile(profileRes.data.data);
+
+          const videosRes = await axios.get(
+            `/api/v1/videos?owner=${profileRes.data.data._id}`
+          );
+          setVideos(videosRes.data.data.docs);
+          console.log("user videos: ", videosRes.data.data.docs);
+
+          const playlistsRes = await axios.get(
+            `/api/v1/playlists`,{
+              withCredentials: true,
+            }
+          );
+          console.log("user playlists: ", playlistsRes.data.data.docs); 
+          setPlaylists(playlistsRes.data.data.docs);
+           
         } catch (error) {
           console.error(
-            "Failed to fetch user channel profile:",
+            "Failed to fetch user data or videos:",
             error
           );
+        } finally {
+          setIsLoading(false);
         }
+      } else {
+        // If not logged in, we are not loading any data
+        setIsLoading(false);
       }
     };
-    getUserChannelProfile();
-  }, [reduxUser]);
+    fetchUserProfileAndVideosAndPlaylists();
+  }, [isLoggedIn, reduxUser]); // Depend on `isLoggedIn` and `reduxUser`
 
   const updateProfile = async () => {
     if (!isLoggedIn) return;
@@ -101,9 +92,8 @@ const UserProfilePage = () => {
         },
         { withCredentials: true }
       );
-      // Update the state with the new data from the backend
       setChannelProfile(response.data.data);
-      setIsEditing(false); // Close the dialog
+      setIsEditing(false);
     } catch (error) {
       console.error("Error updating profile:", error);
     }
@@ -147,7 +137,15 @@ const UserProfilePage = () => {
     }
   };
 
-if(!isLoggedIn){
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-900 text-white flex justify-center items-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-pink-500"></div>
+      </div>
+    );
+  }
+
+  if (!isLoggedIn) {
     return (
       <div className="min-h-screen flex flex-col justify-center items-center bg-gray-900 text-white">
         <h2 className="text-2xl font-bold mb-4">
@@ -191,7 +189,7 @@ if(!isLoggedIn){
       <div className="relative w-full h-64 md:h-80 bg-gray-800 rounded-xl overflow-hidden shadow-2xl">
         <img
           src={
-            channelProfile.coverImage ||
+            channelProfile?.coverImage ||
             "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=2073&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
           }
           alt="Cover"
@@ -321,39 +319,68 @@ if(!isLoggedIn){
           </DialogContent>
         </Dialog>
       </div>
-
-      {/* User's Videos Section */}
-      <div className="mt-8">
-        <h3 className="text-xl font-bold text-pink-500 mb-4">
+      
+      {/* Tabs */}
+      <div className="flex space-x-4 mt-8 border-b border-gray-700">
+        <Button
+          variant="ghost"
+          onClick={() => setActiveTab("videos")}
+          className={`px-4 py-2 text-lg font-semibold ${
+            activeTab === "videos"
+              ? "text-pink-500 border-b-2 border-pink-500"
+              : "text-gray-400 hover:text-black"
+          }`}
+        >
           My Videos
-        </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {channelProfile?.videos?.map((video) => (
-            <Link
-              key={video._id}
-              to={`/video/${video._id}`}
-              className="group relative block w-full aspect-video rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-transform transform hover:-translate-y-1"
-            >
-              <img
-                src={video.thumbnail}
-                alt={video.title}
-                className="w-full h-full object-cover transition-transform group-hover:scale-105"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent"></div>
-              <div className="absolute bottom-0 left-0 right-0 p-4">
-                <h4 className="text-sm font-semibold text-white line-clamp-2">
-                  {video.title}
-                </h4>
-                <p className="text-xs text-gray-300 mt-1">
-                  {video.views} views
-                </p>
-              </div>
-              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                <FaPlay className="text-white text-4xl" />
-              </div>
-            </Link>
-          ))}
-        </div>
+        </Button>
+        <Button
+          variant="ghost"
+          onClick={() => setActiveTab("playlists")}
+          className={`px-4 py-2 text-lg font-semibold ${
+            activeTab === "playlists"
+              ? "text-pink-500 border-b-2 border-pink-500"
+              : "text-gray-400 hover:text-black"
+          }`}
+        >
+          My Playlists
+        </Button>
+      </div>
+
+      {/* Conditionally render content based on the active tab */}
+      <div className="mt-8">
+        {activeTab === "videos" && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {videos?.map((video) => (
+              <Link
+                key={video._id}
+                to={`/video/${video._id}`}
+                className="group relative block w-full aspect-video rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-transform transform hover:-translate-y-1"
+              >
+                <img
+                  src={video.thumbnail}
+                  alt={video.title}
+                  className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent"></div>
+                <div className="absolute bottom-0 left-0 right-0 p-4">
+                  <h4 className="text-sm font-semibold text-white line-clamp-2">
+                    {video.title}
+                  </h4>
+                  <p className="text-xs text-gray-300 mt-1">
+                    {video.views} views
+                  </p>
+                </div>
+                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <FaPlay className="text-white text-4xl" />
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
+
+        {activeTab === "playlists" && (
+          <Playlists playlists={playlists} />
+        )}
       </div>
     </div>
   );

@@ -35,6 +35,7 @@ const getAllVideos = asyncHandler(async (req, res) => {
     sortBy = "createdAt",
     sortType = "desc",
     title,
+    owner,
   } = req.query;
   //TODO: get all videos based on query, sort, pagination
 
@@ -47,6 +48,9 @@ const getAllVideos = asyncHandler(async (req, res) => {
   const matchStage = {};
   if (query) {
     matchStage.title = { $regex: query, $options: "i" };
+  }
+  if(owner){
+    matchStage.owner = new mongoose.Types.ObjectId(owner);
   }
   matchStage.isPublished = true;
 

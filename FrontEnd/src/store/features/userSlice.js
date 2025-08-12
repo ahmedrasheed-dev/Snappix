@@ -12,6 +12,7 @@ const initialState = {
   error: null,
 };
 
+
 export const userSlice = createSlice({
   name: "user",
   initialState,

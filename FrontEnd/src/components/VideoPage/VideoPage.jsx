@@ -1,14 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
-import {
-  FaHeart,
-  FaRegHeart,
-  FaShareAlt,
-  FaExpand,
-} from "react-icons/fa";
 import { Copy } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
-import { useSelector } from "react-redux";
 import {
   Avatar,
   AvatarFallback,
@@ -18,6 +11,12 @@ import { Button } from "@/components/ui/button";
 import axios from "axios";
 import Topbar from "../Topbar/Topbar";
 import { formatTimeAgo } from "../../utils/VideoUtils";
+import {
+  FaHeart,
+  FaRegHeart,
+  FaShareAlt,
+  FaExpand,
+} from "react-icons/fa";
 import { toast, Bounce } from "react-toastify";
 import {
   Dialog,
@@ -26,7 +25,22 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogFooter,
 } from "@/components/ui/dialog";
+import { CiBookmark } from "react-icons/ci";
+import { SolidBookmark } from "@/assets/index.js";
+import { Label } from "@/components/ui/label";
+import { useSelector, useDispatch } from "react-redux";
+import {
+  getVideoData,
+  toggleVideoLike,
+  addVideoToPlaylist,
+} from "@/store/features/videoSlice";
+import { fetchRelatedVideos } from "@/store/features/videosSlice";
+import {
+  fetchUserPlaylists,
+  createPlaylist,
+} from "@/store/features/playlistSlice";
 
 const VideoPage = () => {
   const notifySuccess = (error) => {
@@ -56,72 +70,52 @@ const VideoPage = () => {
     });
   };
 
-  const [video, setVideo] = useState(null);
+  const dispatch = useDispatch();
+  const { videoId } = useParams();
+  const {
+    currentVideo: video,
+    likesCount,
+    likeStatus,
+    isLiked,
+    status: videoStatus,
+    error: videoError,
+    // The following two are removed as they are no longer in the videoSlice
+    // addedVideoToPlaylist,
+    // alreadyinPlaylist,
+    addedToPlaylistId, // This is now an array
+  } = useSelector((state) => state.video);
+
+  const relatedVideos = useSelector(
+    (state) => state.videos.relatedVideos
+  );
+  const userPlaylists = useSelector(
+    (state) => state.playlists.playlist
+  );
+  const isLoggedIn = useSelector((state) => state.user.isLoggedIn);
+  const user = useSelector((state) => state.user.user);
+
+  //UI states
   const [showFullDescription, setShowFullDescription] =
     useState(false);
   const [isTheaterMode, setIsTheaterMode] = useState(false);
   const [isVideoVertical, setIsVideoVertical] = useState(false);
-  const [relatedVideos, setRelatedVideos] = useState([]);
-  const [isLiked, setIsLiked] = useState(false);
-  const [likeCount, setLikeCount] = useState(0);
-  const { videoId } = useParams();
-
-  const isLoggedIn = useSelector((state) => state.user.isLoggedIn);
+  const [showPlaylistDialog, setShowPlaylistDialog] = useState(false);
+  const [newPlaylistName, setNewPlaylistName] = useState("");
+  const [newPlaylistDescription, setNewPlaylistDescription] =
+    useState("");
 
   useEffect(() => {
-    const fetchVideoData = async () => {
-      if (!videoId || videoId.length !== 24) {
-        setVideo(null);
-        return;
-      }
+    if (videoId) {
+      dispatch(getVideoData(videoId));
+      dispatch(fetchRelatedVideos({ videoId }));
+    }
+  }, [videoId, dispatch]);
 
-      try {
-        const [videoRes, allLikesRes] = await Promise.all([
-          axios.get(`/api/v1/videos/${videoId}`),
-          axios.get(`/api/v1/likes/v/likes/${videoId}`),
-        ]);
-
-        axios.patch(`/api/v1/videos/${videoId}/views`);
-
-        setVideo(videoRes.data.data);
-        setLikeCount(allLikesRes.data.data.length);
-
-        if (isLoggedIn) {
-          try {
-            const likedRes = await axios.get(
-              `/api/v1/likes/v/${videoId}`,
-              {
-                withCredentials: true,
-              }
-            );
-            setIsLiked(!!likedRes.data.data);
-          } catch (error) {
-            console.error("Error fetching like status:", error);
-            setIsLiked(false);
-          }
-        } else {
-          setIsLiked(false);
-        }
-      } catch (error) {
-        console.error("Error fetching video details:", error);
-        setVideo(null);
-      }
-    };
-
-    const fetchRelatedVideos = async () => {
-      try {
-        const response = await axios.get("/api/v1/videos", {
-          params: { limit: 10 },
-        });
-        setRelatedVideos(response.data.data.docs);
-      } catch (error) {
-        console.error("Error fetching related videos:", error);
-      }
-    };
-
-    fetchVideoData();
-    fetchRelatedVideos();
-  }, [videoId, isLoggedIn]);
+  useEffect(() => {
+    if (isLoggedIn && user?._id) {
+      dispatch(fetchUserPlaylists(user._id));
+    }
+  }, [isLoggedIn, user, dispatch]);
 
   const toggleTheaterMode = () => {
     setIsTheaterMode(!isTheaterMode);
@@ -129,35 +123,19 @@ const VideoPage = () => {
 
   const handleLoadedMetadata = (e) => {
     const { videoWidth, videoHeight } = e.target;
-    if (videoWidth < videoHeight) {
-      setIsVideoVertical(true);
-    } else {
-      setIsVideoVertical(false);
-    }
+    setIsVideoVertical(videoWidth < videoHeight);
   };
 
-  const handleLike = async () => {
-    if (!isLoggedIn) {
-      notifyError("Please log in to like a video.");
-      return;
-    }
-
-    try {
-      const response = await axios.post(
-        `/api/v1/likes/v/${videoId}`,
-        {},
-        {
-          withCredentials: true,
+  const handleLike = () => {
+    if (likeStatus !== "loading") {
+      dispatch(toggleVideoLike(videoId)).then((result) => {
+        if (toggleVideoLike.rejected.match(result)) {
+          notifyError(result.payload);
         }
-      );
-      console.log("toggle like: ", response.data);
-      setIsLiked(!isLiked);
-      setLikeCount(isLiked ? likeCount - 1 : likeCount + 1);
-    } catch (error) {
-      notifyError("Error liking video:");
-      console.error("Error toggling like status:", error);
+      });
     }
   };
+
   const handleCopyLink = async () => {
     try {
       await navigator.clipboard.writeText(window.location.href);
@@ -167,7 +145,60 @@ const VideoPage = () => {
       console.error("Failed to copy link:", error);
     }
   };
-  if (!video) {
+
+  const handleAddVideoToPlaylist = (playlistId) => {
+    if (!isLoggedIn) {
+      notifyError("Please log in to add video to a playlist.");
+      return;
+    }
+
+    dispatch(addVideoToPlaylist({ playlistId, videoId }))
+      .then((result) => {
+        if (addVideoToPlaylist.fulfilled.match(result)) {
+          notifySuccess("Video added to playlist!");
+        } else {
+          notifyError(result.payload);
+        }
+        setShowPlaylistDialog(false);
+      })
+      .catch((error) => {
+        notifyError(error || "An unexpected error occurred.");
+      });
+  };
+
+  const handleCreatePlaylist = () => {
+    if (!newPlaylistName || !newPlaylistDescription) {
+      notifyError("Playlist name and description are required.");
+      return;
+    }
+
+    dispatch(
+      createPlaylist({
+        name: newPlaylistName,
+        description: newPlaylistDescription,
+      })
+    )
+      .then((result) => {
+        const newPlaylistId = result.payload._id;
+        console.log("playlist id: ", newPlaylistId);
+        setNewPlaylistName("");
+        setNewPlaylistDescription("");
+        handleAddVideoToPlaylist(newPlaylistId);
+      })
+      .catch((error) => {
+        notifyError(error);
+      });
+  };
+
+  const openPlaylistDialog = () => {
+    if (isLoggedIn) {
+      setShowPlaylistDialog(true);
+    } else {
+      notifyError("Please log in to add video to a playlist.");
+    }
+  };
+
+  if (videoStatus === "loading" || !video) {
     return (
       <>
         <div className="flex justify-center items-center">
@@ -215,6 +246,14 @@ const VideoPage = () => {
           </div>
         </div>
       </>
+    );
+  }
+
+  if (videoStatus === "failed") {
+    return (
+      <div className="flex justify-center items-center h-screen text-red-500 text-2xl">
+        Error: {videoError || "Failed to load video."}
+      </div>
     );
   }
 
@@ -276,20 +315,148 @@ const VideoPage = () => {
                   {video?.views} views •{" "}
                   {formatTimeAgo(video?.createdAt)}
                 </span>
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
                   <Button
                     variant="ghost"
+                    disabled={likeStatus === "loading"}
                     onClick={handleLike}
                     className="flex items-center gap-2 text-white hover:text-pink transition-colors"
                   >
-                    {console.log("isLiked: ", isLiked)}
                     {isLiked ? (
                       <FaHeart className="text-pink-500" />
                     ) : (
                       <FaRegHeart />
                     )}
-                    <span>{likeCount} Likes</span>
+                    <span>{likesCount} Likes</span>
                   </Button>
+
+                  <Dialog
+                    open={showPlaylistDialog}
+                    onOpenChange={setShowPlaylistDialog}
+                  >
+                    <DialogTrigger asChild>
+                      <Button
+                        title="Add to Playlist"
+                        variant="ghost"
+                        onClick={openPlaylistDialog}
+                        className={`flex items-center gap-2 text-white hover:text-pink transition-colors `}
+                      >
+                        <span>
+                          {addedToPlaylistId.length > 0 ? (
+                            <SolidBookmark
+                              classes={"text-pink-600"}
+                            />
+                          ) : (
+                            <CiBookmark />
+                          )}
+                        </span>
+                      </Button>
+                    </DialogTrigger>
+                    {isLoggedIn ? (
+                      <DialogContent className="sm:max-w-md bg-gray-900 text-white">
+                        <DialogHeader>
+                          <DialogTitle>Add to Playlist</DialogTitle>
+                          <DialogDescription>
+                            Select a playlist or create a new one.
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="grid gap-4 py-4 overflow-x-auto max-h-96 scroll-auto">
+                          {/* Display existing playlists */}
+                          {userPlaylists?.length > 0 ? (
+                            <div className="space-y-2 overflow-x-scroll overflow-y-hidden">
+                              <h4 className="text-lg font-semibold">
+                                My Playlists
+                              </h4>
+                              {userPlaylists.map((playlist) => {
+                                const isAdded =
+                                  addedToPlaylistId.includes(
+                                    playlist._id
+                                  );
+                                return (
+                                  <div
+                                    key={playlist._id}
+                                    className="flex justify-between items-center p-2 rounded-lg hover:bg-gray-700 transition-colors overflow-hidden"
+                                  >
+                                    <span className="overflow-ellipsis overflow-hidden">
+                                      {playlist.name}
+                                    </span>
+                                    <Button
+                                      disabled={isAdded}
+                                      variant="ghost"
+                                      onClick={() =>
+                                        handleAddVideoToPlaylist(
+                                          playlist._id
+                                        )
+                                      }
+                                    >
+                                      {isAdded ? "Added" : "Add"}
+                                    </Button>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          ) : (
+                            <>
+                              <p className="text-gray-400">
+                                No playlists found. Create a new one
+                                below.
+                              </p>
+                              {/* Create new playlist form */}
+                            </>
+                          )}
+                        </div>
+                        <div className="space-y-2 mt-4">
+                          <h4 className="text-lg font-semibold">
+                            Create New Playlist
+                          </h4>
+                          <Label htmlFor="playlistName">
+                            Playlist Name
+                          </Label>
+                          <Input
+                            id="playlistName"
+                            value={newPlaylistName}
+                            onChange={(e) =>
+                              setNewPlaylistName(e.target.value)
+                            }
+                            placeholder="Enter playlist name"
+                            className={"selection:bg-pink-500"}
+                          />
+                          <Label htmlFor="playlistDescription">
+                            Description
+                          </Label>
+                          <Input
+                            id="playlistDescription"
+                            value={newPlaylistDescription}
+                            onChange={(e) =>
+                              setNewPlaylistDescription(
+                                e.target.value
+                              )
+                            }
+                            className={"selection:bg-pink-500"}
+                            placeholder="Enter description"
+                          />
+                          <Button
+                            onClick={handleCreatePlaylist}
+                            className="w-full bg-pink-600 hover:bg-pink-700"
+                          >
+                            Create & Add Video
+                          </Button>
+                        </div>
+                        <DialogFooter>
+                          <Button
+                            variant="secondary"
+                            onClick={() =>
+                              setShowPlaylistDialog(false)
+                            }
+                          >
+                            Close
+                          </Button>
+                        </DialogFooter>
+                      </DialogContent>
+                    ) : (
+                      ""
+                    )}
+                  </Dialog>
 
                   <Dialog>
                     <DialogTrigger asChild>
@@ -311,6 +478,7 @@ const VideoPage = () => {
                             id="link"
                             defaultValue={window.location.href}
                             readOnly
+                            className={"selection:bg-pink-500"}
                           />
                         </div>
                         <Button
@@ -398,7 +566,7 @@ const VideoPage = () => {
             Related Videos
           </h3>
           <div className="space-y-4">
-            {relatedVideos.map((relatedVideo) => (
+            {relatedVideos?.map((relatedVideo) => (
               <Link
                 key={relatedVideo._id}
                 to={`/video/${relatedVideo._id}`}

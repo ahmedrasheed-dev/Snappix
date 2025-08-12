@@ -8,6 +8,7 @@ import Verifiedicon from "./icons/Verifiedicon.jsx";
 import SearchIcon from "./icons/SearchIcon.jsx";
 import Loadericon from './icons/Loadericon.jsx'
 import AddVideoicon from "./icons/AddVideoicon.jsx";
+import SolidBookmark from "./icons/SolidBookmark.jsx";
 export {
   Homeicon,
   Profileicon,
@@ -18,5 +19,6 @@ export {
   Verifiedicon,
   SearchIcon,
   Loadericon,
-  AddVideoicon
+  AddVideoicon,
+  SolidBookmark
 };

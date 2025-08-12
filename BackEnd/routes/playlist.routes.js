@@ -8,14 +8,20 @@ import {
   removeVideoFromPlaylist,
   deletePlaylist,
   updatePlaylist,
+  getPlaylistsByVideoId,
 } from "../controllers/playlist.controller.js";
 
 const router = Router();
 
-router.get("/:userId/:page/:limit", verifyJWT, getUserPlaylists);
+router.get("/", verifyJWT, getUserPlaylists);
 router.get("/:playlistId", verifyJWT, getPlaylistById);
+router.get("/video/:videoId/", getPlaylistsByVideoId);
 router.post("/", verifyJWT, createPlaylist);
-router.post("/add-video/:playlistId/:videoId", verifyJWT, addVideoToPlaylist);
+router.post(
+  "/add-video/:playlistId/:videoId",
+  verifyJWT,
+  addVideoToPlaylist
+);
 router.delete(
   "/remove-video/:playlistId/:videoId",
   verifyJWT,
