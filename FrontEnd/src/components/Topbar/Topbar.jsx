@@ -13,12 +13,9 @@ import { AddVideoicon } from "../../assets/index.js";
 import SearchAutocomplete from "./SearchAutoComplete";
 
 const Topbar = ({ classes }) => {
-  const isLoggedIn = useSelector((state) => state.user.isLoggedIn);
-  const user = useSelector((state) => state.user.user);
+  const {user, isLoggedIn, status} = useSelector((state) => state.user);
 
-  // State for the user avatar dropdown
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
-  // State for the add video dropdown
   const [isAddVideoDropdownOpen, setIsAddVideoDropdownOpen] =
     useState(false);
 
@@ -55,13 +52,15 @@ const Topbar = ({ classes }) => {
     };
   }, []);
 
+  const authCheckCompleted = status === "succeeded" || status === "failed";
+
   return (
     <>
       <div className={`flex justify-between items-center ${classes}`}>
           <SearchAutocomplete />
 
         <div className="flex items-center gap-4">
-          {!isLoggedIn && (
+          {!isLoggedIn && authCheckCompleted && (
             <div className="flex rounded-sm p-2 gap-2 w-48 transition-all">
               <NavLink to="/login">
                 <Button
@@ -84,7 +83,8 @@ const Topbar = ({ classes }) => {
             </div>
           )}
 
-          {isLoggedIn && user && (
+          {/* Only show logged-in UI if auth check is complete AND user is logged in */}
+          {isLoggedIn && user && status === "succeeded" && (
             <div className="relative">
               <div
                 className="cursor-pointer"
@@ -112,7 +112,7 @@ const Topbar = ({ classes }) => {
             </div>
           )}
 
-          {isLoggedIn && user && (
+          {isLoggedIn && user  && status === "succeeded" && (
             <div className="relative">
               <Avatar
                 ref={userAvatarRef}
@@ -170,5 +170,4 @@ const Topbar = ({ classes }) => {
     </>
   );
 };
-
 export default Topbar;

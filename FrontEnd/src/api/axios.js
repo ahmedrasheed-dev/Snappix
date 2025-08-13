@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios from "axios";
 let reduxStore = null;
 
 export const setReduxStore = (store) => {
@@ -6,15 +6,15 @@ export const setReduxStore = (store) => {
 };
 
 const axiosInstance = axios.create({
-  baseURL: '/api/v1', 
-  withCredentials: true, 
+  baseURL: "/api/v1",
+  withCredentials: true,
 });
 
 let isRefreshing = false;
 let failedQueue = [];
 
 const processQueue = (error, token = null) => {
-  failedQueue.forEach(prom => {
+  failedQueue.forEach((prom) => {
     if (error) {
       prom.reject(error);
     } else {
@@ -52,16 +52,16 @@ axiosInstance.interceptors.response.use(
 
       // If a refresh token request is already in progress, add the current request to a queue
       if (isRefreshing) {
-        return new Promise(function(resolve, reject) {
+        return new Promise(function (resolve, reject) {
           failedQueue.push({ resolve, reject });
         })
-        .then(token => {
-          originalRequest.headers.Authorization = `Bearer ${token}`;
-          return axiosInstance(originalRequest); // Retry original request with new token
-        })
-        .catch(err => {
-          return Promise.reject(err);
-        });
+          .then((token) => {
+            originalRequest.headers.Authorization = `Bearer ${token}`;
+            return axiosInstance(originalRequest); // Retry original request with new token
+          })
+          .catch((err) => {
+            return Promise.reject(err);
+          });
       }
 
       isRefreshing = true; // Set flag: refresh token request is starting
@@ -69,21 +69,33 @@ axiosInstance.interceptors.response.use(
       return new Promise(async (resolve, reject) => {
         try {
           // Call your backend refresh token endpoint
-          const refreshResponse = await axios.post('/api/v1/users/refresh-token', {}, { withCredentials: true });
+          const refreshResponse = await axios.post(
+            "/api/v1/users/refresh-token",
+            {},
+            { withCredentials: true }
+          );
           console.log("refreshing Tokens: ", refreshResponse);
-          const { user } = refreshResponse.data?.data; 
-          const {refreshToken} = refreshResponse?.data?.data?.user?.refreshToken
-          const accessToken = refreshResponse?.data?.data?.accessToken;
+          const { user } = refreshResponse.data?.data;
+
+          const accessToken =
+            refreshResponse?.data?.data?.accessToken;
+          const refreshToken = user?.refreshToken;
 
           // Dispatch setTokens using the stored reduxStore
           if (reduxStore) {
             // Dynamically import actions to avoid circular dependency at module load time
-            const { setTokens } = await import('../store/features/userSlice');
-            reduxStore.dispatch(setTokens({ accessToken, refreshToken, user }));
+            const { setTokens } = await import(
+              "../store/features/userSlice"
+            );
+            reduxStore.dispatch(
+              setTokens({ accessToken, refreshToken, user })
+            );
           }
 
           // Update the Axios instance's default header (for any future direct axios.defaults use, though axiosInstance is preferred)
-          axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
+          axiosInstance.defaults.headers.common[
+            "Authorization"
+          ] = `Bearer ${accessToken}`;
 
           // Process the queue of failed requests
           processQueue(null, accessToken);
@@ -94,8 +106,10 @@ axiosInstance.interceptors.response.use(
         } catch (refreshError) {
           // If refresh fails (e.g., refresh token expired/invalid), log out the user
           if (reduxStore) {
-             // Dynamically import logoutUser
-            const { logoutUser } = await import('../store/features/userSlice');
+            // Dynamically import logoutUser
+            const { logoutUser } = await import(
+              "../store/features/userSlice"
+            );
             reduxStore.dispatch(logoutUser());
           }
           processQueue(refreshError, null); // Reject all queued requests

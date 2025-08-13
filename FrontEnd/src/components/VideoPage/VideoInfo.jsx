@@ -39,9 +39,11 @@ const VideoInfo = () => {
     (state) => state.playlists.playlists
   );
   const { videoId } = useParams();
-
-  const isLoggedIn = useSelector((state) => state.user.isLoggedIn);
-  const user = useSelector((state) => state.user.user);
+  const {
+    isLoggedIn,
+    user,
+    status: userStatus,
+  } = useSelector((state) => state.user);
 
   const [likeDisabled, setLikeDisabled] = useState(false);
   const [showPlaylistDialog, setShowPlaylistDialog] = useState(false);
@@ -50,10 +52,14 @@ const VideoInfo = () => {
     useState("");
 
   useEffect(() => {
-    if (isLoggedIn  && user?._id) {
+    // Dispatch fetchUserPlaylists only when:
+    // 1. The user authentication status has been *determined* (succeeded or failed, not 'idle' or 'loading')
+    // 2. The user is actually logged in.
+    // 3. The user object and its _id are available.
+    if (userStatus === "succeeded" && isLoggedIn && user?._id) {
       dispatch(fetchUserPlaylists());
     }
-  }, [isLoggedIn, user, dispatch]);
+  }, [userStatus, isLoggedIn, user, dispatch]); 
 
   const handleLike = () => {
     setLikeDisabled(true);

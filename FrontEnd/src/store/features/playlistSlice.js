@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 
-import axiosInstance from "@/api/axios";
+import axiosInstance from "../../api/axios.js";
+
 const initialState = {
   playlists: [],
   status: "idle",
@@ -10,11 +11,12 @@ const initialState = {
 export const fetchUserPlaylists = createAsyncThunk(
   "playlist/fetchUserPlaylists",
   async (_, { getState, rejectWithValue }) => {
-    const user = getState().user;
-    const isLoggedIn = user.isLoggedIn;
-    if (isLoggedIn && user?._id) {
+    console.log("Fetching user playlists...");
+    
       try {
         const response = await axiosInstance.get(`/playlists/`);
+        // evene not this in console
+        console.log("playlists: ", response.data.data.docs);
         return response.data.data.docs;
       } catch (error) {
         return rejectWithValue(
@@ -23,8 +25,7 @@ export const fetchUserPlaylists = createAsyncThunk(
             "Error fetching user playlists."
         );
       }
-    }
-    return [];
+    
   }
 );
 
@@ -108,6 +109,7 @@ const playlistSlice = createSlice({
     builder.addCase(fetchUserPlaylists.rejected, (state, action) => {
       state.status = "failed";
       state.error = action.payload;
+      state.playlists = [];
     });
     builder.addCase(createPlaylist.fulfilled, (state, action) => {
       state.playlists.push(action.payload);

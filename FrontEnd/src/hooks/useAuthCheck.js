@@ -16,12 +16,7 @@ const useInitialAuthCheck = () => {
   useEffect(() => {
     const verifyToken = async () => {
       try {
-        const response = await axiosInstance.get(
-          `/users/profile`,
-          {
-            withCredentials: true,
-          }
-        );
+        const response = await axiosInstance.get(`/users/profile`);
 
         if (response.data && response.data.data) {
           const user = response.data.data;
@@ -37,7 +32,7 @@ const useInitialAuthCheck = () => {
           console.log("No valid session found. Logging out.");
           dispatch(logoutUser());
         } else {
-          console.error(
+          console.log(
             "An error occurred during initial auth check:",
             error
           );

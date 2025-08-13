@@ -12,6 +12,7 @@ const initialState = {
   refreshToken: null,
   isLoggedIn: false,
   error: null,
+  status: 'idle',
 };
 
 export const performLogout = createAsyncThunk(
@@ -82,7 +83,7 @@ export const userSlice = createSlice({
       state.user = action.payload?.user;
       state.isLoggedIn = true;
       state.error = null;
-      state.status = "succeeded";
+      state.status = "succeeded"; 
     },
     logoutUser: (state) => {
       state.user = initialState.user;
@@ -90,7 +91,7 @@ export const userSlice = createSlice({
       state.refreshToken = null;
       state.isLoggedIn = false;
       state.error = null;
-      state.status = "idle";
+      state.status = "idle"; 
     },
     setError: (state, action) => {
       state.error = action.payload?.error;
@@ -100,29 +101,29 @@ export const userSlice = createSlice({
       state.refreshToken = action.payload.user.refreshToken;
       state.user = action.payload.user;
       state.isLoggedIn = true;
-      state.status = "succeeded";
+      state.status = "succeeded"; 
     },
   },
   extraReducers: (builder) => {
     builder
       .addCase(performLogout.pending, (state) => {
-        state.status = "loading";
+        state.status = "loading"; 
         state.error = null;
       })
       .addCase(performLogout.fulfilled, (state) => {
-        state.status = "succeeded";
+        state.status = "succeeded"; 
         state.error = null;
       })
       .addCase(performLogout.rejected, (state, action) => {
-        state.status = "failed";
+        state.status = "failed"; 
         state.error = action.payload;
       })
       .addCase(perfomLogin.pending, (state) => {
-        state.status = "loading";
+        state.status = "loading"; 
         state.error = null;
       })
       .addCase(perfomLogin.fulfilled, (state, action) => {
-        state.status = "succeeded";
+        state.status = "succeeded"; 
         state.error = null;
         state.user = action.payload.user;
         state.accessToken = action.payload.accessToken; 
@@ -130,7 +131,7 @@ export const userSlice = createSlice({
         state.isLoggedIn = true;
       })
       .addCase(perfomLogin.rejected, (state, action) => {
-        state.status = "failed";
+        state.status = "failed"; 
         state.error = action.payload;
         state.user = initialState.user;
         state.accessToken = null;
