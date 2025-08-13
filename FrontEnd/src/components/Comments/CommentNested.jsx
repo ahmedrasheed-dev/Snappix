@@ -72,11 +72,11 @@ const CommentNested = ({ comment, videoId }) => {
   const mainCommentOwner = comment.commentOwners;
 
   const mainCommentDate = formatTimeAgo(comment.createdAt);
-
+  console.log("mainComment: ", mainCommentOwner);
   return (
     <div className="flex gap-4 mb-4">
       <Avatar className="w-10 h-10">
-        <AvatarImage src={mainCommentOwner?.avatar} />
+        <AvatarImage src={mainCommentOwner.avatar} />
         <AvatarFallback className={"text-black"}>
           {getInitials(mainCommentOwner?.username)}
         </AvatarFallback>

@@ -89,15 +89,14 @@ const commentsSlice = createSlice({
         state.error = action.payload;
       })
       .addCase(addReplyToComment.fulfilled, (state, action) => {
-        state.status = "succeeded";
         const { parentCommentId, reply } = action.payload;
+        reply.replyOwners = reply.replyOwners[0]; // flatten array to object
         const parentComment = state.comments.find(
           (comment) => comment._id === parentCommentId
         );
         if (parentComment) {
           parentComment.replies.push(reply);
         }
-        state.error = null;
       })
       .addCase(addReplyToComment.rejected, (state, action) => {
         state.status = "failed";
