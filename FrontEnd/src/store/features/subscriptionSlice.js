@@ -1,8 +1,8 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import axios from "axios";
+import axiosInstance from "@/api/axios";
 
 const initialState = {
-  status: "idle",// 'idle' | 'loading' | 'succeeded' | 'failed'
+  status: "idle", // 'idle' | 'loading' | 'succeeded' | 'failed'
   error: null,
   // Indicates if the currently logged-in user is subscribed to the channel being viewed
   isSubscribed: false,
@@ -13,29 +13,29 @@ export const fetchSubscriptionStatus = createAsyncThunk(
   "subscription/fetchSubscriptionStatus",
   async (channelUsername, { getState, rejectWithValue }) => {
     try {
-      console.log("in fetchSubscriptionStatus");
-
       const state = getState();
       const isLoggedIn = state.user.isLoggedIn;
 
       if (!isLoggedIn) {
         return { isSubscribed: false, subscriberCount: 0 };
       }
-      const response = await axios.get(`/api/v1/users/c/${channelUsername}`, {
-        withCredentials: true,
-      });
+      const response = await axiosInstance.get(
+        `/users/c/${channelUsername}`,
+        {
+          withCredentials: true,
+        }
+      );
 
-      const channelData = response.data.data; 
-      console.log("channelData: ", channelData);
+      const channelData = response.data.data;
       return {
-        isSubscribed: channelData.isSubscribed, 
-        subscriberCount: channelData.subscriberCount || 0, 
+        isSubscribed: channelData.isSubscribed,
+        subscriberCount: channelData.subscriberCount || 0,
       };
-
     } catch (error) {
       console.error("Error fetching subscription status:", error);
       return rejectWithValue(
-        error.response?.data?.message || "Failed to fetch subscription status."
+        error.response?.data?.message ||
+          "Failed to fetch subscription status."
       );
     }
   }
@@ -52,20 +52,20 @@ export const toggleSubscription = createAsyncThunk(
     }
 
     try {
-      const response = await axios.post(
-        `/api/v1/subscriptions/toggle/${channelId}`,
-        {}, 
+      const response = await axiosInstance.post(
+        `/subscriptions/toggle/${channelId}`,
+        {},
         { withCredentials: true }
       );
       return response.data.data;
     } catch (error) {
       return rejectWithValue(
-        error.response?.data?.message || "Failed to toggle subscription."
+        error.response?.data?.message ||
+          "Failed to toggle subscription."
       );
     }
   }
 );
-
 
 const subscriptionSlice = createSlice({
   name: "subscription",
@@ -86,8 +86,8 @@ const subscriptionSlice = createSlice({
       .addCase(fetchSubscriptionStatus.rejected, (state, action) => {
         state.status = "failed";
         state.error = action.payload;
-        state.isSubscribed = false; 
-        state.subscriberCount = 0; 
+        state.isSubscribed = false;
+        state.subscriberCount = 0;
       });
 
     builder
@@ -97,7 +97,7 @@ const subscriptionSlice = createSlice({
       })
       .addCase(toggleSubscription.fulfilled, (state, action) => {
         state.status = "succeeded";
-        state.isSubscribed = action.payload.subscribed; 
+        state.isSubscribed = action.payload.subscribed;
         state.subscriberCount += action.payload.subscribed ? 1 : -1;
         state.error = null;
       })

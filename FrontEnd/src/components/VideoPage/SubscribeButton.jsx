@@ -53,7 +53,6 @@ const SubscribeButton = ({ channelUsername, channelId }) => {
       >
         {status === 'loading' ? 'Loading...' : buttonText}
       </button>
-      <span className="text-gray-400 text-sm">{subscriberCount} Subscribers</span>
       {error && <p className="text-red-500 text-xs">{error}</p>}
     </div>
   );

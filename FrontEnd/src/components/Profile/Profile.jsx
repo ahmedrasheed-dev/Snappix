@@ -18,9 +18,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Pencil, FileInput } from "lucide-react";
-import axios from "axios";
+import axiosInstance from "@/api/axios";
 import Playlists from "./Playlists";
-
 
 const UserProfilePage = () => {
   const [isEditing, setIsEditing] = useState(false);
@@ -29,7 +28,7 @@ const UserProfilePage = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   const [activeTab, setActiveTab] = useState("videos");
-  const [playlists, setPlaylists] = useState([])
+  const [playlists, setPlaylists] = useState([]);
 
   const isLoggedIn = useSelector((state) => state.user.isLoggedIn);
   const reduxUser = useSelector((state) => state.user.user);
@@ -44,26 +43,26 @@ const UserProfilePage = () => {
       if (isLoggedIn && reduxUser && reduxUser.username) {
         try {
           // Fetch user channel profile first
-          const profileRes = await axios.get(
-            `/api/v1/users/c/${reduxUser.username}`
+          const profileRes = await axiosInstance.get(
+            `/users/c/${reduxUser.username}`
           );
           console.log("user channel profile: ", profileRes.data.data);
           setChannelProfile(profileRes.data.data);
 
-          const videosRes = await axios.get(
-            `/api/v1/videos?owner=${profileRes.data.data._id}`
+          const videosRes = await axiosInstance.get(
+            `/videos?owner=${profileRes.data.data._id}`
           );
           setVideos(videosRes.data.data.docs);
           console.log("user videos: ", videosRes.data.data.docs);
 
-          const playlistsRes = await axios.get(
-            `/api/v1/playlists`,{
-              withCredentials: true,
-            }
+          const playlistsRes = await axiosInstance.get(`/playlists`, {
+            withCredentials: true,
+          });
+          console.log(
+            "user playlists: ",
+            playlistsRes.data.data.docs
           );
-          console.log("user playlists: ", playlistsRes.data.data.docs); 
           setPlaylists(playlistsRes.data.data.docs);
-           
         } catch (error) {
           console.error(
             "Failed to fetch user data or videos:",
@@ -84,8 +83,8 @@ const UserProfilePage = () => {
     if (!isLoggedIn) return;
 
     try {
-      const response = await axios.patch(
-        `/api/v1/users/update-account`,
+      const response = await axiosInstance.patch(
+        `/users/update-account`,
         {
           username: newUsername || channelProfile.username,
           fullName: newFullName || channelProfile.fullName,
@@ -105,8 +104,8 @@ const UserProfilePage = () => {
     try {
       const formData = new FormData();
       formData.append("avatar", file);
-      const response = await axios.patch(
-        `/api/v1/users/avatar`,
+      const response = await axiosInstance.patch(
+        `/users/avatar`,
         formData,
         {
           withCredentials: true,
@@ -124,8 +123,8 @@ const UserProfilePage = () => {
     try {
       const formData = new FormData();
       formData.append("coverImage", file);
-      const response = await axios.patch(
-        `/api/v1/users/cover-image`,
+      const response = await axiosInstance.patch(
+        `/users/cover-image`,
         formData,
         {
           withCredentials: true,
@@ -319,7 +318,7 @@ const UserProfilePage = () => {
           </DialogContent>
         </Dialog>
       </div>
-      
+
       {/* Tabs */}
       <div className="flex space-x-4 mt-8 border-b border-gray-700">
         <Button

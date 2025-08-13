@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Loadericon } from "../../assets/index.js";
 import { Progress } from "@/components/ui/progress";
-import axios from "axios";
+import axiosInstance from "@/api/axios";
 
 const UploadVideo = () => {
   const {
@@ -84,8 +84,8 @@ const UploadVideo = () => {
     }
 
     try {
-      const res = await axios.post(
-        "/api/v1/videos/upload",
+      const res = await axiosInstance.post(
+        "/videos/upload",
         formData,
         {
           headers: {

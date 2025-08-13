@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import axios from "axios";
+import axiosInstance from "@/api/axios";
 
 const initialState = {
   relatedVideos: [],
@@ -9,15 +9,15 @@ const initialState = {
 
 export const fetchRelatedVideos = createAsyncThunk(
   "videos/getRelatedVideos",
-  async ({videoId, page = 1, limit = 10}, { rejectWithValue }) => {
+  async ({ videoId, page = 1, limit = 10 }, { rejectWithValue }) => {
     if (!videoId || videoId.length !== 24) {
       return rejectWithValue("Invalid video ID.");
     }
 
     try {
-      const response = await axios.get("/api/v1/videos", {
+      const response = await axiosInstance.get("/videos", {
         params: {
-            page,
+          page,
           limit,
         },
       });

@@ -12,9 +12,12 @@ cloudinary.config({
 
 const uploadToCloudinary = async function (localFilePath) {
   try {
-    const uploadResult = await cloudinary.uploader.upload(localFilePath, {
-      resource_type: "auto",
-    });
+    const uploadResult = await cloudinary.uploader.upload(
+      localFilePath,
+      {
+        resource_type: "auto",
+      }
+    );
     // fs.unlinkSync(localFilePath);
 
     // console.log("upload result: ", uploadResult);
@@ -46,7 +49,7 @@ const uploadToCloudinary = async function (localFilePath) {
     throw new ApiError(
       500,
       "Something went wrong while uploading image to cloudinary"
-    ).send(res);
+    );
   }
 };
 
@@ -57,7 +60,7 @@ const deleteFromCloudinary = async (publicId) => {
     throw new ApiError(
       500,
       "Something went wrong while deleting image from cloudinary"
-    ).send(res);
+    );
   }
 };
 

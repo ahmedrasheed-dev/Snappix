@@ -5,7 +5,7 @@ import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import axios from "axios";
+import axiosInstance from "@/api/axios";
 import { useDispatch } from "react-redux";
 import { setLoggedInUser } from "../../store/features/userSlice";
 import { Loadericon } from "../../assets/index.js";
@@ -76,8 +76,8 @@ const RegisterPage = () => {
       formData.append("password", data.password);
       formData.append("avatar", data.avatar);
 
-      const response = await axios.post(
-        `/api/v1/users/register`,
+      const response = await axiosInstance.post(
+        `/users/register`,
         formData,
         {
           headers: {

@@ -1,11 +1,13 @@
-import { useLayoutEffect, useEffect } from "react";
+import { useEffect } from "react";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+
 import {
   setLoggedInUser,
   logoutUser,
 } from "../store/features/userSlice";
+
+import axiosInstance from "../api/axios";
 
 const useInitialAuthCheck = () => {
   const dispatch = useDispatch();
@@ -14,24 +16,23 @@ const useInitialAuthCheck = () => {
   useEffect(() => {
     const verifyToken = async () => {
       try {
-        const response = await axios.get(`/api/v1/users/profile`, {
-          withCredentials: true,
-        });
+        const response = await axiosInstance.get(
+          `/users/profile`,
+          {
+            withCredentials: true,
+          }
+        );
 
-        
-
-        if (response.data) {
-           const user = response.data.data;
+        if (response.data && response.data.data) {
+          const user = response.data.data;
           dispatch(setLoggedInUser({ user }));
         } else {
-          // If the API returns 200 but no user data, something is wrong.
           console.log(
             "Profile API returned 200 OK but no user data. Logging out."
           );
           dispatch(logoutUser());
         }
       } catch (error) {
-        // This block runs if the API returns a 401 or any other error status code
         if (error.response && error.response.status === 401) {
           console.log("No valid session found. Logging out.");
           dispatch(logoutUser());

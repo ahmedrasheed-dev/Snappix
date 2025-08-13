@@ -9,19 +9,14 @@ import {
 import { Button } from "@/components/ui/button";
 import Topbar from "../Topbar/Topbar";
 import { formatTimeAgo } from "../../utils/VideoUtils";
-import {
-  FaExpand,
-} from "react-icons/fa";
+import { FaExpand } from "react-icons/fa";
 import { useSelector, useDispatch } from "react-redux";
-import {
-  getVideoData,
-} from "@/store/features/videoSlice";
+import { getVideoData } from "@/store/features/videoSlice";
 import VideoInfo from "./VideoInfo";
 import RelatedVideos from "./RelatedVideos";
 import SubscribeButton from "./SubscribeButton";
 
 const VideoPage = () => {
-
   const dispatch = useDispatch();
   const { videoId } = useParams();
   const {
@@ -29,8 +24,9 @@ const VideoPage = () => {
     status: videoStatus,
     error: videoError,
   } = useSelector((state) => state.video);
+  const { subscriberCount, status, error } =
+    useSelector((state) => state.subscription);
 
- 
   const isLoggedIn = useSelector((state) => state.user.isLoggedIn);
   const user = useSelector((state) => state.user.user);
 
@@ -39,14 +35,13 @@ const VideoPage = () => {
     useState(false);
   const [isTheaterMode, setIsTheaterMode] = useState(false);
   const [isVideoVertical, setIsVideoVertical] = useState(false);
-    useState("");
+  useState("");
 
   useEffect(() => {
     if (videoId) {
       dispatch(getVideoData(videoId));
     }
   }, [videoId, dispatch]);
-
 
   const toggleTheaterMode = () => {
     setIsTheaterMode(!isTheaterMode);
@@ -57,8 +52,7 @@ const VideoPage = () => {
     setIsVideoVertical(videoWidth < videoHeight);
   };
 
-  const handleSubscribe = ()=>{}
-
+  const handleSubscribe = () => {};
 
   if (videoStatus === "loading" || !video) {
     return (
@@ -168,7 +162,7 @@ const VideoPage = () => {
 
           <div className="w-full">
             {/* Video Info Section */}
-            <VideoInfo video={video}/>
+            <VideoInfo video={video} />
 
             <div className="mt-6 border-t border-gray-700 pt-6">
               {/* Channel Info */}
@@ -184,11 +178,15 @@ const VideoPage = () => {
                     {video?.owner?.username}
                   </h2>
                   <p className="text-sm text-gray-400">
-                    100K subscribers
+                    {subscriberCount} subscribers
                   </p>
                 </div>
-                {video?.owner?._id && <SubscribeButton channelUsername={video?.owner?.username}
-                channelId={video?.owner?._id}/>}
+                {video?.owner?._id && (
+                  <SubscribeButton
+                    channelUsername={video?.owner?.username}
+                    channelId={video?.owner?._id}
+                  />
+                )}
               </div>
 
               {/* Description */}
@@ -227,7 +225,10 @@ const VideoPage = () => {
         </div>
 
         {/* Related Videos Section */}
-        <RelatedVideos isTheaterMode={isTheaterMode} videoId={videoId} />
+        <RelatedVideos
+          isTheaterMode={isTheaterMode}
+          videoId={videoId}
+        />
       </div>
     </>
   );

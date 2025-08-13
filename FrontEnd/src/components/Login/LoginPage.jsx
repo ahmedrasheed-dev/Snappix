@@ -4,86 +4,37 @@ import { Link, useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import axios from "axios";
 import { useDispatch } from "react-redux";
-import { setLoggedInUser } from "../../store/features/userSlice";
+import { perfomLogin } from "../../store/features/userSlice"; 
 import { Loadericon } from "../../assets/index.js";
-import {toast, Bounce } from 'react-toastify';
+import { notifyError, notifySuccess } from "@/utils/toasts";
+
 const LoginPage = () => {
   const navigate = useNavigate();
-
   const dispatch = useDispatch();
-  const [error, seterror] = useState("");
+  const [errorMessage, setErrorMessage] = useState(""); // Renamed for clarity
+
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm();
 
-  const handleAvatarChange = (file, onChange) => {
-    if (file) {
-      setAvatarPreview(URL.createObjectURL(file));
-      onChange(file);
-    } else {
-      setAvatarPreview(null);
-      onChange(null);
-    }
-  };
 
-  const onSubmit = async (data) => {
-    const notifySuccess = (success) => {
-      toast.success(success, {
-        position: "top-right",
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: false,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-        theme: "colored",
-        transition: Bounce,
-      });
+  const onSubmit = async (data) => { 
+    const loginData = {
+      email: data.email,
+      password: data.password,
     };
-    const notifyError = (error) => {
-      toast.error(error, {
-        position: "top-right",
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: false,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-        theme: "colored",
-        transition: Bounce,
-      });
-    };
+    setErrorMessage("");
+
     try {
-      const loginData = {
-        email: data.email,
-        password: data.password,
-      };
-
-      const response = await axios.post(
-        `/api/v1/users/login`,
-        loginData,
-        {
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
-          },
-        }
-      );
-      const { user, accessToken } = response.data.data;
-
-      dispatch(setLoggedInUser({ user, token: accessToken }));
-      notifySuccess("Login Successfull");
-      navigate("/");
+      await dispatch(perfomLogin(loginData)).unwrap(); 
+      notifySuccess("Login successful!");
+      navigate("/"); 
     } catch (error) {
-      notifyError("Login Failed");
-      console.log(
-        "Registration error:",
-        error?.response?.data?.message
-      );
-      seterror(error?.response?.data?.message);
+      notifyError(error);
+      setErrorMessage(error);
     }
   };
 
@@ -94,7 +45,7 @@ const LoginPage = () => {
           LogIn
         </h2>
         <h3 className="text-center text-red-500 h-3.5 mt-4">
-          {error}
+          {errorMessage} 
         </h3>
 
         <form
@@ -114,7 +65,10 @@ const LoginPage = () => {
                 type="email"
                 {...register("email", {
                   required: "Email is required",
-                  pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                  pattern: {
+                    value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                    message: "Enter a valid email address",
+                  },
                 })}
                 className="mt-1 block w-full rounded-md shadow-sm bg-gray-800 border-gray-700 text-white focus:border-pink-500 focus:ring-pink-500"
               />

@@ -1,10 +1,10 @@
-import axios from "axios";
+import axiosInstance from "@/api/axios";
 const BASE_URL = import.meta.env.VITE_server_url;
-import { useQuery } from '@tanstack/react-query';
+import { useQuery } from "@tanstack/react-query";
 
 export const getVideos = async (params = {}) => {
   try {
-    const res = await axios.get(`/api/v1/videos?page=1&limit=12`, {
+    const res = await axiosInstance.get(`/videos?page=1&limit=12`, {
       params: {
         page: params.page,
         limit: params.limit,
@@ -23,7 +23,7 @@ export const getVideos = async (params = {}) => {
 
 export const useGetVideos = (params) => {
   return useQuery({
-    queryKey: ['videos', params],
+    queryKey: ["videos", params],
     queryFn: () => getVideos(params),
     staleTime: 10000,
   });

@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import axios from "axios";
+import axiosInstance from "@/api/axios";
 import { toast, Bounce } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useNavigate } from "react-router-dom";
@@ -41,8 +41,8 @@ const OtpInputComponent = () => {
   const handleSubmit = async () => {
     setisSubmiting(true);
     const otpValue = otp.join("");
-    const res = await axios.post(
-      "/api/v1/auth/verify-email",
+    const res = await axiosInstance.post(
+      "/auth/verify-email",
       { otp: otpValue },
       {
         headers: {

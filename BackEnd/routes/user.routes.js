@@ -10,6 +10,7 @@ import {
   updateCoverImage,
   getUserChannelProfile,
   getWatchHistory,
+  getSearchSuggestions,
 } from "../controllers/user.controller.js";
 import { Router } from "express";
 import { upload } from "../middlewares/multer.middleware.js";
@@ -26,6 +27,7 @@ router.post(
 );
 
 router.post("/login", login);
+router.get("/suggestions", getSearchSuggestions);
 
 //secured routes
 router.post("/logout", verifyJWT, logout);
@@ -34,7 +36,12 @@ router.post("/change-password", verifyJWT, changePassword);
 router.post("/update-profile", verifyJWT, updateProfile);
 router.get("/profile", verifyJWT, getCurrentUser);
 
-router.post("/update-avatar", verifyJWT, upload.single("avatar"), updateAvatar);
+router.post(
+  "/update-avatar",
+  verifyJWT,
+  upload.single("avatar"),
+  updateAvatar
+);
 
 router.post(
   "/update-cover-image",
@@ -46,6 +53,5 @@ router.post(
 router.get("/c/:username", verifyJWT, getUserChannelProfile);
 
 router.get("/watch-history", verifyJWT, getWatchHistory);
-
 
 export default router;

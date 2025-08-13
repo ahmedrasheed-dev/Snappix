@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import axios from "axios";
+import axiosInstance from "@/api/axios";
 
 const initialState = {
   comments: [],
@@ -11,7 +11,9 @@ export const fetchComments = createAsyncThunk(
   "comments/fetchComments",
   async (videoId, { rejectWithValue }) => {
     try {
-      const response = await axios.get(`/api/v1/comments/${videoId}`);
+      const response = await axiosInstance.get(
+        `/comments/${videoId}`
+      );
       return response.data.data.docs;
     } catch (error) {
       return rejectWithValue(
@@ -24,8 +26,8 @@ export const addCommentToVideo = createAsyncThunk(
   "comments/addCommentToVideo",
   async ({ videoId, content }, { rejectWithValue }) => {
     try {
-      const response = await axios.post(
-        `/api/v1/comments/${videoId}`,
+      const response = await axiosInstance.post(
+        `/comments/${videoId}`,
         { content }
       );
       return response.data.data;
@@ -40,8 +42,8 @@ export const addReplyToComment = createAsyncThunk(
   "comments/addReplyToComment",
   async ({ videoId, commentId, content }, { rejectWithValue }) => {
     try {
-      const response = await axios.post(
-        `/api/v1/comments/reply/${videoId}/${commentId}`,
+      const response = await axiosInstance.post(
+        `/comments/reply/${videoId}/${commentId}`,
         { content }
       );
       return {

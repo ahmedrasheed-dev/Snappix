@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import axios from "axios";
+import axiosInstance from "@/api/axios";
 import { fetchUserPlaylists } from "./playlistSlice";
 
 const initialState = {
@@ -28,8 +28,8 @@ export const toggleVideoLike = createAsyncThunk(
         return rejectWithValue("Please log in to like a video.");
       }
 
-      const response = await axios.post(
-        `/api/v1/likes/v/${videoId}`,
+      const response = await axiosInstance.post(
+        `/likes/v/${videoId}`,
         {},
         {
           withCredentials: true,
@@ -53,11 +53,11 @@ export const getVideoData = createAsyncThunk(
       const isLoggedIn = getState().user.isLoggedIn;
       // Fetch video data and likes count simultaneously
       const [videoRes, allLikesRes] = await Promise.all([
-        axios.get(`/api/v1/videos/${videoId}`),
-        axios.get(`/api/v1/likes/v/likes/${videoId}`),
+        axiosInstance.get(`/videos/${videoId}`),
+        axiosInstance.get(`/likes/v/likes/${videoId}`),
       ]);
 
-      axios.patch(`/api/v1/videos/${videoId}/views`);
+      axiosInstance.patch(`/videos/${videoId}/views`);
 
       let isLiked = false;
       let addedToPlaylistIds = [];
@@ -67,12 +67,8 @@ export const getVideoData = createAsyncThunk(
           // Fetch like status and playlists for the video concurrently
           const [isLikedVideoStatus, playlistsWithVideoRes] =
             await Promise.all([
-              axios.get(`/api/v1/likes/v/${videoId}`, {
-                withCredentials: true,
-              }),
-              axios.get(`/api/v1/playlists/video/${videoId}/`, {
-                withCredentials: true,
-              }),
+              axiosInstance.get(`/likes/v/${videoId}`),
+              axiosInstance.get(`/playlists/video/${videoId}/`),
             ]);
           isLiked = !!isLikedVideoStatus.data.data;
           addedToPlaylistIds = playlistsWithVideoRes.data.data.map(
@@ -99,8 +95,6 @@ export const getVideoData = createAsyncThunk(
     }
   }
 );
-
-
 
 const videoSlice = createSlice({
   name: "video",

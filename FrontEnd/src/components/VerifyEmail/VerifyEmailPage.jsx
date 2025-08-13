@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Loadericon } from "../../assets/index.js";
 import OtpInputComponent from "./OtpInputComponent";
-import axios from "axios";
+import axiosInstance from "@/api/axios";
 
 const VerifyEmailPage = () => {
   const [showOtpInput, setShowOtpInput] = useState(false);
@@ -18,8 +18,8 @@ const VerifyEmailPage = () => {
 
   const onSubmit = async (data) => {
     try {
-      const response = await axios.post(
-        `/api/v1/auth/send-verification-code`,
+      const response = await axiosInstance.post(
+        `/auth/send-verification-code`,
         {
           email: data.email,
         },

@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 
-import axios from "axios";
+import axiosInstance from "@/api/axios";
 const initialState = {
   playlists: [],
   status: "idle",
@@ -12,16 +12,15 @@ export const fetchUserPlaylists = createAsyncThunk(
   async (_, { getState, rejectWithValue }) => {
     const user = getState().user;
     const isLoggedIn = user.isLoggedIn;
-    if (isLoggedIn) {
+    if (isLoggedIn && user?._id) {
       try {
-        const response = await axios.get(`/api/v1/playlists/`, {
-          withCredentials: true,
-        });
+        const response = await axiosInstance.get(`/playlists/`);
         return response.data.data.docs;
       } catch (error) {
         return rejectWithValue(
-          "Error fetching user playlists:",
-          error?.data?.message
+          error.response?.data?.message ||
+            error.message ||
+            "Error fetching user playlists."
         );
       }
     }
@@ -33,8 +32,8 @@ export const createPlaylist = createAsyncThunk(
   "playlists/createPlaylist",
   async ({ name, description }, { rejectWithValue }) => {
     try {
-      const response = await axios.post(
-        `/api/v1/playlists/`,
+      const response = await axiosInstance.post(
+        `/playlists/`,
         { name, description },
         { withCredentials: true }
       );
@@ -57,8 +56,8 @@ export const addVideoToPlaylist = createAsyncThunk(
       return rejectWithValue("Invalid video ID.");
     }
     try {
-      const response = await axios.post(
-        `/api/v1/playlists/add-video/${playlistId}/${videoId}`,
+      const response = await axiosInstance.post(
+        `/playlists/add-video/${playlistId}/${videoId}`,
         {},
         {
           withCredentials: true,

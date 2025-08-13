@@ -2,6 +2,7 @@ import asyncHandler from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { User } from "../models/user.model.js";
+import { Video } from "../models/video.model.js"
 import mongoose from "mongoose";
 import crypto from "crypto";
 import {
@@ -734,6 +735,68 @@ const getWatchHistory = asyncHandler(async (req, res) => {
     );
 });
 
+const getSearchSuggestions = asyncHandler(async (req, res) => {
+    const { q } = req.query; 
+
+    if (!q || q.trim().length < 2) {
+        return res
+            .status(200)
+            .json(new ApiResponse(200, [], "Please enter at least 2 characters to search."));
+    }
+
+    const searchTerm = q.toLowerCase();
+
+     const videoSuggestions = await Video.aggregate([
+        {
+            $match: {
+                title: { $regex: searchTerm, $options: 'i' }, 
+                isPublished: true
+            }
+        },
+        {
+            $limit: 5 
+        },
+        {
+            $project: {
+                _id: 1,
+                title: 1,
+                thumbnail: 1, 
+                type: { $literal: "video" }, 
+                url: { $concat: ["/video/", { $toString: "$_id" }] } 
+            }
+        }
+    ]);
+    const channelSuggestions = await User.aggregate([
+        {
+            $match: {
+                $or: [
+                    { username: { $regex: searchTerm, $options: 'i' } },
+                    { fullName: { $regex: searchTerm, $options: 'i' } }
+                ]
+            }
+        },
+        {
+            $limit: 5
+        },
+        {
+            $project: {
+                _id: 1,
+                title: "$username",
+                url: { $concat: ["/channel/", "$username"] }, 
+                avatar: 1, 
+                type: { $literal: "channel" } 
+            }
+        }
+    ]);
+
+    // Combine both sets of suggestions
+    const combinedSuggestions = [...videoSuggestions, ...channelSuggestions];
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, combinedSuggestions, "Search suggestions fetched successfully"));
+});
+
 export {
   registerUser,
   login,
@@ -750,4 +813,5 @@ export {
   verifyEmailOtp,
   sendPasswordResetOtp,
   verifyPasswordResetOtp,
+  getSearchSuggestions
 };

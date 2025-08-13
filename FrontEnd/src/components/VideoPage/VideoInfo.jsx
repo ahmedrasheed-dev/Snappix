@@ -50,8 +50,8 @@ const VideoInfo = () => {
     useState("");
 
   useEffect(() => {
-    if (isLoggedIn && user?._id) {
-      dispatch(fetchUserPlaylists(user._id));
+    if (isLoggedIn  && user?._id) {
+      dispatch(fetchUserPlaylists());
     }
   }, [isLoggedIn, user, dispatch]);
 

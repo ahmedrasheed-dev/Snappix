@@ -1,71 +1,34 @@
 import React, { useEffect } from "react";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { logoutUser } from "../../store/features/userSlice";
+import { performLogout, logoutUser } from "../../store/features/userSlice";
 import { Loadericon } from "../../assets/index.js";
-import axios from "axios";
-import { toast, Bounce } from "react-toastify";
+import { notifyError, notifySuccess } from "@/utils/toasts";
+
 const LogoutPage = () => {
-    const notifySuccess = (success) => {
-      toast.success(success, {
-        position: "top-right",
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: false,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-        theme: "colored",
-        transition: Bounce,
-      });
-    };
-    const notifyError = (error) => {
-      toast.error(error, {
-        position: "top-right",
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: false,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-        theme: "colored",
-        transition: Bounce,
-      });
-    };
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
   useEffect(() => {
-    let redirectTimeout;
     const logUserOut = async () => {
       try {
-        const res = await axios.post(
-          `/api/v1/users/logout`,
-          {},
-          {
-            withCredentials: true,
-          }
-        );
-
-        if (res?.data?.statusCode === 200) {
-          dispatch(logoutUser());
-          redirectTimeout = setTimeout(() => {
-            notifySuccess("Logout Successfull");
-            navigate("/");
-          }, 1200);
-        }
+        await dispatch(performLogout()).unwrap(); 
+        notifySuccess("Logout successful!");
+        setTimeout(() => {
+          navigate("/login");
+        }, 1000);
       } catch (error) {
-        dispatch(logoutUser());
-        redirectTimeout = setTimeout(() => {
-          notifyError("Logout Failed");
-          navigate("/");
-        }, 1500);
+        notifyError(error);
+        setTimeout(() => {
+          navigate("/login");
+        }, 1000);
       }
     };
 
     logUserOut();
 
-    return () => clearTimeout(redirectTimeout);
+    // No need for a separate redirectTimeout cleanup if it's inside then/catch
+    // return () => clearTimeout(redirectTimeout); 
   }, [dispatch, navigate]);
 
   return (
