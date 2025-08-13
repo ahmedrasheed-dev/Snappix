@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
+import { fetchUserPlaylists } from "./playlistSlice";
 
 const initialState = {
   currentVideo: null,
@@ -99,35 +100,7 @@ export const getVideoData = createAsyncThunk(
   }
 );
 
-export const addVideoToPlaylist = createAsyncThunk(
-  "video/addVideoToPlaylist",
-  async ({ playlistId, videoId }, { rejectWithValue }) => {
-    if (!playlistId || playlistId.length !== 24) {
-      return rejectWithValue("Invalid playlist ID.");
-    }
-    if (!videoId || videoId.length !== 24) {
-      return rejectWithValue("Invalid video ID.");
-    }
-    try {
-      const response = await axios.post(
-        `/api/v1/playlists/add-video/${playlistId}/${videoId}`,
-        {},
-        {
-          withCredentials: true,
-        }
-      );
-      return response.data; // You may want to return a more specific payload
-    } catch (error) {
-      if (error.response.status === 409) {
-        return rejectWithValue("Video already in playlist");
-      }
-      return rejectWithValue(
-        error?.response?.data?.message ||
-          "Error adding video to playlist."
-      );
-    }
-  }
-);
+
 
 const videoSlice = createSlice({
   name: "video",
@@ -168,11 +141,17 @@ const videoSlice = createSlice({
         state.likeStatus = "failed";
         state.error = action.payload;
       })
-      .addCase(addVideoToPlaylist.fulfilled, (state, action) => {
-        state.addedToPlaylistId.push(action.meta.arg.playlistId);
-      })
-      .addCase(addVideoToPlaylist.rejected, (state, action) => {
-        state.error = action.payload;
+      .addCase(fetchUserPlaylists.fulfilled, (state, action) => {
+        const videoId = state.currentVideo?._id;
+        if (videoId) {
+          const playlistsWithVideo = action.payload.filter(
+            (playlist) =>
+              playlist.videos.some((video) => video._id === videoId)
+          );
+          state.addedToPlaylistId = playlistsWithVideo.map(
+            (playlist) => playlist._id
+          );
+        }
       });
   },
 });

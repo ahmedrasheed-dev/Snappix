@@ -1,0 +1,107 @@
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import axios from "axios";
+
+const initialState = {
+  comments: [],
+  status: "idle",
+  error: null,
+};
+
+export const fetchComments = createAsyncThunk(
+  "comments/fetchComments",
+  async (videoId, { rejectWithValue }) => {
+    try {
+      const response = await axios.get(`/api/v1/comments/${videoId}`);
+      return response.data.data.docs;
+    } catch (error) {
+      return rejectWithValue(
+        error.response.data.message || "Failed to fetch comments."
+      );
+    }
+  }
+);
+export const addCommentToVideo = createAsyncThunk(
+  "comments/addCommentToVideo",
+  async ({ videoId, content }, { rejectWithValue }) => {
+    try {
+      const response = await axios.post(
+        `/api/v1/comments/${videoId}`,
+        { content }
+      );
+      return response.data.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response.data.message || "Failed to add comment."
+      );
+    }
+  }
+);
+export const addReplyToComment = createAsyncThunk(
+  "comments/addReplyToComment",
+  async ({ videoId, commentId, content }, { rejectWithValue }) => {
+    try {
+      const response = await axios.post(
+        `/api/v1/comments/reply/${videoId}/${commentId}`,
+        { content }
+      );
+      return {
+        parentCommentId: commentId,
+        reply: response.data.data,
+      };
+    } catch (error) {
+      return rejectWithValue(
+        error.response.data.message || "Failed to add reply."
+      );
+    }
+  }
+);
+
+const commentsSlice = createSlice({
+  name: "comments",
+  initialState,
+  reducers: {},
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchComments.pending, (state) => {
+        state.status = "loading";
+      })
+      .addCase(fetchComments.fulfilled, (state, action) => {
+        state.status = "succeeded";
+        state.comments = action.payload;
+        state.error = null;
+      })
+      .addCase(fetchComments.rejected, (state, action) => {
+        state.status = "failed";
+        state.error = action.payload;
+      })
+      .addCase(addCommentToVideo.pending, (state) => {
+        state.status = "loading";
+      })
+      .addCase(addCommentToVideo.fulfilled, (state, action) => {
+        state.status = "succeeded";
+        state.comments.unshift(action.payload);
+        state.error = null;
+      })
+      .addCase(addCommentToVideo.rejected, (state, action) => {
+        state.status = "failed";
+        state.error = action.payload;
+      })
+      .addCase(addReplyToComment.fulfilled, (state, action) => {
+        state.status = "succeeded";
+        const { parentCommentId, reply } = action.payload;
+        const parentComment = state.comments.find(
+          (comment) => comment._id === parentCommentId
+        );
+        if (parentComment) {
+          parentComment.replies.push(reply);
+        }
+        state.error = null;
+      })
+      .addCase(addReplyToComment.rejected, (state, action) => {
+        state.status = "failed";
+        state.error = action.payload;
+      });
+  },
+});
+
+export default commentsSlice.reducer;

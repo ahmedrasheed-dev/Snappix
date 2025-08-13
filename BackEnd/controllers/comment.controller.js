@@ -5,7 +5,6 @@ import { Comment } from "../models/comments.model.js";
 import mongoose from "mongoose";
 
 const getVideoComments = asyncHandler(async (req, res) => {
-  //TODO: get all comments for a video
   const { videoId } = req.params;
   const {
     page = 1,
@@ -13,15 +12,16 @@ const getVideoComments = asyncHandler(async (req, res) => {
     sortBy = "createdAt",
     sortType = "desc",
   } = req.query;
+
   const commentsWithRepliesPipeLine = [
     {
       $match: {
         video: new mongoose.Types.ObjectId(videoId),
-        parentComment: null,
+        parentComment: null, // Only get top-level comments
       },
     },
     {
-      $sort: { createdAt: -1 },
+      $sort: { [sortBy]: sortType === "desc" ? -1 : 1 }, // Apply sorting
     },
     {
       $lookup: {
@@ -67,22 +67,23 @@ const getVideoComments = asyncHandler(async (req, res) => {
               ],
             },
           },
+          // Project the reply fields. We need to include the replies' owner information
           {
             $project: {
+              _id: 1,
               content: 1,
               createdAt: 1,
-              "replyOwners.fullName": 1,
-              "replyOwners.username": 1,
-              "replyOwners.avatar": 1,
+              replyOwners: { $first: "$replyOwners" },
             },
           },
         ],
       },
     },
     {
+      // Correctly calculate commentCount as the number of replies
       $addFields: {
         commentCount: {
-          $size: "$commentOwners",
+          $size: "$replies",
         },
       },
     },
@@ -91,77 +92,116 @@ const getVideoComments = asyncHandler(async (req, res) => {
         content: 1,
         createdAt: 1,
         commentCount: 1,
-        "commentOwners.fullName": 1,
-        "commentOwners.username": 1,
-        "commentOwners.avatar": 1,
+        commentOwners: { $first: "$commentOwners" },
         replies: 1,
       },
     },
   ];
+
   if (!commentsWithRepliesPipeLine) {
     throw new ApiError(404, "Comments not found").send(res);
   }
+
   const options = {
     page: parseInt(page),
     limit: parseInt(limit),
-    sort: { [sortBy]: sortType === "desc" ? -1 : 1 },
   };
+
   const result = await Comment.aggregatePaginate(
     Comment.aggregate(commentsWithRepliesPipeLine),
     options
   );
 
-  return new ApiResponse(200, result, "Comments fetched successfully").send(
-    res
-  );
+  return new ApiResponse(
+    200,
+    result,
+    "Comments fetched successfully"
+  ).send(res);
 });
 
 const addComment = asyncHandler(async (req, res) => {
-  // TODO: add a comment to a video
   const { videoId } = req.params;
-  const userId = req.user._id;
-  if (!userId) {
-    throw new ApiError(401, "Unauthorized Access").send(res);
-  }
-  const { content, parentComponent } = req.body;
-  if (!content || !content.trim().length === "") {
-    throw new ApiError(400, "Content is required").send(res);
-  }
-  if (!videoId) {
-    throw new ApiError(400, "Video ID is required").send(res);
-  }
+  const { content } = req.body;
+  const userId = req.user?._id;
 
-  if (!mongoose.Types.ObjectId.isValid(userId)) {
-    throw new ApiError(400, "invalid User ID").send(res);
+  if (!userId) {
+    throw new ApiError(401, "Unauthorized Access");
+  }
+  if (!content || content.trim().length === 0) {
+    throw new ApiError(400, "Content is required");
   }
   if (!mongoose.Types.ObjectId.isValid(videoId)) {
-    throw new ApiError(400, "invalid Video ID").send(res);
-  }
-  if (parentComponent && !mongoose.Types.ObjectId.isValid(parentComponent)) {
-    throw new ApiError(400, "invalid Parent Comment ID").send(res);
+    throw new ApiError(400, "Invalid Video ID");
   }
 
   const comment = await Comment.create({
     video: videoId,
     owner: userId,
     content,
-    parentComment: parentComponent || null,
+    parentComment: null,
   });
+
   if (!comment) {
-    throw new ApiError(500, "Failed to add comment").send(res);
+    throw new ApiError(500, "Failed to add comment");
   }
-  return new ApiResponse(200, comment, "Comment added successfully").send(res);
+
+  const createdComment = await Comment.aggregate([
+    {
+      $match: {
+        _id: comment._id,
+      },
+    },
+    {
+      $lookup: {
+        from: "users",
+        localField: "owner",
+        foreignField: "_id",
+        as: "commentOwners",
+        pipeline: [
+          {
+            $project: {
+              fullName: 1,
+              username: 1,
+              avatar: 1,
+            },
+          },
+        ],
+      },
+    },
+    {
+      $addFields: {
+        replies: [],
+      },
+    },
+  ]);
+
+  return res
+    .status(201)
+    .json(
+      new ApiResponse(
+        201,
+        createdComment[0],
+        "Comment added successfully"
+      )
+    );
 });
 
 const addReplyToComment = asyncHandler(async (req, res) => {
-  // TODO: add a reply to a comment
   const { videoId, parentCommentId } = req.params;
   const { content } = req.body;
-  const userId = req.user._id;
-  if (!parentCommentId || !content.trim().length === "") {
-    throw new ApiError(400, "ParentCommentId and content is required").send(
-      res
-    );
+  const userId = req.user?._id;
+
+  if (!userId) {
+    throw new ApiError(401, "Unauthorized Access");
+  }
+  if (!content || content.trim().length === 0) {
+    throw new ApiError(400, "Content is required");
+  }
+  if (
+    !mongoose.Types.ObjectId.isValid(videoId) ||
+    !mongoose.Types.ObjectId.isValid(parentCommentId)
+  ) {
+    throw new ApiError(400, "Invalid Video ID or Parent Comment ID");
   }
 
   const comment = await Comment.create({
@@ -171,9 +211,44 @@ const addReplyToComment = asyncHandler(async (req, res) => {
     parentComment: parentCommentId,
   });
 
+  if (!comment) {
+    throw new ApiError(500, "Failed to add reply");
+  }
+
+  const createdReply = await Comment.aggregate([
+    {
+      $match: {
+        _id: comment._id,
+      },
+    },
+    {
+      $lookup: {
+        from: "users",
+        localField: "owner",
+        foreignField: "_id",
+        as: "replyOwners",
+        pipeline: [
+          {
+            $project: {
+              fullName: 1,
+              username: 1,
+              avatar: 1,
+            },
+          },
+        ],
+      },
+    },
+  ]);
+
   res
     .status(201)
-    .json(new ApiResponse(200, comment, "Comment added successfully"));
+    .json(
+      new ApiResponse(
+        201,
+        createdReply[0],
+        "Reply added successfully"
+      )
+    );
 });
 
 const updateComment = asyncHandler(async (req, res) => {
@@ -198,9 +273,11 @@ const updateComment = asyncHandler(async (req, res) => {
   }
   comment.content = content;
   await comment.save({ valideBeforeSave: false });
-  return new ApiResponse(200, comment, "Comment updated successfully").send(
-    res
-  );
+  return new ApiResponse(
+    200,
+    comment,
+    "Comment updated successfully"
+  ).send(res);
 });
 const deleteCommentAndReplies = async (commentId) => {
   const comment = await Comment.findById(commentId);
@@ -232,10 +309,11 @@ const deleteComment = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Comment not found").send(res);
   }
   await deleteCommentAndReplies(commentId);
-  return new ApiResponse(200, comment, "Comment deleted successfully").send(
-    res
-  );
-
+  return new ApiResponse(
+    200,
+    comment,
+    "Comment deleted successfully"
+  ).send(res);
 });
 
 export {

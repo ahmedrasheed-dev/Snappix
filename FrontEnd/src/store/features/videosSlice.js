@@ -41,7 +41,6 @@ const videosSlice = createSlice({
     });
     builder.addCase(fetchRelatedVideos.fulfilled, (state, action) => {
       state.status = "succeeded";
-      console.log("action.payload: ", action.payload);
       state.relatedVideos = action.payload;
       state.error = null;
     });
