@@ -21,7 +21,7 @@ export const fetchUserPlaylists = createAsyncThunk(
       } catch (error) {
         return rejectWithValue(
           "Error fetching user playlists:",
-          error
+          error?.data?.message
         );
       }
     }

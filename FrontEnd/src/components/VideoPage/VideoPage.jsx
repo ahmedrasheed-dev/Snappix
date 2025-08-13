@@ -18,6 +18,7 @@ import {
 } from "@/store/features/videoSlice";
 import VideoInfo from "./VideoInfo";
 import RelatedVideos from "./RelatedVideos";
+import SubscribeButton from "./SubscribeButton";
 
 const VideoPage = () => {
 
@@ -56,6 +57,7 @@ const VideoPage = () => {
     setIsVideoVertical(videoWidth < videoHeight);
   };
 
+  const handleSubscribe = ()=>{}
 
 
   if (videoStatus === "loading" || !video) {
@@ -185,9 +187,8 @@ const VideoPage = () => {
                     100K subscribers
                   </p>
                 </div>
-                <Button className="bg-pink-600 hover:bg-pink-700 text-white">
-                  Subscribe
-                </Button>
+                {video?.owner?._id && <SubscribeButton channelUsername={video?.owner?.username}
+                channelId={video?.owner?._id}/>}
               </div>
 
               {/* Description */}

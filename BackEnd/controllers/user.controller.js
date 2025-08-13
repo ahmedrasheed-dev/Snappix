@@ -600,6 +600,7 @@ const updateCoverImage = asyncHandler(async (req, res) => {
     );
 });
 
+
 const getUserChannelProfile = asyncHandler(async (req, res) => {
   const { username } = req.params;
 
@@ -641,7 +642,7 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
         },
         isSubscribed: {
           $cond: {
-            if: { $in: [req.user._id, "$subscribers.subscriber"] },
+            if: req.user && req.user._id ? { $in: [req.user._id, "$subscribers.subscriber"] } : false,
             then: true,
             else: false,
           },
@@ -652,7 +653,7 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
       $project: {
         fullName: 1,
         username: 1,
-        subscribersCount: 1,
+        subscriberCount: 1,
         channelsSubscribedToCount: 1,
         isSubscribed: 1,
         avatar: 1,
