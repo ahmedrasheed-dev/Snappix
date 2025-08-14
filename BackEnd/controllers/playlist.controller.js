@@ -2,19 +2,12 @@ import asyncHandler from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { Playlist } from "../models/playlist.model.js";
-import { isValidObjectId } from "mongoose";
 import { User } from "../models/user.model.js";
 import mongoose from "mongoose";
 import aggregatePaginate from "mongoose-aggregate-paginate-v2";
 
 const createPlaylist = asyncHandler(async (req, res) => {
   const { name, description, isPublic } = req.body;
-
-  if (!name || !description) {
-    throw new ApiError(400, "Name and description are required").send(
-      res
-    );
-  }
 
   const playlist = await Playlist.create({
     name,
@@ -23,34 +16,20 @@ const createPlaylist = asyncHandler(async (req, res) => {
     owner: req.user._id,
   });
 
-  if (!playlist) {
-    throw new ApiError(
-      400,
-      "Something went wrong while creating playlist"
-    ).send(res);
-  }
-
-  return new ApiResponse(
-    200,
-    playlist,
-    "Playlist created successfully"
-  ).send(res);
+  return new ApiResponse(200, playlist, "Playlist created successfully").send(res);
 });
 
 const getUserPlaylists = asyncHandler(async (req, res) => {
   const { page = 1, limit = 10, visibility } = req.query;
   const { userID } = req.params;
 
-  if (!userID.toString() === req.user._id.toString()) {
-    throw new ApiError(401, "Unauthorized Access").send(res);
+  if (userID.toString() !== req.user._id.toString()) {
+    throw new ApiError(401, "Unauthorized Access");
   }
-  const matchQuery = {
-    owner: new mongoose.Types.ObjectId(req.user._id),
-  };
+
+  const matchQuery = { owner: new mongoose.Types.ObjectId(req.user._id) };
   if (visibility === "public") matchQuery.isPublic = true;
   if (visibility === "private") matchQuery.isPublic = false;
-
-  const options = { page, limit };
 
   const pipeline = [
     { $match: matchQuery },
@@ -62,9 +41,7 @@ const getUserPlaylists = asyncHandler(async (req, res) => {
         as: "videos",
       },
     },
-    {
-      $unwind: { path: "$videos", preserveNullAndEmptyArrays: true },
-    },
+    { $unwind: { path: "$videos", preserveNullAndEmptyArrays: true } },
     {
       $lookup: {
         from: "users",
@@ -73,12 +50,7 @@ const getUserPlaylists = asyncHandler(async (req, res) => {
         as: "videos.ownerInfo",
       },
     },
-    {
-      $unwind: {
-        path: "$videos.ownerInfo",
-        preserveNullAndEmptyArrays: true,
-      },
-    },
+    { $unwind: { path: "$videos.ownerInfo", preserveNullAndEmptyArrays: true } },
     {
       $group: {
         _id: "$_id",
@@ -105,75 +77,45 @@ const getUserPlaylists = asyncHandler(async (req, res) => {
     {
       $addFields: {
         videoCount: { $size: "$videos" },
-        totalViews: {
-          $sum: {
-            $map: {
-              input: "$videos",
-              as: "v",
-              in: "$$v.views",
-            },
-          },
-        },
+        totalViews: { $sum: "$videos.views" },
       },
     },
   ];
 
-  const playlists = await Playlist.aggregatePaginate(
-    pipeline,
-    options
-  );
-  if (!playlists || playlists.docs.length === 0) {
+  const playlists = await Playlist.aggregatePaginate(pipeline, { page, limit });
+
+  if (!playlists.docs.length) {
     throw new ApiError(404, "Playlists not found for this user.");
   }
 
-  return new ApiResponse(
-    200,
-    playlists,
-    "Playlists fetched successfully"
-  ).send(res);
+  return new ApiResponse(200, playlists, "Playlists fetched successfully").send(res);
 });
 
 const getChannelPlaylists = asyncHandler(async (req, res) => {
   const { username } = req.params;
   const { page = 1, limit = 10 } = req.query;
 
-  if (!username) {
-    throw new ApiError(400, "Channel username is required").send(res);
-  }
-
-  // Find channel ID
   const user = await User.findOne({ username }).select("_id");
-  if (!user) {
-    throw new ApiError(404, "Channel not found").send(res);
-  }
-  const channelId = user._id;
+  if (!user) throw new ApiError(404, "Channel not found");
 
-  // Build match stage
+  const channelId = user._id;
   let matchStage = { owner: channelId };
   if (!req.user || req.user._id.toString() !== channelId.toString()) {
     matchStage.isPublic = true;
   }
 
-  const options = { page: Number(page), limit: Number(limit) };
-
   const pipeline = [
     { $match: matchStage },
-
-    // Lookup owner
     {
       $lookup: {
         from: "users",
         localField: "owner",
         foreignField: "_id",
         as: "owner",
-        pipeline: [
-          { $project: { fullName: 1, username: 1, avatar: 1 } },
-        ],
+        pipeline: [{ $project: { fullName: 1, username: 1, avatar: 1 } }],
       },
     },
     { $unwind: "$owner" },
-
-    // Lookup videos
     {
       $lookup: {
         from: "videos",
@@ -187,219 +129,106 @@ const getChannelPlaylists = asyncHandler(async (req, res) => {
               localField: "owner",
               foreignField: "_id",
               as: "owner",
-              pipeline: [
-                { $project: { fullName: 1, username: 1, avatar: 1 } },
-              ],
+              pipeline: [{ $project: { fullName: 1, username: 1, avatar: 1 } }],
             },
           },
           { $unwind: "$owner" },
-          {
-            $project: { title: 1, views: 1, owner: 1, thumbnail: 1 },
-          },
+          { $project: { title: 1, views: 1, owner: 1, thumbnail: 1 } },
         ],
       },
     },
-
-    // Add computed fields
     {
       $addFields: {
         videoCount: { $size: "$videos" },
-        totalViews: {
-          $sum: {
-            $map: {
-              input: "$videos",
-              as: "v",
-              in: { $ifNull: ["$$v.views", 0] },
-            },
-          },
-        },
+        totalViews: { $sum: "$videos.views" },
       },
     },
-
     { $sort: { createdAt: -1 } },
   ];
 
-  const playlists = await Playlist.aggregatePaginate(
-    Playlist.aggregate(pipeline),
-    options
-  );
+  const playlists = await Playlist.aggregatePaginate(Playlist.aggregate(pipeline), {
+    page: Number(page),
+    limit: Number(limit),
+  });
 
-  if (!playlists || playlists.docs.length === 0) {
-    return new ApiResponse(200, [], "No playlists found").send(res);
-  }
-
-  return new ApiResponse(
-    200,
-    playlists,
-    "Channel playlists fetched successfully"
-  ).send(res);
+  return new ApiResponse(200, playlists, "Channel playlists fetched successfully").send(res);
 });
 
 const getPlaylistById = asyncHandler(async (req, res) => {
   const { playlistId } = req.params;
-  //TODO: get playlist by id
-  if (!isValidObjectId(playlistId)) {
-    throw new ApiError(
-      400,
-      "Playlist id is required and must be valid"
-    ).send(res);
-  }
   const playlist = await Playlist.findById(playlistId);
-  if (!playlist) {
-    throw new ApiError(404, "Playlist not found").send(res);
-  }
-  return new ApiResponse(
-    200,
-    playlist,
-    "Playlist fetched successfully"
-  ).send(res);
+  if (!playlist) throw new ApiError(404, "Playlist not found");
+
+  return new ApiResponse(200, playlist, "Playlist fetched successfully").send(res);
 });
 
 const addVideoToPlaylist = asyncHandler(async (req, res) => {
   const { playlistId, videoId } = req.params;
-  // TODO: add video to playlist
-  if (
-    !videoId ||
-    !playlistId ||
-    !isValidObjectId(videoId) ||
-    !isValidObjectId(playlistId)
-  ) {
-    throw new ApiError(
-      400,
-      "Video id and playlist id is required and must be valid"
-    ).send(res);
-  }
 
   const playlist = await Playlist.findById(playlistId);
-  const alreadyExists = playlist?.videos?.includes(videoId);
-  if (alreadyExists) {
-    throw new ApiError(409, "Video already in playlist").send(res);
+  if (!playlist) throw new ApiError(404, "Playlist not found");
+
+  if (playlist.videos.includes(videoId)) {
+    throw new ApiError(409, "Video already in playlist");
   }
-  if (!playlist) {
-    throw new ApiError(404, "Playlist not found").send(res);
-  }
+
   playlist.videos.push(videoId);
   await playlist.save({ validateBeforeSave: false });
-  return new ApiResponse(
-    200,
-    playlist,
-    "Video added to playlist"
-  ).send(res);
+
+  return new ApiResponse(200, playlist, "Video added to playlist").send(res);
 });
 
 const removeVideoFromPlaylist = asyncHandler(async (req, res) => {
   const { playlistId, videoId } = req.params;
-  // TODO: remove video from playlist
-  if (
-    !videoId ||
-    !playlistId ||
-    !isValidObjectId(videoId) ||
-    !isValidObjectId(playlistId)
-  ) {
-    throw new ApiError(
-      400,
-      "Video id and playlist id is required and must be valid"
-    ).send(res);
-  }
 
   const playlist = await Playlist.findById(playlistId);
-  if (!playlist) {
-    throw new ApiError(404, "Playlist not found").send(res);
-  }
+  if (!playlist) throw new ApiError(404, "Playlist not found");
+
   const initialLength = playlist.videos.length;
   playlist.videos.pull(videoId);
 
   if (playlist.videos.length === initialLength) {
-    return new ApiResponse(
-      200,
-      playlist,
-      "Video was not in the playlist"
-    ).send(res);
+    return new ApiResponse(200, playlist, "Video was not in the playlist").send(res);
   }
 
   await playlist.save({ validateBeforeSave: false });
-  return new ApiResponse(
-    200,
-    playlist,
-    "Video removed from playlist"
-  ).send(res);
+  return new ApiResponse(200, playlist, "Video removed from playlist").send(res);
 });
 
 const deletePlaylist = asyncHandler(async (req, res) => {
   const { playlistId } = req.params;
-  // TODO: delete playlist
-  if (!isValidObjectId(playlistId)) {
-    throw new ApiError(
-      400,
-      "Playlist id is required and must be valid"
-    ).send(res);
-  }
+
   const playlist = await Playlist.findByIdAndDelete(playlistId);
-  if (!playlist) {
-    throw new ApiError(404, "Playlist not found").send(res);
-  }
-  return new ApiResponse(
-    200,
-    playlist,
-    "Playlist deleted successfully"
-  ).send(res);
+  if (!playlist) throw new ApiError(404, "Playlist not found");
+
+  return new ApiResponse(200, playlist, "Playlist deleted successfully").send(res);
 });
 
 const updatePlaylist = asyncHandler(async (req, res) => {
   const { playlistId } = req.params;
   const { name, description, isPublic } = req.body;
 
-  if (!isValidObjectId(playlistId)) {
-    throw new ApiError(
-      400,
-      "Playlist id is required and must be valid"
-    ).send(res);
-  }
-
   const playlist = await Playlist.findById(playlistId);
-  if (!playlist) {
-    throw new ApiError(404, "Playlist not found").send(res);
-  }
+  if (!playlist) throw new ApiError(404, "Playlist not found");
 
   if (name) playlist.name = name;
   if (description) playlist.description = description;
   if (typeof isPublic === "boolean") playlist.isPublic = isPublic;
 
   await playlist.save({ validateBeforeSave: false });
-
-  return new ApiResponse(
-    200,
-    playlist,
-    "Playlist updated successfully"
-  ).send(res);
+  return new ApiResponse(200, playlist, "Playlist updated successfully").send(res);
 });
+
 const getPlaylistsByVideoId = asyncHandler(async (req, res) => {
   const { videoId } = req.params;
-  if (!isValidObjectId(videoId)) {
-    throw new ApiError(
-      400,
-      "Video id is required and must be valid"
-    ).send(res);
-  }
 
   let query = { videos: videoId };
   if (!req.user) query.isPublic = true;
 
   const playlists = await Playlist.find(query);
-  if (!playlists || playlists.length === 0) {
-    return new ApiResponse(
-      200,
-      [],
-      "No playlists found for this video"
-    ).send(res);
-  }
-
-  return new ApiResponse(
-    200,
-    playlists,
-    "Playlists fetched successfully"
-  ).send(res);
+  return new ApiResponse(200, playlists, "Playlists fetched successfully").send(res);
 });
+
 export {
   createPlaylist,
   getUserPlaylists,
