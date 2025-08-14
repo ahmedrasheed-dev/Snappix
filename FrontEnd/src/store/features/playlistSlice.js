@@ -32,8 +32,7 @@ export const createPlaylist = createAsyncThunk(
     try {
       const response = await axiosInstance.post(
         `/playlists/`,
-        { name, description },
-        { withCredentials: true }
+        { name, description }
       );
       return response.data.data;
     } catch (error) {

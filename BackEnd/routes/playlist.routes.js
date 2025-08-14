@@ -13,8 +13,9 @@ import {
 } from "../controllers/playlist.controller.js";
 import { verifyJWTOptional } from "../middlewares/verifyJWTOptonal.js";
 const router = Router();
-
+// users playlist which are private
 router.get("/:userID", verifyJWT, getUserPlaylists);
+// pulbic playlists of anyone
 router.get("/channel/:username", verifyJWTOptional, getChannelPlaylists);
 
 router.get("/:playlistId", verifyJWT, getPlaylistById);
