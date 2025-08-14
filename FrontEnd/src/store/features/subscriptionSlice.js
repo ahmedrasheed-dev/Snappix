@@ -53,14 +53,12 @@ export const toggleSubscription = createAsyncThunk(
 
     try {
       const response = await axiosInstance.post(
-        `/subscriptions/toggle/${channelId}`,
-        {},
-        { withCredentials: true }
+        `/subscriptions/toggle/${channelId}`
       );
       return response.data.data;
     } catch (error) {
       return rejectWithValue(
-        error.response?.data?.message ||
+        error.response.data.message ||
           "Failed to toggle subscription."
       );
     }

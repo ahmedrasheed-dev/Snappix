@@ -23,7 +23,7 @@ const Sidebar = () => {
         <div className="flex flex-col gap-4">
           <SidebarItem to="/" icon={Homeicon} text="Home" />
           <SidebarItem
-            to={`/profile/`}
+            to={`/channel/${user?.username}`}
             icon={Profileicon}
             text="Profile"
           />

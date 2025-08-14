@@ -69,7 +69,10 @@ const commentsSlice = createSlice({
       })
       .addCase(fetchComments.fulfilled, (state, action) => {
         state.status = "succeeded";
-        state.comments = action.payload;
+        state.comments = action.payload.map((c) => ({
+          ...c,
+          commentOwners: c.commentOwners?.[0] || {},
+        }));
         state.error = null;
       })
       .addCase(fetchComments.rejected, (state, action) => {
@@ -80,9 +83,14 @@ const commentsSlice = createSlice({
         state.status = "loading";
       })
       .addCase(addCommentToVideo.fulfilled, (state, action) => {
-        state.status = "succeeded";
-        state.comments.unshift(action.payload);
+        const comment = {
+          ...action.payload,
+          commentOwners: action.payload.commentOwners?.[0] || {},
+        };
+
+        state.comments.unshift(comment);
         state.error = null;
+        state.status = "succeeded";
       })
       .addCase(addCommentToVideo.rejected, (state, action) => {
         state.status = "failed";

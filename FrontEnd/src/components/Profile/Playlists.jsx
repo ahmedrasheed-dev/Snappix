@@ -6,6 +6,7 @@ const Playlists = ({ playlists }) => {
     return <p className="text-gray-400">No playlists found.</p>;
   }
 
+  {console.log("playlists",playlists)}
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
       {playlists.map((playlist) => (
@@ -15,7 +16,7 @@ const Playlists = ({ playlists }) => {
           className="group relative block w-full aspect-video rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-transform transform hover:-translate-y-1"
         >
           <img
-            src={playlist.thumbnail}
+            src={playlist.thumbnail || playlist.videos[0]?.thumbnail}
             alt={playlist.name}
             className="w-full h-full object-cover transition-transform group-hover:scale-105"
           />

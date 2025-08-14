@@ -27,6 +27,8 @@ const SubscribeButton = ({ channelUsername, channelId }) => {
     }
 
     try {
+      console.log("inSubToggle:");
+
       const resultAction = await dispatch(toggleSubscription(channelId)).unwrap();
       if (resultAction.subscribed) {
         notifySuccess("Subscribed successfully!");
@@ -53,7 +55,6 @@ const SubscribeButton = ({ channelUsername, channelId }) => {
       >
         {status === 'loading' ? 'Loading...' : buttonText}
       </button>
-      {error && <p className="text-red-500 text-xs">{error}</p>}
     </div>
   );
 };

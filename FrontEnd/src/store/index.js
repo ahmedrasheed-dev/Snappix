@@ -5,6 +5,7 @@ import videosReducer from "./features/videosSlice";
 import playlistReducer from "./features/playlistSlice";
 import commentReducer from "./features/commentSlice";
 import subscriptionReducer from "./features/subscriptionSlice";
+import channelReducers from "./features/channelSlice";
 import { setReduxStore } from "@/api/axios";
 export const store = configureStore({
   reducer: {
@@ -14,6 +15,7 @@ export const store = configureStore({
     playlists: playlistReducer,
     comments: commentReducer,
     subscription: subscriptionReducer,
+    channel: channelReducers,
   },
 });
 setReduxStore(store);

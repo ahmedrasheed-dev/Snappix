@@ -9,11 +9,14 @@ import {
   deletePlaylist,
   updatePlaylist,
   getPlaylistsByVideoId,
+  getChannelPlaylists
 } from "../controllers/playlist.controller.js";
-
+import { verifyJWTOptional } from "../middlewares/verifyJWTOptonal.js";
 const router = Router();
 
-router.get("/", verifyJWT, getUserPlaylists);
+router.get("/:userID", verifyJWT, getUserPlaylists);
+router.get("/channel/:username", verifyJWTOptional, getChannelPlaylists);
+
 router.get("/:playlistId", verifyJWT, getPlaylistById);
 router.get("/video/:videoId/", getPlaylistsByVideoId);
 router.post("/", verifyJWT, createPlaylist);

@@ -10,22 +10,19 @@ const initialState = {
 
 export const fetchUserPlaylists = createAsyncThunk(
   "playlist/fetchUserPlaylists",
-  async (_, { getState, rejectWithValue }) => {
-    console.log("Fetching user playlists...");
-    
-      try {
-        const response = await axiosInstance.get(`/playlists/`);
-        // evene not this in console
-        console.log("playlists: ", response.data.data.docs);
-        return response.data.data.docs;
-      } catch (error) {
-        return rejectWithValue(
-          error.response?.data?.message ||
-            error.message ||
-            "Error fetching user playlists."
-        );
-      }
-    
+  async (userID, { getState, rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.get(
+        `/playlists/${userID}`
+      );
+      return response.data.data.docs;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message ||
+          error.message ||
+          "Error fetching user playlists."
+      );
+    }
   }
 );
 

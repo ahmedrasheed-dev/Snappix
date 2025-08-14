@@ -28,6 +28,8 @@ router.post(
 
 router.post("/login", login);
 router.get("/suggestions", getSearchSuggestions);
+router.get("/c/:username", getUserChannelProfile);
+
 
 //secured routes
 router.post("/logout", verifyJWT, logout);
@@ -50,7 +52,6 @@ router.post(
   updateCoverImage
 );
 
-router.get("/c/:username", verifyJWT, getUserChannelProfile);
 
 router.get("/watch-history", verifyJWT, getWatchHistory);
 

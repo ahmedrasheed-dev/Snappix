@@ -2,8 +2,9 @@ import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
+import {errorHandler} from "./middlewares/errorHandler.middleware.js";
 dotenv.config({
-  path: "./.env", // Make sure this path is correct
+  path: "./.env",
 });
 const app = express();
 app.use(
@@ -36,4 +37,7 @@ app.use("/api/v1/playlists", playlistRouter);
 app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/subscriptions", subscriptionRouter);
 
+
+
+app.use(errorHandler);
 export default app;

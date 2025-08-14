@@ -9,35 +9,9 @@ import { formatTimeAgo } from "../../utils/VideoUtils";
 import { Textarea } from "@/components/ui/textarea";
 import { addReplyToComment } from "../../store/features/commentSlice.js";
 import { useDispatch, useSelector } from "react-redux";
-import { toast, Bounce } from "react-toastify";
+import { notifyError, notifySuccess } from "@/utils/toasts";
 
 const CommentNested = ({ comment, videoId }) => {
-  const notifySuccess = (success) => {
-    toast.success(success, {
-      position: "top-right",
-      autoClose: 5000,
-      hideProgressBar: false,
-      closeOnClick: false,
-      pauseOnHover: true,
-      draggable: true,
-      progress: undefined,
-      theme: "colored",
-      transition: Bounce,
-    });
-  };
-  const notifyError = (error) => {
-    toast.error(error, {
-      position: "top-right",
-      autoClose: 5000,
-      hideProgressBar: false,
-      closeOnClick: false,
-      pauseOnHover: true,
-      draggable: true,
-      progress: undefined,
-      theme: "colored",
-      transition: Bounce,
-    });
-  };
   const { isLoggedIn } = useSelector((state) => state.user);
 
   const dispatch = useDispatch();

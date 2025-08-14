@@ -24,8 +24,9 @@ const VideoPage = () => {
     status: videoStatus,
     error: videoError,
   } = useSelector((state) => state.video);
-  const { subscriberCount, status, error } =
-    useSelector((state) => state.subscription);
+  const { subscriberCount, status, error } = useSelector(
+    (state) => state.subscription
+  );
 
   const isLoggedIn = useSelector((state) => state.user.isLoggedIn);
   const user = useSelector((state) => state.user.user);
@@ -173,14 +174,16 @@ const VideoPage = () => {
                     {video?.owner?.username?.charAt(0)}
                   </AvatarFallback>
                 </Avatar>
-                <div className="flex-1">
+                <Link to={`/channel/${video?.owner?.username}`} className="flex-1 hover:underline underline-offset-1 decoration-blue-400"
+                >
                   <h2 className="text-lg font-semibold text-pink-500">
                     {video?.owner?.username}
                   </h2>
                   <p className="text-sm text-gray-400">
                     {subscriberCount} subscribers
                   </p>
-                </div>
+                </Link>
+
                 {video?.owner?._id && (
                   <SubscribeButton
                     channelUsername={video?.owner?.username}

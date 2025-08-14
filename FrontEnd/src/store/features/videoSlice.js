@@ -56,7 +56,7 @@ export const getVideoData = createAsyncThunk(
         axiosInstance.get(`/videos/${videoId}`),
         axiosInstance.get(`/likes/v/likes/${videoId}`),
       ]);
-
+      console.log("Video data and likes count fetched:", videoRes.data.data, allLikesRes.data.data);
       axiosInstance.patch(`/videos/${videoId}/views`);
 
       let isLiked = false;

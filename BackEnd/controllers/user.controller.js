@@ -497,25 +497,25 @@ const changePassword = asyncHandler(async (req, res) => {
 
 const updateProfile = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user._id);
-  const { fullName, email } = req.body;
-  if (!fullName || !email) {
+  const { username, fullName } = req.body;
+  if (!fullName || !username) {
     throw new ApiError(400, "Full name and email are required").send(
       res
     );
   }
 
-  if (email === user.email) {
+  if (username === user.username) {
     throw new ApiError(
       400,
-      "Email cannot be same as previous email"
+      "Username cannot be same as previous email"
     ).send(res);
   }
-  const existingUser = await User.findOne({ email });
+  const existingUser = await User.findOne({ username });
   if (existingUser) {
-    throw new ApiError(400, "Email already in use").send(res);
+    throw new ApiError(400, "Username already in use");
   }
   user.fullName = fullName;
-  user.email = email;
+  user.username = username;
   user.save({ validateBeforeSave: false }, { new: true });
   const responseUser = await User.findById(user._id).select(
     "-password -refreshToken"

@@ -52,14 +52,10 @@ const VideoInfo = () => {
     useState("");
 
   useEffect(() => {
-    // Dispatch fetchUserPlaylists only when:
-    // 1. The user authentication status has been *determined* (succeeded or failed, not 'idle' or 'loading')
-    // 2. The user is actually logged in.
-    // 3. The user object and its _id are available.
-    if (userStatus === "succeeded" && isLoggedIn && user?._id) {
-      dispatch(fetchUserPlaylists());
+    if (user?.username) {
+      dispatch(fetchUserPlaylists(user?._id));
     }
-  }, [userStatus, isLoggedIn, user, dispatch]); 
+  }, [dispatch, user]);
 
   const handleLike = () => {
     setLikeDisabled(true);
@@ -174,7 +170,7 @@ const VideoInfo = () => {
                 title="Add to Playlist"
                 variant="ghost"
                 onClick={openPlaylistDialog}
-                className={`flex items-center gap-2 text-white hover:text-pink transition-colors `}
+                className={`flex items-center gap-2 text-white hover:text-pink transition-colors`}
               >
                 <span>
                   {totalPlaylistsWithVideo > 0 ? (

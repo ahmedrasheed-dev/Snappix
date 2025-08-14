@@ -3,28 +3,33 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { Playlist } from "../models/playlist.model.js";
 import { isValidObjectId } from "mongoose";
+import { User } from "../models/user.model.js";
 import mongoose from "mongoose";
 import aggregatePaginate from "mongoose-aggregate-paginate-v2";
 
 const createPlaylist = asyncHandler(async (req, res) => {
-  const { name, description } = req.body;
-  //TODO: create playlist
+  const { name, description, isPublic } = req.body;
+
   if (!name || !description) {
-    throw new ApiError(400, "Name and description is required").send(
+    throw new ApiError(400, "Name and description are required").send(
       res
     );
   }
+
   const playlist = await Playlist.create({
     name,
     description,
+    isPublic: typeof isPublic === "boolean" ? isPublic : true,
     owner: req.user._id,
   });
+
   if (!playlist) {
     throw new ApiError(
       400,
       "Something went wrong while creating playlist"
     ).send(res);
   }
+
   return new ApiResponse(
     200,
     playlist,
@@ -33,27 +38,22 @@ const createPlaylist = asyncHandler(async (req, res) => {
 });
 
 const getUserPlaylists = asyncHandler(async (req, res) => {
-  
-  const {page = 1, limit = 10 } = req.params;
-  //TODO: get user playlists
+  const { page = 1, limit = 10, visibility } = req.query;
+  const { userID } = req.params;
 
-  const userId = req.user._id;
-  if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
-    throw new ApiError(400, "Invalid userId provided.");
+  if (!userID.toString() === req.user._id.toString()) {
+    throw new ApiError(401, "Unauthorized Access").send(res);
   }
-
-  const options = {
-    page,
-    limit,
+  const matchQuery = {
+    owner: new mongoose.Types.ObjectId(req.user._id),
   };
-  const user = req.user;
+  if (visibility === "public") matchQuery.isPublic = true;
+  if (visibility === "private") matchQuery.isPublic = false;
+
+  const options = { page, limit };
 
   const pipeline = [
-    {
-      $match: {
-        owner: new mongoose.Types.ObjectId(userId),
-      },
-    },
+    { $match: matchQuery },
     {
       $lookup: {
         from: "videos",
@@ -63,10 +63,7 @@ const getUserPlaylists = asyncHandler(async (req, res) => {
       },
     },
     {
-      $unwind: {
-        path: "$videos",
-        preserveNullAndEmptyArrays: true,
-      },
+      $unwind: { path: "$videos", preserveNullAndEmptyArrays: true },
     },
     {
       $lookup: {
@@ -87,6 +84,7 @@ const getUserPlaylists = asyncHandler(async (req, res) => {
         _id: "$_id",
         name: { $first: "$name" },
         description: { $first: "$description" },
+        isPublic: { $first: "$isPublic" },
         createdAt: { $first: "$createdAt" },
         updatedAt: { $first: "$updatedAt" },
         videos: {
@@ -119,6 +117,7 @@ const getUserPlaylists = asyncHandler(async (req, res) => {
       },
     },
   ];
+
   const playlists = await Playlist.aggregatePaginate(
     pipeline,
     options
@@ -126,10 +125,113 @@ const getUserPlaylists = asyncHandler(async (req, res) => {
   if (!playlists || playlists.docs.length === 0) {
     throw new ApiError(404, "Playlists not found for this user.");
   }
+
   return new ApiResponse(
     200,
     playlists,
     "Playlists fetched successfully"
+  ).send(res);
+});
+
+const getChannelPlaylists = asyncHandler(async (req, res) => {
+  const { username } = req.params;
+  const { page = 1, limit = 10 } = req.query;
+
+  if (!username) {
+    throw new ApiError(400, "Channel username is required").send(res);
+  }
+
+  // Find channel ID
+  const user = await User.findOne({ username }).select("_id");
+  if (!user) {
+    throw new ApiError(404, "Channel not found").send(res);
+  }
+  const channelId = user._id;
+
+  // Build match stage
+  let matchStage = { owner: channelId };
+  if (!req.user || req.user._id.toString() !== channelId.toString()) {
+    matchStage.isPublic = true;
+  }
+
+  const options = { page: Number(page), limit: Number(limit) };
+
+  const pipeline = [
+    { $match: matchStage },
+
+    // Lookup owner
+    {
+      $lookup: {
+        from: "users",
+        localField: "owner",
+        foreignField: "_id",
+        as: "owner",
+        pipeline: [
+          { $project: { fullName: 1, username: 1, avatar: 1 } },
+        ],
+      },
+    },
+    { $unwind: "$owner" },
+
+    // Lookup videos
+    {
+      $lookup: {
+        from: "videos",
+        localField: "videos",
+        foreignField: "_id",
+        as: "videos",
+        pipeline: [
+          {
+            $lookup: {
+              from: "users",
+              localField: "owner",
+              foreignField: "_id",
+              as: "owner",
+              pipeline: [
+                { $project: { fullName: 1, username: 1, avatar: 1 } },
+              ],
+            },
+          },
+          { $unwind: "$owner" },
+          {
+            $project: { title: 1, views: 1, owner: 1, thumbnail: 1 },
+          },
+        ],
+      },
+    },
+
+    // Add computed fields
+    {
+      $addFields: {
+        videoCount: { $size: "$videos" },
+        totalViews: {
+          $sum: {
+            $map: {
+              input: "$videos",
+              as: "v",
+              in: { $ifNull: ["$$v.views", 0] },
+            },
+          },
+        },
+      },
+    },
+
+    { $sort: { createdAt: -1 } },
+  ];
+
+  const playlists = await Playlist.aggregatePaginate(
+    Playlist.aggregate(pipeline),
+    options
+  );
+
+  if (!playlists || playlists.docs.length === 0) {
+    return new ApiResponse(200, [], "No playlists found").send(res);
+  }
+
+  return new ApiResponse(
+    200,
+    playlists,
+    "Channel playlists fetched successfully"
   ).send(res);
 });
 
@@ -245,35 +347,34 @@ const deletePlaylist = asyncHandler(async (req, res) => {
 
 const updatePlaylist = asyncHandler(async (req, res) => {
   const { playlistId } = req.params;
-  const { name, description } = req.body;
-  //TODO: update playlist
+  const { name, description, isPublic } = req.body;
+
   if (!isValidObjectId(playlistId)) {
     throw new ApiError(
       400,
       "Playlist id is required and must be valid"
     ).send(res);
   }
+
   const playlist = await Playlist.findById(playlistId);
   if (!playlist) {
     throw new ApiError(404, "Playlist not found").send(res);
   }
-  if (name) {
-    playlist.name = name;
-  }
-  if (description) {
-    playlist.description = description;
-  }
+
+  if (name) playlist.name = name;
+  if (description) playlist.description = description;
+  if (typeof isPublic === "boolean") playlist.isPublic = isPublic;
+
   await playlist.save({ validateBeforeSave: false });
+
   return new ApiResponse(
     200,
     playlist,
     "Playlist updated successfully"
   ).send(res);
 });
-
 const getPlaylistsByVideoId = asyncHandler(async (req, res) => {
   const { videoId } = req.params;
-
   if (!isValidObjectId(videoId)) {
     throw new ApiError(
       400,
@@ -281,8 +382,10 @@ const getPlaylistsByVideoId = asyncHandler(async (req, res) => {
     ).send(res);
   }
 
-  const playlists = await Playlist.find({ videos: videoId });
+  let query = { videos: videoId };
+  if (!req.user) query.isPublic = true;
 
+  const playlists = await Playlist.find(query);
   if (!playlists || playlists.length === 0) {
     return new ApiResponse(
       200,
@@ -305,5 +408,6 @@ export {
   removeVideoFromPlaylist,
   deletePlaylist,
   updatePlaylist,
-  getPlaylistsByVideoId
+  getPlaylistsByVideoId,
+  getChannelPlaylists,
 };
