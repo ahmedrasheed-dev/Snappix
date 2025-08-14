@@ -27,6 +27,7 @@ import {
 
 const router = Router();
 
+/* ---------- PUBLIC ROUTES ---------- */
 router.post(
   "/register",
   upload.fields([
@@ -41,13 +42,18 @@ router.post(
 router.post("/login", loginValidator, validate, login);
 
 router.get("/suggestions", suggestionsValidator, validate, getSearchSuggestions);
+
 router.get("/c/:username", usernameParamValidator, validate, getUserChannelProfile);
 
-// secured routes
+/* ---------- AUTH ROUTES ---------- */
 router.post("/logout", verifyJWT, logout);
+
 router.post("/refresh-token", refreshToken);
+
 router.post("/change-password", verifyJWT, changePasswordValidator, validate, changePassword);
+
 router.post("/update-profile", verifyJWT, updateProfileValidator, validate, updateProfile);
+
 router.get("/profile", verifyJWT, getCurrentUser);
 
 router.post("/update-avatar", verifyJWT, upload.single("avatar"), updateAvatar);

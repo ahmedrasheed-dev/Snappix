@@ -6,13 +6,25 @@ import {
   updateVideo,
   deleteVideo,
   togglePublishStatus,
-  increaseVideoViews
+  increaseVideoViews,
 } from "../controllers/video.controller.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 import { upload } from "../middlewares/multer.middleware.js";
+import { validate } from "../middlewares/validateRequest.middleware.js";
+import {
+  publishVideoValidator,
+  videoIdParamValidator,
+  getAllVideosValidator,
+  updateVideoValidator,
+  togglePublishValidator,
+  increaseViewsValidator,
+  deleteVideoValidator,
+  getVideoByIdValidator,
+} from "../validators/video.validators.js";
 
 const router = Router();
 
+// Upload and publish a video
 router.post(
   "/upload",
   verifyJWT,
@@ -20,13 +32,40 @@ router.post(
     { name: "video", maxCount: 1 },
     { name: "thumbnail", maxCount: 1 },
   ]),
+  publishVideoValidator,
+  validate,
   publishAVideo
 );
 
-router.get("/", getAllVideos);
-router.get("/:videoId", getVideoById);
-router.patch("/:videoId/views", increaseVideoViews);
-router.patch("/:videoId", verifyJWT, upload.single("thumbnail"), updateVideo);
-router.delete("/:videoId", verifyJWT, deleteVideo);
-router.patch("/toggle-publish/:videoId", verifyJWT, togglePublishStatus);
+// Get all videos with filters, pagination, search
+router.get("/", getAllVideosValidator, validate, getAllVideos);
+
+// Get single video by ID
+router.get("/:videoId", getVideoByIdValidator, validate, getVideoById);
+
+// Increase video views
+router.patch("/:videoId/views", increaseViewsValidator, validate, increaseVideoViews);
+
+// Update video details (title, description, thumbnail)
+router.patch(
+  "/:videoId",
+  verifyJWT,
+  upload.single("thumbnail"),
+  updateVideoValidator,
+  validate,
+  updateVideo
+);
+
+// Delete video
+router.delete("/:videoId", verifyJWT, deleteVideoValidator, validate, deleteVideo);
+
+// Toggle publish status
+router.patch(
+  "/toggle-publish/:videoId",
+  verifyJWT,
+  togglePublishValidator,
+  validate,
+  togglePublishStatus
+);
+
 export default router;
