@@ -9,7 +9,7 @@ import {
   getCurrentUser,
   updateAvatar,
   updateCoverImage,
-  getUserChannelProfile,
+  getPublicChannelDetails,
   getWatchHistory,
   getSearchSuggestions,
 } from "../controllers/user.controller.js";
@@ -43,7 +43,7 @@ router.post("/login", loginValidator, validate, login);
 
 router.get("/suggestions", suggestionsValidator, validate, getSearchSuggestions);
 
-router.get("/c/:username", usernameParamValidator, validate, getUserChannelProfile);
+router.get("/c/:username",usernameParamValidator, validate, getPublicChannelDetails);
 
 /* ---------- AUTH ROUTES ---------- */
 router.post("/logout", verifyJWT, logout);

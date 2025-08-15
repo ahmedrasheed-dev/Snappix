@@ -190,8 +190,9 @@ export const updateCoverImage = asyncHandler(async (req, res) => {
 
 // ------------------- Public -------------------
 
-export const getUserChannelProfile = asyncHandler(async (req, res) => {
+export const getPublicChannelDetails = asyncHandler(async (req, res) => {
   const { username } = req.params;
+  
   const channel = await User.aggregate([
     { $match: { username: username.toLowerCase() } },
     {
@@ -213,8 +214,7 @@ export const getUserChannelProfile = asyncHandler(async (req, res) => {
     {
       $addFields: {
         subscriberCount: { $size: "$subscribers" },
-        channelsSubscribedToCount: { $size: "$subscribedTo" },
-        isSubscribed: req.user ? { $in: [req.user._id, "$subscribers.subscriber"] } : false,
+        channelsSubscribedToCount: { $size: "$subscribedTo" }
       },
     },
     {
@@ -223,7 +223,6 @@ export const getUserChannelProfile = asyncHandler(async (req, res) => {
         username: 1,
         subscriberCount: 1,
         channelsSubscribedToCount: 1,
-        isSubscribed: 1,
         avatar: 1,
         coverImage: 1,
         email: 1,

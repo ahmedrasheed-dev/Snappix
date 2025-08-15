@@ -80,4 +80,16 @@ const getSubscribedChannels = asyncHandler(async (req, res) => {
   return new ApiResponse(200, subscribedChannels, "Subscribed channels fetched successfully").send(res);
 });
 
+export const getSubscriptionStatus = asyncHandler(async (req, res) => {
+  const { channelId } = req.params;
+  const viewerId = req.user._id;
+
+  const exists = await Subscription.exists({
+    channel: channelId,
+    subscriber: viewerId
+  });
+
+  return new ApiResponse(200, { isSubscribed: !!exists }, "Subscription status fetched").send(res);
+});
+
 export { toggleSubscription, getUserChannelSubscribers, getSubscribedChannels };

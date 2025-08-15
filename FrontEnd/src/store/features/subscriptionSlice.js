@@ -11,7 +11,7 @@ const initialState = {
 
 export const fetchSubscriptionStatus = createAsyncThunk(
   "subscription/fetchSubscriptionStatus",
-  async (channelUsername, { getState, rejectWithValue }) => {
+  async (channelId, { getState, rejectWithValue }) => {
     try {
       const state = getState();
       const isLoggedIn = state.user.isLoggedIn;
@@ -19,14 +19,10 @@ export const fetchSubscriptionStatus = createAsyncThunk(
       if (!isLoggedIn) {
         return { isSubscribed: false, subscriberCount: 0 };
       }
-      const response = await axiosInstance.get(
-        `/users/c/${channelUsername}`,
-        {
-          withCredentials: true,
-        }
-      );
+      const response = await axiosInstance.get(`subscriptions/status/${channelId}`);
 
       const channelData = response.data.data;
+
       return {
         isSubscribed: channelData.isSubscribed,
         subscriberCount: channelData.subscriberCount || 0,
@@ -34,8 +30,7 @@ export const fetchSubscriptionStatus = createAsyncThunk(
     } catch (error) {
       console.error("Error fetching subscription status:", error);
       return rejectWithValue(
-        error.response?.data?.message ||
-          "Failed to fetch subscription status."
+        error.response?.data?.message || "Failed to fetch subscription status."
       );
     }
   }
@@ -52,15 +47,10 @@ export const toggleSubscription = createAsyncThunk(
     }
 
     try {
-      const response = await axiosInstance.post(
-        `/subscriptions/toggle/${channelId}`
-      );
+      const response = await axiosInstance.post(`/subscriptions/toggle/${channelId}`);
       return response.data.data;
     } catch (error) {
-      return rejectWithValue(
-        error.response.data.message ||
-          "Failed to toggle subscription."
-      );
+      return rejectWithValue(error.response.data.message || "Failed to toggle subscription.");
     }
   }
 );
@@ -96,7 +86,8 @@ const subscriptionSlice = createSlice({
       .addCase(toggleSubscription.fulfilled, (state, action) => {
         state.status = "succeeded";
         state.isSubscribed = action.payload.subscribed;
-        state.subscriberCount += action.payload.subscribed ? 1 : -1;
+        const delta = action.payload.subscribed ? 1 : -1;
+        state.subscriberCount = Math.max(0, state.subscriberCount + delta)
         state.error = null;
       })
       .addCase(toggleSubscription.rejected, (state, action) => {

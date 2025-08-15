@@ -3,6 +3,7 @@ import {
   toggleSubscription,
   getUserChannelSubscribers,
   getSubscribedChannels,
+  getSubscriptionStatus
 } from "../controllers/subscription.controller.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 import { validate } from "../middlewares/validateRequest.middleware.js";
@@ -13,6 +14,7 @@ import {
 
 const router = Router();
 
+router.get("/status/:channelId", verifyJWT, channelIdParamValidator, getSubscriptionStatus )
 router.post("/toggle/:channelId", verifyJWT, channelIdParamValidator, validate, toggleSubscription);
 
 router.get("/:channelId", channelIdParamValidator, validate, getUserChannelSubscribers);
