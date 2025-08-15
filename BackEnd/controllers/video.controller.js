@@ -86,7 +86,82 @@ const getAllVideos = asyncHandler(async (req, res) => {
 
   return new ApiResponse(200, videos, "Videos fetched successfully").send(res);
 });
+//user dashboard videos
+const getMyVideos = asyncHandler(async (req, res) => {
+  const { page = 1, limit = 10, sortBy = "createdAt", sortType = "desc" } = req.query;
 
+  const userId = new mongoose.Types.ObjectId(req.user._id);
+
+  const options = {
+    page: parseInt(page),
+    limit: parseInt(limit),
+    sort: { [sortBy]: sortType === "desc" ? -1 : 1 },
+  };
+
+  const aggregate = Video.aggregate([
+    { $match: { owner: userId } },
+    {
+      $facet: {
+        // 1️⃣ Video list (with pagination)
+        videos: [
+          { $sort: { [sortBy]: sortType === "desc" ? -1 : 1 } },
+          {
+            $lookup: {
+              from: "users",
+              localField: "owner",
+              foreignField: "_id",
+              as: "ownerInfo",
+            },
+          },
+          { $unwind: "$ownerInfo" },
+          {
+            $project: {
+              _id: 1,
+              videoFile: 1,
+              thumbnail: 1,
+              owner: 1,
+              title: 1,
+              description: 1,
+              duration: 1,
+              views: 1,
+              isPublished: 1,
+              createdAt: 1,
+              "ownerInfo.username": 1,
+              "ownerInfo.avatar": 1,
+            },
+          },
+          { $limit: parseInt(limit) },
+        ],
+
+        // 2️⃣ Total views
+        totalViews: [{ $group: { _id: null, totalViews: { $sum: "$views" } } }],
+
+        // 3️⃣ Total count for pagination
+        totalCount: [{ $count: "count" }],
+      },
+    },
+  ]);
+
+  const result = await aggregate.exec();
+
+  const videos = result[0].videos;
+  const totalViews = result[0].totalViews[0]?.totalViews || 0;
+  const totalCount = result[0].totalCount[0]?.count || 0;
+
+  return new ApiResponse(
+    200,
+    {
+      videos,
+      totalViews,
+      pagination: {
+        totalItems: totalCount,
+        totalPages: Math.ceil(totalCount / limit),
+        currentPage: parseInt(page),
+      },
+    },
+    "Your videos fetched successfully"
+  ).send(res);
+});
 const publishAVideo = asyncHandler(async (req, res) => {
   const { title, description } = req.body;
 
@@ -189,10 +264,9 @@ const getVideoById = asyncHandler(async (req, res) => {
 });
 
 const updateVideo = asyncHandler(async (req, res) => {
-  //TODO: update video details like title, description, thumbnail
+  //TODO: update video details like title, description
   const { videoId } = req.params;
   const { title, description } = req.body;
-  const thumbnailLocalPath = req.file?.path;
 
   if (!videoId) {
     throw new ApiError(400, "Video id is required");
@@ -207,18 +281,48 @@ const updateVideo = asyncHandler(async (req, res) => {
   if (description) {
     video.description = description;
   }
-  if (!thumbnailLocalPath) {
-    throw new ApiError(400, "Thumbnail is required");
-  }
-  const oldThumbnail = video.thumbnail;
-  const publicId = extractPublicId(oldThumbnail);
-  await deleteFromCloudinary(publicId);
-
-  const thumbnail = await uploadToCloudinary(thumbnailLocalPath);
-  video.thumbnail = thumbnail.secure_url;
   await video.save();
   const responeVideo = await Video.findById(videoId);
   return new ApiResponse(200, responeVideo, "Video updated successfully").send(res);
+});
+
+const UpdateThumbnail = asyncHandler(async (req, res) => {
+  const { videoId } = req.params;
+  const thumbnailLocalPath = req.file?.path;
+  if (!thumbnailLocalPath) {
+    throw new ApiError(400, "Thumbnail is required");
+  }
+  if (!videoId) {
+    throw new ApiError(400, "Video id is required");
+  }
+  const video = await Video.findById(videoId);
+  if (!video) {
+    throw new ApiError(404, "Video not found");
+  }
+
+  const oldThumbnail = video.thumbnail;
+  const compressedThumbnailPath = path.join(
+    path.dirname(thumbnailLocalPath),
+    `${path.parse(thumbnailLocalPath).name}-compressed.jpg`
+  );
+  try {
+    const publicId = extractPublicId(oldThumbnail);
+    await deleteFromCloudinary(publicId);
+
+    await imageComp(thumbnailLocalPath, compressedThumbnailPath);
+
+    const thumbnail = await uploadToCloudinary(compressedThumbnailPath);
+    video.thumbnail = thumbnail.secure_url;
+    await video.save();
+    const responeVideo = await Video.findById(videoId);
+    return new ApiResponse(200, responeVideo, "Thumbnail updated successfully").send(res);
+  } catch (error) {
+    console.error("Compression/upload error: ", error);
+   return new ApiError(500, "Thumbnail processing failed", error).send(res);
+  } finally {
+    deleteLocalFile(thumbnailLocalPath);
+    deleteLocalFile(compressedThumbnailPath);
+  }
 });
 
 const deleteVideo = asyncHandler(async (req, res) => {
@@ -283,4 +387,6 @@ export {
   deleteVideo,
   togglePublishStatus,
   increaseVideoViews,
+  getMyVideos,
+  UpdateThumbnail,
 };

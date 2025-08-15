@@ -13,7 +13,7 @@ export const fetchLoggedInUser = createAsyncThunk(
   "user/fetchLoggedInUser",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.get(`/users/profile`);
+      const response = await axiosInstance.get(`/users/profile`, { withCredentials: true });
       if (response.data?.data) {
         return response.data.data;
       }
@@ -22,9 +22,7 @@ export const fetchLoggedInUser = createAsyncThunk(
       if (error.response?.status === 401) {
         return rejectWithValue("No valid session");
       }
-      return rejectWithValue(
-        error.response?.data?.message || "Auth check failed"
-      );
+      return rejectWithValue(error.response?.data?.message || "Auth check failed");
     }
   }
 );
@@ -32,28 +30,18 @@ export const performLogout = createAsyncThunk(
   "user/performLogout",
   async (_, { rejectWithValue, dispatch }) => {
     try {
-      const res = await axiosInstance.post(
-        `/users/logout`,
-        {},
-        {
-          withCredentials: true,
-        }
-      );
+      const res = await axiosInstance.post(`/users/logout`, {});
 
       if (res?.data?.statusCode === 200) {
         dispatch(logoutUser());
         return { success: true };
       } else {
-        return rejectWithValue(
-          res.data?.message || "Logout failed unexpectedly."
-        );
+        return rejectWithValue(res.data?.message || "Logout failed unexpectedly.");
       }
     } catch (error) {
       dispatch(logoutUser());
       return rejectWithValue(
-        error.response?.data?.message ||
-          error.message ||
-          "An error occurred during logout."
+        error.response?.data?.message || error.message || "An error occurred during logout."
       );
     }
   }
@@ -65,24 +53,18 @@ export const perfomLogin = createAsyncThunk(
       const response = await axiosInstance.post(
         `/users/login`,
         { email, password },
-        {
-          withCredentials: true,
-        }
+        { withCredentials: true }
       );
-      if (response?.data?.statusCode === 200) {
-        const { user, accessToken, refreshToken } =
-          response?.data?.data;
+      
+      if (response?.status === 200 && response?.data?.data) {
+        const { user, accessToken, refreshToken } = response?.data?.data;
         return { user, accessToken, refreshToken };
       } else {
-        return rejectWithValue(
-          response.data?.message || "Login failed unexpectedly."
-        );
+        return rejectWithValue(response.data?.message || "Login failed unexpectedly.");
       }
     } catch (error) {
       return rejectWithValue(
-        error.response?.data?.message ||
-          error.message ||
-          "An error occurred during login."
+        error.response?.data?.message || error.message || "An error occurred during login."
       );
     }
   }
@@ -98,15 +80,10 @@ export const updateAvatar = createAsyncThunk(
     try {
       const formData = new FormData();
       formData.append("avatar", file);
-      const response = await axiosInstance.patch(
-        `/users/avatar`,
-        formData
-      );
+      const response = await axiosInstance.patch(`/users/avatar`, formData);
       return response.data?.data?.avatar;
     } catch (error) {
-      rejectWithValue(
-        "Error updating avatar" || error.response?.data?.message
-      );
+      rejectWithValue("Error updating avatar" || error.response?.data?.message);
     }
   }
 );
@@ -122,15 +99,10 @@ export const updateCoverImage = createAsyncThunk(
     try {
       const formData = new FormData();
       formData.append("coverImage", file);
-      const response = await axiosInstance.patch(
-        `/users/cover-image`,
-        formData
-      );
+      const response = await axiosInstance.patch(`/users/cover-image`, formData);
       return data?.data?.coverImage;
     } catch (error) {
-      rejectWithValue(
-        "Error updating cover image" || error.respone?.data?.message
-      );
+      rejectWithValue("Error updating cover image" || error.respone?.data?.message);
     }
   }
 );
@@ -147,22 +119,16 @@ export const updateProflie = createAsyncThunk(
     formData.append("username", username);
     formData.append("fullName", fullName);
     try {
-      const response = await axiosInstance.patch(
-        `/users/update-account`,
-        formData
-      );
+      const response = await axiosInstance.patch(`/users/update-account`, formData);
       return {
         username: data?.data?.username,
         fullName: data?.data?.fullName,
       };
     } catch (error) {
-      rejectWithValue(
-        "Error updating profile" || error.respone?.data?.message
-      );
+      rejectWithValue("Error updating profile" || error.respone?.data?.message);
     }
   }
 );
-
 
 export const userSlice = createSlice({
   name: "user",
@@ -292,7 +258,6 @@ export const userSlice = createSlice({
   },
 });
 
-export const { setLoggedInUser, logoutUser, setError, setTokens } =
-  userSlice.actions;
+export const { setLoggedInUser, logoutUser, setError, setTokens } = userSlice.actions;
 
 export default userSlice.reducer;

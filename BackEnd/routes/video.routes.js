@@ -7,6 +7,8 @@ import {
   deleteVideo,
   togglePublishStatus,
   increaseVideoViews,
+  getMyVideos,
+  UpdateThumbnail
 } from "../controllers/video.controller.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 import { upload } from "../middlewares/multer.middleware.js";
@@ -40,21 +42,20 @@ router.post(
 // Get all videos with filters, pagination, search
 router.get("/", getAllVideosValidator, validate, getAllVideos);
 
+// get user dahsboard videos
+router.get("/myvideos", verifyJWT, getAllVideosValidator, getMyVideos);
+
 // Get single video by ID
 router.get("/:videoId", getVideoByIdValidator, validate, getVideoById);
 
 // Increase video views
 router.patch("/:videoId/views", increaseViewsValidator, validate, increaseVideoViews);
 
-// Update video details (title, description, thumbnail)
-router.patch(
-  "/:videoId",
-  verifyJWT,
-  upload.single("thumbnail"),
-  updateVideoValidator,
-  validate,
-  updateVideo
-);
+// Update video details (title, description, isPublished)
+router.patch("/:videoId", verifyJWT, updateVideoValidator, validate, updateVideo);
+
+//updaet thumbnil
+router.post("/thumbnail/:videoId", verifyJWT, upload.single("thumbnail"), UpdateThumbnail);
 
 // Delete video
 router.delete("/:videoId", verifyJWT, deleteVideoValidator, validate, deleteVideo);

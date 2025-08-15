@@ -66,26 +66,6 @@ const Profile = () => {
     }
   }, [username, dispatch]);
 
-  // Handle profile update
-  const handleUpdateProfile = () => {
-    dispatch(
-      updateProflie({ username: newUsername, fullName: newFullName })
-    )
-      .unwrap()
-      .then(() => setIsEditing(false))
-      .catch((err) => console.error(err));
-  };
-
-  // Handle avatar update
-  const handleUpdateAvatar = (file) => {
-    if (file) dispatch(updateAvatar(file));
-  };
-
-  // Handle cover update
-  const handleUpdateCoverImage = (file) => {
-    if (file) dispatch(updateCoverImage(file));
-  };
-
   if (status === "loading") {
     return (
       <div className="min-h-screen bg-gray-900 text-white flex justify-center items-center">
@@ -115,32 +95,6 @@ const Profile = () => {
           className="w-full h-full object-cover"
         />
 
-        {/* Edit Cover - Only if owner */}
-        {isLoggedIn && user.username === username && (
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="absolute bottom-4 right-4 bg-gray-800 border text-white hover:bg-pink-600"
-              >
-                <Pencil className="h-4 w-4" />
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Update Cover Image</DialogTitle>
-              </DialogHeader>
-              <Input
-                type="file"
-                accept="image/*"
-                onChange={(e) =>
-                  handleUpdateCoverImage(e.target.files[0])
-                }
-              />
-            </DialogContent>
-          </Dialog>
-        )}
 
         {/* Avatar */}
         <div className="absolute bottom-0 left-8 flex items-end">
@@ -152,32 +106,6 @@ const Profile = () => {
               </AvatarFallback>
             </Avatar>
 
-            {/* Edit Avatar - Only if owner */}
-            {isLoggedIn && user.username === username && (
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="absolute bottom-1 right-1 bg-gray-800 border text-white hover:bg-pink-600 rounded-full"
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Update Avatar</DialogTitle>
-                  </DialogHeader>
-                  <Input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) =>
-                      handleUpdateAvatar(e.target.files[0])
-                    }
-                  />
-                </DialogContent>
-              </Dialog>
-            )}
           </div>
 
           <div className="ml-6 mb-4">
@@ -194,43 +122,6 @@ const Profile = () => {
         </div>
       </div>
 
-      {/* Profile Edit */}
-      {isLoggedIn && user.username === username && (
-        <div className="mt-20 md:mt-24 flex items-center justify-between border-b border-gray-700 pb-4">
-          <h3 className="text-2xl font-bold">Channel Details</h3>
-          <Dialog open={isEditing} onOpenChange={setIsEditing}>
-            <DialogTrigger asChild>
-              <Button
-                variant="ghost"
-                className="flex items-center gap-2 text-pink-500"
-              >
-                <Pencil className="h-4 w-4" /> Edit Profile
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Update Profile</DialogTitle>
-              </DialogHeader>
-              <Label>Username</Label>
-              <Input
-                defaultValue={ChannelProfile?.username}
-                onChange={(e) => setNewUsername(e.target.value)}
-              />
-              <Label>Full Name</Label>
-              <Input
-                defaultValue={ChannelProfile?.fullName}
-                onChange={(e) => setNewFullName(e.target.value)}
-              />
-              <Button
-                onClick={handleUpdateProfile}
-                className="bg-pink-600"
-              >
-                Save Changes
-              </Button>
-            </DialogContent>
-          </Dialog>
-        </div>
-      )}
 
       {/* Tabs */}
       <div className="flex space-x-4 mt-8 border-b border-gray-700">

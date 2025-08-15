@@ -29,7 +29,7 @@ const LoginPage = () => {
     setErrorMessage("");
 
     try {
-      await dispatch(perfomLogin(loginData)).unwrap(); 
+      const data = await dispatch(perfomLogin(loginData)).unwrap();
       notifySuccess("Login successful!");
       navigate("/"); 
     } catch (error) {

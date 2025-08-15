@@ -19,7 +19,9 @@ dotenv.config({ path: "../env" });
 
 const cookieOptions = {
   httpOnly: true,
-  secure: true,
+  secure: false,//for local host
+  age: 24 * 60 * 60 * 1000,
+  sameSite: "lax",
 };
 
 const generateAccessAndRefereshTokens = async (userId) => {
@@ -76,28 +78,28 @@ export const registerUser = asyncHandler(async (req, res) => {
 
 export const login = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
-  const user = await User.findOne({ email });
-  if (!user) throw new ApiError(404, "User not found");
+  const DBuser = await User.findOne({ email });
+  if (!DBuser) throw new ApiError(404, "User not found");
 
-  const isPasswordValid = await user.isPasswordrect(password);
+  const isPasswordValid = await DBuser.isPasswordrect(password);
   if (!isPasswordValid) throw new ApiError(401, "Invalid email or password");
 
-  const { refreshToken, accessToken } = await generateAccessAndRefereshTokens(user._id);
+  const { refreshToken, accessToken } = await generateAccessAndRefereshTokens(DBuser._id);
 
-  const sanitizedUser = user.toObject();
-  delete sanitizedUser.password;
-  delete sanitizedUser.refreshToken;
-  delete sanitizedUser.emailVerificationOtp;
-  delete sanitizedUser.emailVerificationOtpExpiresAt;
-  delete sanitizedUser.passwordResetOtp;
-  delete sanitizedUser.passwordResetOtpExpiresAt;
-  delete sanitizedUser.__v;
+  const user = DBuser.toObject();
+  delete user.password;
+  delete user.refreshToken;
+  delete user.emailVerificationOtp;
+  delete user.emailVerificationOtpExpiresAt;
+  delete user.passwordResetOtp;
+  delete user.passwordResetOtpExpiresAt;
+  delete user.__v;
+  delete user.refreshToken;
 
-  return new ApiResponse(200, { user, accessToken }, "Login successful").send(
-    res
-      .cookie("refreshToken", refreshToken, cookieOptions)
-      .cookie("accessToken", accessToken, cookieOptions)
-  );
+  res
+    .cookie("refreshToken", refreshToken, cookieOptions)
+    .cookie("accessToken", accessToken, cookieOptions);
+  return new ApiResponse(200, { user, accessToken, refreshToken }, "Login successful").send(res);
 });
 
 export const logout = asyncHandler(async (req, res) => {
@@ -192,7 +194,7 @@ export const updateCoverImage = asyncHandler(async (req, res) => {
 
 export const getPublicChannelDetails = asyncHandler(async (req, res) => {
   const { username } = req.params;
-  
+
   const channel = await User.aggregate([
     { $match: { username: username.toLowerCase() } },
     {
@@ -214,7 +216,7 @@ export const getPublicChannelDetails = asyncHandler(async (req, res) => {
     {
       $addFields: {
         subscriberCount: { $size: "$subscribers" },
-        channelsSubscribedToCount: { $size: "$subscribedTo" }
+        channelsSubscribedToCount: { $size: "$subscribedTo" },
       },
     },
     {

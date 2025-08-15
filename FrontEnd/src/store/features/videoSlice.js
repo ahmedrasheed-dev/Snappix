@@ -30,10 +30,7 @@ export const toggleVideoLike = createAsyncThunk(
 
       const response = await axiosInstance.post(
         `/likes/v/${videoId}`,
-        {},
-        {
-          withCredentials: true,
-        }
+        {}
       );
       return response?.data;
     } catch (error) {

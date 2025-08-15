@@ -55,10 +55,7 @@ export const addVideoToPlaylist = createAsyncThunk(
     try {
       const response = await axiosInstance.post(
         `/playlists/add-video/${playlistId}/${videoId}`,
-        {},
-        {
-          withCredentials: true,
-        }
+        {}
       );
       // {
       //   "success": true,
