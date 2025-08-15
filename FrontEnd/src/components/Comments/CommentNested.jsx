@@ -37,7 +37,6 @@ const CommentNested = ({ comment, videoId }) => {
           content: replyContent,
         })
       );
-      console.log("Adding reply to", comment._id, ":", replyContent);
       setReplyContent("");
       setShowReplyInput(false);
     }
@@ -46,7 +45,6 @@ const CommentNested = ({ comment, videoId }) => {
   const mainCommentOwner = comment.commentOwners;
 
   const mainCommentDate = formatTimeAgo(comment.createdAt);
-  console.log("mainComment: ", mainCommentOwner);
   return (
     <div className="flex gap-4 mb-4">
       <Avatar className="w-10 h-10">

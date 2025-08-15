@@ -66,7 +66,7 @@ export const registerUser = asyncHandler(async (req, res) => {
     });
 
     const responseUser = await User.findById(newUser._id).select("-password -refreshToken");
-    res.status(201).json(new ApiResponse(201, responseUser, "User registered successfully"));
+    return new ApiResponse(201, responseUser, "User registered successfully").send(res);
   } finally {
     await deleteLocalFile(avatarPath);
     await deleteLocalFile(coverImagePath);
@@ -93,22 +93,19 @@ export const login = asyncHandler(async (req, res) => {
   delete sanitizedUser.passwordResetOtpExpiresAt;
   delete sanitizedUser.__v;
 
-  res
-    .status(200)
-    .cookie("refreshToken", refreshToken, cookieOptions)
-    .cookie("accessToken", accessToken, cookieOptions)
-    .json(
-      new ApiResponse(200, { user: sanitizedUser, refreshToken, accessToken }, "Login successful")
-    );
+  return new ApiResponse(200, { user, accessToken }, "Login successful").send(
+    res
+      .cookie("refreshToken", refreshToken, cookieOptions)
+      .cookie("accessToken", accessToken, cookieOptions)
+  );
 });
 
 export const logout = asyncHandler(async (req, res) => {
   await User.findByIdAndUpdate(req.user._id, { $unset: { refreshToken: 1 } });
-  res
-    .status(200)
-    .clearCookie("refreshToken", cookieOptions)
-    .clearCookie("accessToken", cookieOptions)
-    .json(new ApiResponse(200, {}, "Logout successful"));
+
+  return new ApiResponse(200, {}, "Logout successful").send(
+    res.clearCookie("refreshToken", cookieOptions).clearCookie("accessToken", cookieOptions)
+  );
 });
 
 export const refreshToken = asyncHandler(async (req, res) => {
@@ -121,11 +118,11 @@ export const refreshToken = asyncHandler(async (req, res) => {
 
   const { refreshToken, accessToken } = await generateAccessAndRefereshTokens(user._id);
 
-  res
-    .status(200)
-    .cookie("refreshToken", refreshToken, cookieOptions)
-    .cookie("accessToken", accessToken, cookieOptions)
-    .json(new ApiResponse(200, { user, accessToken }, "Token updated successfully"));
+  return new ApiResponse(200, { user, accessToken }, "Token updated successfully").send(
+    res
+      .cookie("refreshToken", refreshToken, cookieOptions)
+      .cookie("accessToken", accessToken, cookieOptions)
+  );
 });
 
 // ------------------- Profile -------------------
@@ -140,7 +137,7 @@ export const changePassword = asyncHandler(async (req, res) => {
   await user.save({ validateBeforeSave: false });
 
   const responseUser = await User.findById(user._id).select("-password -refreshToken");
-  res.status(200).json(new ApiResponse(200, responseUser, "Password changed successfully"));
+  return new ApiResponse(200, responseUser, "Password changed successfully").send(res);
 });
 
 export const updateProfile = asyncHandler(async (req, res) => {
@@ -155,14 +152,14 @@ export const updateProfile = asyncHandler(async (req, res) => {
   await user.save({ validateBeforeSave: false });
 
   const responseUser = await User.findById(user._id).select("-password -refreshToken");
-  res.status(200).json(new ApiResponse(200, responseUser, "Profile updated successfully"));
+  return new ApiResponse(200, responseUser, "Profile updated successfully").send(res);
 });
 
 export const getCurrentUser = asyncHandler(async (req, res) => {
   const responseUser = await User.findById(req.user._id).select(
     "-password -refreshToken -passwordResetOtp -passwordResetOtpExpiresAt -emailVerificationOtp -emailVerificationOtpExpiresAt"
   );
-  res.status(200).json(new ApiResponse(200, responseUser));
+  return new ApiResponse(200, responseUser).send(res);
 });
 
 export const updateAvatar = asyncHandler(async (req, res) => {
@@ -175,7 +172,7 @@ export const updateAvatar = asyncHandler(async (req, res) => {
   await req.user.save({ validateBeforeSave: false });
 
   const responseUser = await User.findById(req.user._id).select("-password -refreshToken");
-  res.status(200).json(new ApiResponse(200, responseUser, "Avatar updated successfully"));
+  return new ApiResponse(200, responseUser, "Avatar updated successfully").send(res);
 });
 
 export const updateCoverImage = asyncHandler(async (req, res) => {
@@ -188,7 +185,7 @@ export const updateCoverImage = asyncHandler(async (req, res) => {
   await req.user.save({ validateBeforeSave: false });
 
   const responseUser = await User.findById(req.user._id).select("-password -refreshToken");
-  res.status(200).json(new ApiResponse(200, responseUser, "Cover image updated successfully"));
+  return new ApiResponse(200, responseUser, "Cover image updated successfully").send(res);
 });
 
 // ------------------- Public -------------------
@@ -235,7 +232,7 @@ export const getUserChannelProfile = asyncHandler(async (req, res) => {
   ]);
   if (!channel?.length) throw new ApiError(404, "Channel does not exist");
 
-  res.status(200).json(new ApiResponse(200, channel[0], "User channel fetched successfully"));
+  return new ApiResponse(200, channel[0], "User channel fetched successfully").send(res);
 });
 
 export const getWatchHistory = asyncHandler(async (req, res) => {
@@ -262,7 +259,7 @@ export const getWatchHistory = asyncHandler(async (req, res) => {
       },
     },
   ]);
-  res.status(200).json(new ApiResponse(200, watchHistory, "Watch history fetched successfully"));
+  return new ApiResponse(200, watchHistory, "Watch history fetched successfully").send(res);
 });
 export const sendEmailVerifyOtp = asyncHandler(async (req, res) => {
   const user = req.user;
@@ -274,7 +271,7 @@ export const sendEmailVerifyOtp = asyncHandler(async (req, res) => {
 
   await sendOTPEmail(user.email, otp);
 
-  res.status(200).json(new ApiResponse(200, {}, "Verification OTP sent to email"));
+  return new ApiResponse(200, {}, "Verification OTP sent to email").send(res);
 });
 
 export const verifyEmailOtp = asyncHandler(async (req, res) => {
@@ -290,7 +287,7 @@ export const verifyEmailOtp = asyncHandler(async (req, res) => {
   user.emailVerificationOtpExpiresAt = null;
   await user.save({ validateBeforeSave: false });
 
-  res.status(200).json(new ApiResponse(200, {}, "Email verified successfully"));
+  return new ApiResponse(200, {}, "Email verified successfully").send(res);
 });
 
 export const sendPasswordResetOtp = asyncHandler(async (req, res) => {
@@ -303,7 +300,7 @@ export const sendPasswordResetOtp = asyncHandler(async (req, res) => {
 
   await sendPasswordResetEmail(user.email, otp);
 
-  res.status(200).json(new ApiResponse(200, {}, "Password reset OTP sent to email"));
+  return new ApiResponse(200, {}, "Password reset OTP sent to email").send(res);
 });
 
 export const verifyPasswordResetOtp = asyncHandler(async (req, res) => {
@@ -319,7 +316,7 @@ export const verifyPasswordResetOtp = asyncHandler(async (req, res) => {
   user.passwordResetOtpExpiresAt = null;
   await user.save({ validateBeforeSave: false });
 
-  res.status(200).json(new ApiResponse(200, {}, "Password reset successful"));
+  return new ApiResponse(200, {}, "Password reset successful").send(res);
 });
 export const getSearchSuggestions = asyncHandler(async (req, res) => {
   const searchTerm = req.query.q.toLowerCase();
@@ -359,13 +356,10 @@ export const getSearchSuggestions = asyncHandler(async (req, res) => {
     },
   ]);
 
-  res
-    .status(200)
-    .json(
-      new ApiResponse(
-        200,
-        [...videoSuggestions, ...channelSuggestions],
-        "Search suggestions fetched successfully"
-      )
-    );
+  return;
+  new ApiResponse(
+    200,
+    [...videoSuggestions, ...channelSuggestions],
+    "Search suggestions fetched successfully"
+  ).send(res);
 });

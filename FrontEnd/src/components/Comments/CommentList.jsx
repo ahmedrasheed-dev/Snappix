@@ -53,7 +53,6 @@ const CommentList = ({ videoId }) => {
       dispatch(
         addCommentToVideo({ videoId, content: newCommentContent })
       );
-      console.log("Adding new comment:", newCommentContent);
       setNewCommentContent("");
     }
   };

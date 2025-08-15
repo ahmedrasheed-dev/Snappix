@@ -104,9 +104,7 @@ const addComment = asyncHandler(async (req, res) => {
     { $addFields: { replies: [] } },
   ]);
 
-  return res
-    .status(201)
-    .json(new ApiResponse(201, createdComment[0], "Comment added successfully"));
+  return new ApiResponse(201, createdComment[0], "Comment added successfully").send(res);
 });
 
 const addReplyToComment = asyncHandler(async (req, res) => {
@@ -134,7 +132,7 @@ const addReplyToComment = asyncHandler(async (req, res) => {
     },
   ]);
 
-  return res.status(201).json(new ApiResponse(201, createdReply[0], "Reply added successfully"));
+  return new ApiResponse(201, createdReply[0], "Reply added successfully").send(res);
 });
 
 const updateComment = asyncHandler(async (req, res) => {

@@ -1,11 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
 import CommentList from "../Comments/CommentList";
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import Topbar from "../Topbar/Topbar";
 import { formatTimeAgo } from "../../utils/VideoUtils";
@@ -24,16 +20,13 @@ const VideoPage = () => {
     status: videoStatus,
     error: videoError,
   } = useSelector((state) => state.video);
-  const { subscriberCount, status, error } = useSelector(
-    (state) => state.subscription
-  );
+  const { subscriberCount, status, error } = useSelector((state) => state.subscription);
 
   const isLoggedIn = useSelector((state) => state.user.isLoggedIn);
   const user = useSelector((state) => state.user.user);
 
   //UI states
-  const [showFullDescription, setShowFullDescription] =
-    useState(false);
+  const [showFullDescription, setShowFullDescription] = useState(false);
   const [isTheaterMode, setIsTheaterMode] = useState(false);
   const [isVideoVertical, setIsVideoVertical] = useState(false);
   useState("");
@@ -58,9 +51,6 @@ const VideoPage = () => {
   if (videoStatus === "loading" || !video) {
     return (
       <>
-        <div className="flex justify-center items-center">
-          <Topbar classes={"mt-5 w-[90%]"} />
-        </div>
         <div className="min-h-screen bg-gray-900 text-white p-4 md:p-8 flex flex-col lg:flex-row gap-6 lg:max-w-screen-2xl lg:mx-auto w-full h-full">
           <div className="flex-1 min-w-0 lg:max-w-[70%]">
             <div
@@ -82,15 +72,10 @@ const VideoPage = () => {
             </div>
           </div>
           <div className="lg:w-80 hidden lg:block">
-            <h3 className="text-xl font-bold text-pink-500 mb-4">
-              Related Videos
-            </h3>
+            <h3 className="text-xl font-bold text-pink-500 mb-4">Related Videos</h3>
             <div className="space-y-4">
               {[...Array(4)].map((_, index) => (
-                <div
-                  key={index}
-                  className="flex gap-4 p-2 rounded-lg animate-pulse"
-                >
+                <div key={index} className="flex gap-4 p-2 rounded-lg animate-pulse">
                   <div className="w-32 h-18 bg-gray-800 rounded-lg"></div>
                   <div className="flex-1 space-y-2">
                     <div className="h-4 w-full bg-gray-800 rounded"></div>
@@ -116,29 +101,17 @@ const VideoPage = () => {
 
   return (
     <>
-      <div className="flex justify-center items-center">
-        <Topbar classes={"mt-5 w-[90%]"} />
-      </div>
-
       <div
         className={`min-h-screen bg-gray-900 text-white p-4 md:p-8 flex flex-col lg:flex-row gap-6 lg:max-w-screen-2xl lg:mx-auto`}
       >
         {/* Main Video Section */}
-        <div
-          className={`flex-1 min-w-0 ${
-            !isTheaterMode ? "lg:max-w-[70%]" : ""
-          }`}
-        >
+        <div className={`flex-1 min-w-0 ${!isTheaterMode ? "lg:max-w-[70%]" : ""}`}>
           {/* Video Player */}
           <div
             className={`relative rounded-xl overflow-hidden shadow-2xl ${
               isTheaterMode
                 ? "lg:h-[90vh] h-auto w-full"
-                : `w-full ${
-                    isVideoVertical
-                      ? "aspect-[9/16] max-w-sm mx-auto"
-                      : "aspect-video"
-                  }`
+                : `w-full ${isVideoVertical ? "aspect-[9/16] max-w-sm mx-auto" : "aspect-video"}`
             }`}
           >
             <video
@@ -174,14 +147,12 @@ const VideoPage = () => {
                     {video?.owner?.username?.charAt(0)}
                   </AvatarFallback>
                 </Avatar>
-                <Link to={`/channel/${video?.owner?.username}`} className="flex-1 hover:underline underline-offset-1 decoration-blue-400"
+                <Link
+                  to={`/channel/${video?.owner?.username}`}
+                  className="flex-1 hover:underline underline-offset-1 decoration-blue-400"
                 >
-                  <h2 className="text-lg font-semibold text-pink-500">
-                    {video?.owner?.username}
-                  </h2>
-                  <p className="text-sm text-gray-400">
-                    {subscriberCount} subscribers
-                  </p>
+                  <h2 className="text-lg font-semibold text-pink-500">{video?.owner?.username}</h2>
+                  <p className="text-sm text-gray-400">{subscriberCount} subscribers</p>
                 </Link>
 
                 {video?.owner?._id && (
@@ -201,37 +172,27 @@ const VideoPage = () => {
                 >
                   {video?.description}
                 </p>
-                {video?.description &&
-                  video?.description.length > 100 && (
-                    <button
-                      onClick={() =>
-                        setShowFullDescription(!showFullDescription)
-                      }
-                      className="mt-2 text-pink-500 hover:underline"
-                    >
-                      {showFullDescription
-                        ? "Show less"
-                        : "Show more"}
-                    </button>
-                  )}
+                {video?.description && video?.description.length > 100 && (
+                  <button
+                    onClick={() => setShowFullDescription(!showFullDescription)}
+                    className="mt-2 text-pink-500 hover:underline"
+                  >
+                    {showFullDescription ? "Show less" : "Show more"}
+                  </button>
+                )}
               </div>
             </div>
 
             {/* Comments Section Placeholder */}
             <div className="mt-8 border-t border-gray-700 pt-8">
-              <h3 className="text-xl font-bold text-pink-500">
-                Comments
-              </h3>
+              <h3 className="text-xl font-bold text-pink-500">Comments</h3>
               <CommentList videoId={videoId} />
             </div>
           </div>
         </div>
 
         {/* Related Videos Section */}
-        <RelatedVideos
-          isTheaterMode={isTheaterMode}
-          videoId={videoId}
-        />
+        <RelatedVideos isTheaterMode={isTheaterMode} videoId={videoId} />
       </div>
     </>
   );

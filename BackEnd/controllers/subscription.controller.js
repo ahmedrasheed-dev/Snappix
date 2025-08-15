@@ -19,9 +19,7 @@ const toggleSubscription = asyncHandler(async (req, res) => {
 
   if (subscription) {
     await Subscription.deleteOne({ _id: subscription._id });
-    return res
-      .status(200)
-      .json(new ApiResponse(200, { subscribed: false }, "Unsubscribed successfully"));
+    return new ApiResponse(200, { subscribed: false }, "Unsubscribed successfully").send(res);
   }
 
   subscription = await Subscription.create({
@@ -29,9 +27,7 @@ const toggleSubscription = asyncHandler(async (req, res) => {
     subscriber: subscriberId,
   });
 
-  return res
-    .status(200)
-    .json(new ApiResponse(200, { subscribed: true }, "Subscribed successfully"));
+  return new ApiResponse(200, { subscribed: true }, "Subscribed successfully").send(res);
 });
 
 const getUserChannelSubscribers = asyncHandler(async (req, res) => {
@@ -56,9 +52,7 @@ const getUserChannelSubscribers = asyncHandler(async (req, res) => {
     { $replaceRoot: { newRoot: "$subscriberInfo" } },
   ]);
 
-  return res
-    .status(200)
-    .json(new ApiResponse(200, subscribers, "Subscribers fetched successfully"));
+  return new ApiResponse(200, subscribers, "Subscribers fetched successfully").send(res);
 });
 
 const getSubscribedChannels = asyncHandler(async (req, res) => {
@@ -83,9 +77,7 @@ const getSubscribedChannels = asyncHandler(async (req, res) => {
     { $replaceRoot: { newRoot: "$channelInfo" } },
   ]);
 
-  return res
-    .status(200)
-    .json(new ApiResponse(200, subscribedChannels, "Subscribed channels fetched successfully"));
+  return new ApiResponse(200, subscribedChannels, "Subscribed channels fetched successfully").send(res);
 });
 
 export { toggleSubscription, getUserChannelSubscribers, getSubscribedChannels };

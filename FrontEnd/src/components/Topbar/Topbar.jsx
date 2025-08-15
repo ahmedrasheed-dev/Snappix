@@ -56,7 +56,7 @@ const Topbar = ({ classes }) => {
 
   return (
     <>
-      <div className={`flex justify-between items-center ${classes}`}>
+      <div className={`flex items-center justify-around ${classes}`}>
           <SearchAutocomplete />
 
         <div className="flex items-center gap-4">
