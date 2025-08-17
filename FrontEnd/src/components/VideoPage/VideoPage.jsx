@@ -3,11 +3,9 @@ import { Link, useParams } from "react-router-dom";
 import CommentList from "../Comments/CommentList";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import Topbar from "../Topbar/Topbar";
-import { formatTimeAgo } from "../../utils/VideoUtils";
 import { FaExpand } from "react-icons/fa";
 import { useSelector, useDispatch } from "react-redux";
-import { getVideoData } from "@/store/features/videoSlice";
+import { getVideoData, addToWatchHistory } from "@/store/features/videoSlice";
 import VideoInfo from "./VideoInfo";
 import RelatedVideos from "./RelatedVideos";
 import SubscribeButton from "./SubscribeButton";
@@ -36,6 +34,16 @@ const VideoPage = () => {
       dispatch(getVideoData(videoId));
     }
   }, [videoId, dispatch]);
+
+  useEffect(() => {
+    const second = setTimeout(() => {
+      dispatch(addToWatchHistory());
+    }, 10000);
+
+    return () => {
+      second.clearTimeout();
+    };
+  }, [videoId, isLoggedIn, dispatch]);
 
   const toggleTheaterMode = () => {
     setIsTheaterMode(!isTheaterMode);

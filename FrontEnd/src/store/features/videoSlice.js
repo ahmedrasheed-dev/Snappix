@@ -95,6 +95,10 @@ export const getVideoData = createAsyncThunk(
   }
 );
 
+export const addToWatchHistory = createAsyncThunk(
+  "video/addToWatchHistory",async (videoId, { getState, rejectWithValue }) => {
+    // hit api to add to watch history
+  })
 const videoSlice = createSlice({
   name: "video",
   initialState,
