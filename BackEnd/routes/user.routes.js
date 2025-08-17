@@ -27,7 +27,7 @@ import {
 
 const router = Router();
 
-/* ---------- PUBLIC ROUTES ---------- */
+/* ---------- PUBLIC ROUTES ----------- */
 router.post(
   "/register",
   upload.fields([
