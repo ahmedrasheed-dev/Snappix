@@ -3,7 +3,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Loadericon } from "@/assets";
-import OtpInputComponent from "../VerifyEmail/OtpInputComponent";
+import OtpInputComponent from "../../VerifyEmail/OtpInputComponent";
 import axiosInstance from "@/api/axios";
 import { notifySuccess, notifyError } from "@/utils/toasts";
 
@@ -98,7 +98,7 @@ const ForgotPassword = ({ onCancel }) => {
 
       {/* Step 2: Enter + Verify OTP */}
       {otpSent && !otpVerified && (
-        <>
+        <div className="flex flex-col justify-center items-center gap-2">
           <OtpInputComponent
             handleSubmit={handleVerifyOtp}
             isSubmitting={otpVerifying}
@@ -106,37 +106,7 @@ const ForgotPassword = ({ onCancel }) => {
             classes="bg-zinc-800 shadow-none"
             isEmail={false}
           />
-
-          <Button
-            type="submit"
-            disabled={otpVerifying}
-            onClick={() => handleVerifyOtp()}
-            className="w-full py-3 px-4 rounded-md shadow-sm text-white bg-pink-600 hover:bg-pink-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-pink-500"
-          >
-            {otpVerifying ? (
-              <>
-                {<Loadericon className="animate-spin" />}
-                <span>Submitting...</span>
-              </>
-            ) : (
-              "Submit"
-            )}
-          </Button>
-          <Button
-            onClick={handleVerifyOtp}
-            disabled={otpVerifying}
-            className="w-full bg-pink-600 hover:bg-pink-700"
-          >
-            {otpVerifying ? (
-              <>
-                <Loadericon className="animate-spin mr-2" />
-                Verifying...
-              </>
-            ) : (
-              "Verify OTP"
-            )}
-          </Button>
-        </>
+        </div>
       )}
 
       {/* Step 3: After OTP verified → New Password Inputs */}
@@ -169,14 +139,45 @@ const ForgotPassword = ({ onCancel }) => {
       )}
 
       {/* Cancel Button */}
-      <Button
-        type="button"
-        onClick={onCancel}
-        variant="ghost"
-        className="w-full bg-zinc-700 hover:bg-zinc-600 text-gray-200 border border-zinc-600"
-      >
-        Cancel
-      </Button>
+      <div className="flex justify-center gap-2">
+        <Button
+          type="button"
+          onClick={onCancel}
+          variant="ghost"
+          className="w-1/4 bg-zinc-700 hover:bg-zinc-600 text-gray-200 border border-zinc-600"
+        >
+          Cancel
+        </Button>
+        <Button
+          type="submit"
+          disabled={otpVerifying}
+          onClick={() => handleVerifyOtp()}
+          className="w-1/4 py-3 px-4 rounded-md shadow-sm text-white bg-pink-600 hover:bg-pink-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-pink-500"
+        >
+          {otpVerifying ? (
+            <>
+              {<Loadericon className="animate-spin" />}
+              <span>Submitting...</span>
+            </>
+          ) : (
+            "Submit"
+          )}
+        </Button>
+        <Button
+          onClick={handleVerifyOtp}
+          disabled={otpVerifying}
+          className="w-1/4 bg-pink-600 hover:bg-pink-700"
+        >
+          {otpVerifying ? (
+            <>
+              <Loadericon className="animate-spin mr-2" />
+              Verifying...
+            </>
+          ) : (
+            "Verify OTP"
+          )}
+        </Button>
+      </div>
     </div>
   );
 };

@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from "react";
-import SearchBar from "./SearchBar";
 import { Separator } from "@/components/ui/separator";
 import { useSelector } from "react-redux";
 import { Button } from "@/components/ui/button";
@@ -151,13 +150,6 @@ const Topbar = ({ classes }) => {
                   <NavLink to={"/logout"}>
                     <p className="hover:text-pink-600 transition-colors duration-200">
                       Logout
-                    </p>
-                  </NavLink>
-
-                  <Separator />
-                  <NavLink to={"/change-password"}>
-                    <p className="hover:text-pink-600 transition-colors duration-700">
-                      Change Password
                     </p>
                   </NavLink>
                 </div>

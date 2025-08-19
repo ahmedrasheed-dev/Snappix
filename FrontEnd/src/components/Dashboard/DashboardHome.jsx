@@ -31,7 +31,7 @@ const DashboardHome = () => {
   const chartData = videos.map((video) => ({
     name: video.title,
     views: video.views,
-    likes: video.likes || 0,
+    likes: video.likesCount || 0,
     published: video.isPublished ? "Published" : "Draft",
   }));
 
