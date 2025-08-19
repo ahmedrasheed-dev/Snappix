@@ -1,16 +1,13 @@
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import axiosInstance from "@/api/axios";
-import { toast, Bounce } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useNavigate } from "react-router-dom";
 import { Loadericon } from "@/assets";
 
-const OtpInputComponent = () => {
+const OtpInputComponent = ({ handleSubmit, label, isSubmitting, classes, isEmail=true }) => {
   const navigate = useNavigate();
   const otpSize = 6;
   const [otp, setOtp] = useState(new Array(otpSize).fill(""));
-  const [isSubmiting, setisSubmiting] = useState(false);
   const inputRef = useRef([]);
   const [Error, setError] = useState("");
 
@@ -38,53 +35,12 @@ const OtpInputComponent = () => {
     }
   };
 
-  const handleSubmit = async () => {
-    setisSubmiting(true);
-    const otpValue = otp.join("");
-    const res = await axiosInstance.post(
-      "/auth/verify-email",
-      { otp: otpValue },
-      {
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      }
-    );
-    const notify = () => {
-      toast.success("Email Verified Sucessfully", {
-        position: "top-right",
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: false,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-        theme: "colored",
-        transition: Bounce,
-      });
-    };
-
-    if (res.status === 200) {
-      setError("");
-      setisSubmiting(false);
-      navigate("/");
-
-      notify();
-    } else {
-      console.log("OTP ERROR: ", res.data?.data?.message);
-      setError(res.data.message);
-      setisSubmiting(false);
-    }
-  };
 
   return (
-    <div className="flex flex-col justify-between items-center p-8 bg-gray-800 rounded-lg shadow-lg max-w-sm w-3xl text-center text-white h-3/7 gap-3.5">
+    <div className={`flex flex-col justify-between items-center p-8 bg-gray-800 rounded-lg shadow-lg max-w-sm w-3xl text-center text-white h-3/7 gap-3.5 ${classes}`}>
       <h2 className="text-3xl font-semibold mb-2">
         Enter OTP
-        <p className="text-xl font-normal text-gray-400">
-          An OTP has been sent to your email.
-        </p>
+        <p className="text-xl font-normal text-gray-400">An OTP has been sent to your {label}.</p>
       </h2>
 
       <div>{Error && <p className="text-red-500">{Error}</p>}</div>
@@ -106,13 +62,13 @@ const OtpInputComponent = () => {
         ))}
       </div>
 
-      <Button
+      {isEmail &&<Button
         type="submit"
-        disabled={isSubmiting}
+        disabled={isSubmitting}
         onClick={() => handleSubmit()}
         className="w-full py-3 px-4 rounded-md shadow-sm text-white bg-pink-600 hover:bg-pink-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-pink-500"
       >
-        {isSubmiting ? (
+        {isSubmitting ? (
           <>
             {<Loadericon className="animate-spin" />}
             <span>Submitting...</span>
@@ -120,7 +76,7 @@ const OtpInputComponent = () => {
         ) : (
           "Submit"
         )}
-      </Button>
+      </Button>}
     </div>
   );
 };

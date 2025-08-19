@@ -6,49 +6,68 @@ import { Button } from "@/components/ui/button";
 import { Loadericon } from "../../assets/index.js";
 import OtpInputComponent from "./OtpInputComponent";
 import axiosInstance from "@/api/axios";
+import { notifySuccess } from "@/utils/toasts.js";
 
 const VerifyEmailPage = () => {
   const [showOtpInput, setShowOtpInput] = useState(false);
   const [Error, setError] = useState("");
+  const [isOtpSubmitting, setIsOtpSubmitting] = useState(false); // 👈 add state here
+
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors, isSubmitting }, // for email
   } = useForm();
 
   const onSubmit = async (data) => {
     try {
-      const response = await axiosInstance.post(
-        `/auth/send-verification-code`,
-        {
-          email: data.email,
-        },
-        {
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
-          },
-        }
-      );
+      const response = await axiosInstance.post(`/auth/send-verification-code`, {
+        email: data.email,
+      });
       console.log("OTP sent:  ", response?.data?.message);
       setShowOtpInput(true);
     } catch (error) {
-      if (
-        error.response &&
-        error.response.data &&
-        error.response.data.message
-      ) {
-        setError(error.response.data.message);
-        console.error("Backend Error:", error.response.data.message);
+      setError(error.response?.data?.message || "Unexpected error");
+    }
+  };
+
+  const submiteHandlerForOTP = async (otp) => {
+    setIsOtpSubmitting(true); // 👈 start loading
+    try {
+      const otpValue = otp.join("");
+      const res = await axiosInstance.post(
+        "/auth/verify-email",
+        { otp: otpValue },
+        {
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+      notifySuccess("Email Verified Successfully");
+
+      if (res.status === 200) {
+        setError("");
+        navigate("/");
       } else {
-        console.error("An unexpected error occurred:", error.message);
+        setError(res.data.message || "Verification failed");
       }
+    } catch (err) {
+      setError(err.response?.data?.message || "OTP verification failed");
+    } finally {
+      setIsOtpSubmitting(false);
     }
   };
 
   if (showOtpInput) {
     return (
       <div className="flex justify-center items-center h-screen">
-        <OtpInputComponent />
+        <OtpInputComponent
+          handleSubmit={submiteHandlerForOTP}
+          isSubmitting={isOtpSubmitting} // 👈 pass down
+          label={"Verify Email"}
+        />
       </div>
     );
   }
@@ -56,24 +75,14 @@ const VerifyEmailPage = () => {
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-900 text-white">
       <div className="flex flex-col p-8 bg-gray-800 rounded-lg shadow-lg max-w-sm w-full">
-        <h1 className="text-3xl font-bold mb-4 text-center">
-          Verify Email
-        </h1>
+        <h1 className="text-3xl font-bold mb-4 text-center">Verify Email</h1>
         <p className="text-center mb-6 text-gray-400">
           Enter your email to receive a verification code.
         </p>
-        {Error && (
-          <p className="text-pink-500 text-xs mt-1">{Error}</p>
-        )}
-        <form
-          onSubmit={handleSubmit(onSubmit)}
-          className="space-y-4 mt-4"
-        >
+        {Error && <p className="text-pink-500 text-xs mt-1">{Error}</p>}
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mt-4">
           <div>
-            <Label
-              htmlFor="email"
-              className="block text-sm font-medium mb-1"
-            >
+            <Label htmlFor="email" className="block text-sm font-medium mb-1">
               Email
             </Label>
             <Input
@@ -90,9 +99,7 @@ const VerifyEmailPage = () => {
               placeholder="you@example.com"
             />
             {errors.email && (
-              <p className="text-pink-500 text-xs mt-1">
-                {errors.email.message}
-              </p>
+              <p className="text-pink-500 text-xs mt-1">{errors.email.message}</p>
             )}
           </div>
 

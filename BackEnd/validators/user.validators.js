@@ -1,5 +1,4 @@
 import { body, param, query } from "express-validator";
-import mongoose from "mongoose";
 
 export const registerUserValidator = [
   body("username")

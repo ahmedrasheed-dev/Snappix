@@ -12,7 +12,7 @@ const LogoutPage = () => {
   useEffect(() => {
     const logUserOut = async () => {
       try {
-        await dispatch(performLogout()).unwrap(); 
+        await dispatch(performLogout()).unwrap();
         notifySuccess("Logout successful!");
         setTimeout(() => {
           navigate("/login");
@@ -27,8 +27,6 @@ const LogoutPage = () => {
 
     logUserOut();
 
-    // No need for a separate redirectTimeout cleanup if it's inside then/catch
-    // return () => clearTimeout(redirectTimeout); 
   }, [dispatch, navigate]);
 
   return (
@@ -36,13 +34,9 @@ const LogoutPage = () => {
       <div className="flex flex-col items-center p-8 bg-gray-800 rounded-lg shadow-lg max-w-sm w-full text-center">
         <Loadericon className="w-12 h-12 text-pink-600 animate-spin mb-4" />
 
-        <h1 className="text-2xl font-semibold mb-2">
-          Logging out...
-        </h1>
+        <h1 className="text-2xl font-semibold mb-2">Logging out...</h1>
 
-        <p className="text-gray-400">
-          You are being securely logged out of your account.
-        </p>
+        <p className="text-gray-400">You are being securely logged out of your account.</p>
       </div>
     </div>
   );

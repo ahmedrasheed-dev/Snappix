@@ -22,9 +22,7 @@ const processQueue = (error, token = null) => {
 };
 
 const refreshAccessToken = async () => {
-  const { setTokens, logoutUser } = await import(
-    "../store/features/userSlice"
-  );
+  const { setTokens, logoutUser } = await import("../store/features/userSlice");
 
   try {
     const refreshResponse = await axios.post(
@@ -33,12 +31,9 @@ const refreshAccessToken = async () => {
       { withCredentials: true }
     );
     console.log("refreshingToken: ", refreshResponse);
-    const { accessToken, refreshToken, user } =
-      refreshResponse.data?.data;
+    const { accessToken, refreshToken, user } = refreshResponse.data?.data;
 
-    reduxStore?.dispatch(
-      setTokens({ accessToken, refreshToken, user })
-    );
+    reduxStore?.dispatch(setTokens({ accessToken, refreshToken, user }));
 
     axiosInstance.defaults.headers.common.Authorization = `Bearer ${accessToken}`;
 
@@ -53,7 +48,13 @@ const refreshAccessToken = async () => {
 axiosInstance.interceptors.request.use(
   (config) => {
     const accessToken = reduxStore?.getState()?.user?.accessToken;
-    if (accessToken) {
+    const isAuthFreeRoute =
+      config.url.includes("/users/login") ||
+      config.url.includes("/users/register") ||
+      config.url.includes("/users/password-reset") ||
+      config.url.includes("/users/refresh-token");
+
+    if (accessToken && !isAuthFreeRoute) {
       config.headers.Authorization = `Bearer ${accessToken}`;
     }
     return config;
@@ -67,7 +68,14 @@ axiosInstance.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // Don’t run refresh logic if this is a login/register call
+    // as it will return 401 and interceptor will try to refresh token
+    const isAuthFreeRoute =
+      originalRequest.url.includes("/users/login") ||
+      originalRequest.url.includes("/users/register") ||
+      originalRequest.url.includes("/users/password-reset");
+
+    if (error.response?.status === 401 && !originalRequest._retry && !isAuthFreeRoute) {
       originalRequest._retry = true;
 
       if (isRefreshing) {

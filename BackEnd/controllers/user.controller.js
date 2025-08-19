@@ -5,7 +5,6 @@ import { User } from "../models/user.model.js";
 import { Video } from "../models/video.model.js";
 import mongoose from "mongoose";
 import crypto from "crypto";
-import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import path from "path";
@@ -82,7 +81,10 @@ export const login = asyncHandler(async (req, res) => {
   if (!DBuser) throw new ApiError(404, "User not found");
 
   const isPasswordValid = await DBuser.isPasswordrect(password);
-  if (!isPasswordValid) throw new ApiError(401, "Invalid email or password");
+  if (!isPasswordValid) {
+    console.log("About to throw ApiError: Invalid email or password");
+    throw new ApiError(401, "Invalid email or password");
+  }
 
   const { refreshToken, accessToken } = await generateAccessAndRefereshTokens(DBuser._id);
 
@@ -163,26 +165,47 @@ export const sendPasswordResetOtp = asyncHandler(async (req, res) => {
   user.passwordResetOtpExpiresAt = Date.now() + 10 * 60 * 1000; // 10 mins
   await user.save({ validateBeforeSave: false });
 
-  await sendPasswordResetEmail(user.email, otp);
+  await sendPasswordResetEmail(user.email, user.username, otp, 10);
 
   return new ApiResponse(200, {}, "Password reset OTP sent to email").send(res);
 });
 
 export const verifyPasswordResetOtp = asyncHandler(async (req, res) => {
-  const { otp, newPassword } = req.body;
+  const { otp } = req.body;
   const user = req.user;
+
+  if (!user.passwordResetOtp || !user.passwordResetOtpExpiresAt) {
+    throw new ApiError(400, "No OTP request found. Please request again.");
+  }
 
   if (user.passwordResetOtp !== otp || Date.now() > user.passwordResetOtpExpiresAt) {
     throw new ApiError(400, "Invalid or expired OTP");
   }
 
-  user.password = newPassword;
+  // OTP is valid → clear OTP but mark user as verified for reset
   user.passwordResetOtp = null;
   user.passwordResetOtpExpiresAt = null;
+  user.isPasswordResetVerified = true; // 🔑 add a temp flag in schema
+  await user.save({ validateBeforeSave: false });
+
+  return new ApiResponse(200, {}, "OTP verified successfully").send(res);
+});
+
+export const setNewPassword = asyncHandler(async (req, res) => {
+  const { newPassword } = req.body;
+  const user = req.user;
+
+  if (!user.isPasswordResetVerified) {
+    throw new ApiError(400, "OTP not verified. Please verify before setting password.");
+  }
+
+  user.password = newPassword;
+  user.isPasswordResetVerified = false; // clear flag
   await user.save({ validateBeforeSave: false });
 
   return new ApiResponse(200, {}, "Password reset successful").send(res);
 });
+
 // ------------------- Profile -------------------
 
 export const changePassword = asyncHandler(async (req, res) => {
@@ -294,15 +317,10 @@ export const addVideoToWatchHistory = asyncHandler(async (req, res) => {
 });
 
 export const clearWatchHistory = asyncHandler(async (req, res) => {
-  await User.findByIdAndUpdate(
-    req.user._id,
-    { $set: { watchHistory: [] } },
-    { new: true }
-  );
+  await User.findByIdAndUpdate(req.user._id, { $set: { watchHistory: [] } }, { new: true });
 
   return new ApiResponse(200, {}, "Watch history cleared successfully").send(res);
 });
-
 
 // ------------------- Public -------------------
 

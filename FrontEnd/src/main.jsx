@@ -20,7 +20,7 @@ import {
 import VideoPage from "./components/VideoPage/VideoPage.jsx";
 import Dashboard from "./components/Dashboard/Dashboard.jsx";
 import HistoryComponent from "./components/History/HistoryComponent.jsx";
-
+import ChanePasswordPage from "./components/ChangePassword/ChanePasswordPage.jsx";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -53,6 +53,7 @@ createRoot(document.getElementById("root")).render(
               <Route path="upload-video" element={<UploadVideo />} />
               <Route path="video/:videoId" element={<VideoPage />} />                
               <Route path="dashboard" element={<Dashboard />} />                
+              <Route path="change-password" element={<ChanePasswordPage />} />                
             </Route>
           </Routes>
         </Provider>

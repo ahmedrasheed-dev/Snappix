@@ -13,7 +13,12 @@ import {
   getWatchHistory,
   getSearchSuggestions,
   addVideoToWatchHistory,
-  clearWatchHistory
+  clearWatchHistory,
+  sendPasswordResetOtp,
+  verifyPasswordResetOtp,
+  sendEmailVerifyOtp,
+  verifyEmailOtp,
+  setNewPassword,
 } from "../controllers/user.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
@@ -56,8 +61,6 @@ router.post("/logout", verifyJWT, logout);
 
 router.post("/refresh-token", refreshToken);
 
-router.post("/change-password", verifyJWT, changePasswordValidator, validate, changePassword);
-
 router.post("/update-profile", verifyJWT, updateProfileValidator, validate, updateProfile);
 
 router.get("/profile", verifyJWT, getCurrentUser);
@@ -67,5 +70,15 @@ router.post("/update-avatar", verifyJWT, upload.single("avatar"), updateAvatar);
 router.post("/update-cover-image", verifyJWT, upload.single("coverImage"), updateCoverImage);
 
 router.get("/watch-history", verifyJWT, getWatchHistory);
+
+router.post("/change-password", verifyJWT, changePasswordValidator, validate, changePassword);
+
+// Password Reset Flow (via OTP)
+router.post("/password-reset/send-otp", verifyJWT, sendPasswordResetOtp);
+router.post("/password-reset/verify-otp", verifyJWT, verifyPasswordResetOtp);
+router.post("/password-reset/set-password", verifyJWT, setNewPassword);
+// Email Verification Flow
+router.post("/email/send-otp", verifyJWT, sendEmailVerifyOtp);
+router.post("/email/verify-otp", verifyJWT, verifyEmailOtp);
 
 export default router;

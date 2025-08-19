@@ -52,7 +52,6 @@ const Topbar = ({ classes }) => {
     };
   }, []);
 
-  const authCheckCompleted = status === "succeeded" || status === "failed";
 
   return (
     <>
@@ -60,7 +59,7 @@ const Topbar = ({ classes }) => {
           <SearchAutocomplete />
 
         <div className="flex items-center gap-4">
-          {!isLoggedIn && authCheckCompleted && (
+          {!isLoggedIn  && (
             <div className="flex rounded-sm p-2 gap-2 w-48 transition-all">
               <NavLink to="/login">
                 <Button
@@ -112,7 +111,7 @@ const Topbar = ({ classes }) => {
             </div>
           )}
 
-          {isLoggedIn && user  && status === "succeeded" && (
+          {isLoggedIn && user && (
             <div className="relative">
               <Avatar
                 ref={userAvatarRef}

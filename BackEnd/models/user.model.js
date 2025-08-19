@@ -61,10 +61,13 @@ const UserSchema = new Mongoose.Schema(
       type: Date,
       required: false,
     },
-    // Separate fields for password reset OTP
     passwordResetOtp: {
       type: String,
       required: false,
+    },
+    isPasswordResetVerified: {
+      type: Boolean,
+      default: false,
     },
     passwordResetOtpExpiresAt: {
       type: Date,

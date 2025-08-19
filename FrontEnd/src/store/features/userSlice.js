@@ -30,10 +30,9 @@ export const performLogout = createAsyncThunk(
   "user/performLogout",
   async (_, { rejectWithValue, dispatch }) => {
     try {
-      const res = await axiosInstance.post(`/users/logout`, {});
-
-      if (res?.data?.statusCode === 200) {
-        dispatch(logoutUser());
+      const res = await axiosInstance.post(`/users/logout`);
+      console.log("logout Res: ", res);
+      if (res?.status === 200) {
         return { success: true };
       } else {
         return rejectWithValue(res.data?.message || "Logout failed unexpectedly.");
@@ -41,7 +40,10 @@ export const performLogout = createAsyncThunk(
     } catch (error) {
       dispatch(logoutUser());
       return rejectWithValue(
-        error.response?.data?.message || error.message || "An error occurred during logout."
+        error.response?.data?.message ||
+          error.response?.data?.error ||
+          error.message ||
+          "An error occurred during login."
       );
     }
   }
@@ -50,11 +52,7 @@ export const perfomLogin = createAsyncThunk(
   "user/performLogin",
   async ({ email, password }, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.post(
-        `/users/login`,
-        { email, password },
-        { withCredentials: true }
-      );
+      const response = await axiosInstance.post(`/users/login`, { email, password });
 
       if (response?.status === 200 && response?.data?.data) {
         const { user, accessToken, refreshToken } = response?.data?.data;
@@ -63,6 +61,7 @@ export const perfomLogin = createAsyncThunk(
         return rejectWithValue(response.data?.message || "Login failed unexpectedly.");
       }
     } catch (error) {
+      console.log("login reject thunk: ", error.response);
       return rejectWithValue(
         error.response?.data?.message || error.message || "An error occurred during login."
       );
@@ -186,8 +185,7 @@ export const userSlice = createSlice({
         state.error = null;
       })
       .addCase(performLogout.fulfilled, (state) => {
-        state.status = "succeeded";
-        state.error = null;
+        return initialState;
       })
       .addCase(performLogout.rejected, (state, action) => {
         state.status = "failed";
