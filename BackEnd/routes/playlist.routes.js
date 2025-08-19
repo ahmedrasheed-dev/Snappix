@@ -20,6 +20,7 @@ import {
   getPlaylistsByVideoId,
   getChannelPlaylists,
   getSinglePlaylist,
+  togglePlaylistVisibility,
 } from "../controllers/playlist.controller.js";
 
 const router = Router();
@@ -70,5 +71,14 @@ router.delete("/:playlistId", verifyJWT, playlistIdParamValidator, validate, del
 
 // Update playlist
 router.patch("/:playlistId", verifyJWT, playlistIdParamValidator, validate, updatePlaylist);
+
+// Toggle playlist
+router.patch(
+  "/toggle/:playlistId",
+  verifyJWT,
+  playlistIdParamValidator,
+  validate,
+  togglePlaylistVisibility 
+);
 
 export default router;

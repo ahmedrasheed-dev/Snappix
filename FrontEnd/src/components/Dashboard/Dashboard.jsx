@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import DashboardHome from "./DashboardHome";
 import VideosTab from "./VideosTab";
 import UpdateProfile from "./UpdateProfile";
-
+import PlaylistsTab from "./PlaylistsTab";
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState("home");
 
@@ -10,6 +10,7 @@ const Dashboard = () => {
     { id: "home", label: "Dashboard Home" },
     { id: "videos", label: "My Videos" },
     { id: "profile", label: "Update Profile" },
+    { id: "Playlists", label: "Update Playlists" },
   ];
 
   return (
@@ -44,6 +45,7 @@ const Dashboard = () => {
         {activeTab === "home" && <DashboardHome />}
         {activeTab === "videos" && <VideosTab />}
         {activeTab === "profile" && <UpdateProfile />}
+        {activeTab === "Playlists" && <PlaylistsTab />}
       </div>
     </div>
   );

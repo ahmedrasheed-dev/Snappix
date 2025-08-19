@@ -253,6 +253,18 @@ const updatePlaylist = asyncHandler(async (req, res) => {
   return new ApiResponse(200, playlist, "Playlist updated successfully").send(res);
 });
 
+export const togglePlaylistVisibility = asyncHandler(async (req, res) => {
+  const { playlistId } = req.params;
+
+  const playlist = await Playlist.findById(playlistId);
+  if (!playlist) throw new ApiError(404, "Playlist not found");
+
+  playlist.isPublic = !playlist.isPublic;
+  await playlist.save({ validateBeforeSave: false });
+
+  return new ApiResponse(200, playlist, "Playlist visibility toggled").send(res);
+});
+
 const getPlaylistsByVideoId = asyncHandler(async (req, res) => {
   const { videoId } = req.params;
 

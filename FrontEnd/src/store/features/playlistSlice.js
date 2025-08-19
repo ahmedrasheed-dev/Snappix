@@ -75,6 +75,47 @@ export const addVideoToPlaylist = createAsyncThunk(
   }
 );
 
+// Delete Playlist
+export const deletePlaylistThunk = createAsyncThunk(
+  "playlists/deletePlaylist",
+  async (playlistId, { rejectWithValue }) => {
+    try {
+      await axiosInstance.delete(`/playlists/${playlistId}`);
+      return playlistId;
+    } catch (error) {
+      return rejectWithValue(error?.response?.data?.message || "Failed to delete playlist.");
+    }
+  }
+);
+
+// Update Playlist
+export const updatePlaylistThunk = createAsyncThunk(
+  "playlists/updatePlaylist",
+  async ({ playlistId, data }, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.patch(`/playlists/${playlistId}`, data);
+      return response.data.data;
+    } catch (error) {
+      return rejectWithValue(error?.response?.data?.message || "Failed to update playlist.");
+    }
+  }
+);
+
+// Toggle Publish
+export const togglePlaylistThunk = createAsyncThunk(
+  "playlists/togglePlaylist",
+  async (playlistId, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.patch(`/playlists/toggle/${playlistId}`);
+      return response.data.data;
+    } catch (error) {
+      return rejectWithValue(
+        error?.response?.data?.message || "Failed to toggle playlist visibility."
+      );
+    }
+  }
+);
+
 //get all videos of a playlist
 export const fetchSinglePlaylist = createAsyncThunk(
   "playlists/fetchSinglePlaylist",
@@ -144,6 +185,25 @@ const playlistSlice = createSlice({
       state.status = "failed";
       state.error = action.payload;
       state.singlePlaylist = null;
+    });
+    builder.addCase(deletePlaylistThunk.fulfilled, (state, action) => {
+      state.userPlaylists = state.userPlaylists.filter((p) => p._id !== action.payload);
+    });
+
+    builder.addCase(updatePlaylistThunk.fulfilled, (state, action) => {
+      const updated = action.payload;
+      const index = state.userPlaylists.findIndex((p) => p._id === updated._id);
+      if (index !== -1) {
+        state.userPlaylists[index] = updated;
+      }
+    });
+
+    builder.addCase(togglePlaylistThunk.fulfilled, (state, action) => {
+      const updated = action.payload;
+      const index = state.userPlaylists.findIndex((p) => p._id === updated._id);
+      if (index !== -1) {
+        state.userPlaylists[index] = updated;
+      }
     });
   },
 });
