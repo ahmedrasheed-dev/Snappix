@@ -7,16 +7,66 @@ const createTweet = asyncHandler(async (req, res) => {
   const { content } = req.body;
   const user = req.user;
 
-  const tweet = await Tweet.create({
+  const tweetCreated = await Tweet.create({
     content,
     owner: user._id,
   });
 
-  return new ApiResponse(201, tweet, "Tweet created successfully").send(res);
-});
+  // Use aggregation to return the created tweet with owner info
+  const tweet = await Tweet.aggregate([
+    { $match: { _id: tweetCreated._id } },
+    {
+      $lookup: {
+        from: "users",
+        localField: "owner",
+        foreignField: "_id",
+        as: "owner",
+      },
+    },
+    { $unwind: "$owner" },
+    {
+      $project: {
+        content: 1,
+        createdAt: 1,
+        updatedAt: 1,
+        "owner._id": 1,
+        "owner.fullname": 1,
+        "owner.username": 1,
+        "owner.avatar": 1,
+      },
+    },
+  ]);
 
+  return new ApiResponse(201, tweet[0], "Tweet created successfully").send(res);
+});
+//get all tweets of everyone
 const getUserTweets = asyncHandler(async (req, res) => {
-  const tweets = await Tweet.find({ owner: req.user._id });
+  const tweets = await Tweet.aggregate([
+    { $sort: { createdAt: -1 } }, // newest first
+    {
+      $lookup: {
+        // join with User collection
+        from: "users", // MongoDB collection name
+        localField: "owner",
+        foreignField: "_id",
+        as: "owner",
+      },
+    },
+    { $unwind: "$owner" }, // convert array to object
+    {
+      $project: {
+        // select only needed fields
+        content: 1,
+        createdAt: 1,
+        updatedAt: 1,
+        "owner._id": 1,
+        "owner.fullname": 1,
+        "owner.username": 1,
+        "owner.avatar": 1,
+      },
+    },
+  ]);
+
   return new ApiResponse(200, tweets, "Tweets fetched successfully").send(res);
 });
 

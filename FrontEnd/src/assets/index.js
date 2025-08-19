@@ -9,6 +9,7 @@ import SearchIcon from "./icons/SearchIcon.jsx";
 import Loadericon from './icons/Loadericon.jsx'
 import AddVideoicon from "./icons/AddVideoicon.jsx";
 import SolidBookmark from "./icons/SolidBookmark.jsx";
+import CommunityIcon from "./icons/CommunityIcon.jsx";
 export {
   Homeicon,
   Profileicon,
@@ -20,5 +21,6 @@ export {
   SearchIcon,
   Loadericon,
   AddVideoicon,
-  SolidBookmark
+  SolidBookmark,
+  CommunityIcon
 };

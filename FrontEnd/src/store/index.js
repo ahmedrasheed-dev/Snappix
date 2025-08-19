@@ -8,6 +8,7 @@ import subscriptionReducer from "./features/subscriptionSlice";
 import channelReducers from "./features/channelSlice";
 import dashboardReducers from "./features/dashboardSlice";
 import subscriptionsReducer from "./features/subscriptionsSlice";
+import tweetReducers from "./features/tweetSlice";
 import { setReduxStore } from "@/api/axios";
 export const store = configureStore({
   reducer: {
@@ -20,6 +21,7 @@ export const store = configureStore({
     channel: channelReducers,
     dashboard: dashboardReducers,
     subscriptions: subscriptionsReducer,
+    tweets: tweetReducers,
   },
 });
 setReduxStore(store);

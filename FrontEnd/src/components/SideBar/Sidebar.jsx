@@ -1,4 +1,3 @@
-import { Navigate } from "react-router-dom";
 import {
   Homeicon,
   Profileicon,
@@ -6,6 +5,7 @@ import {
   WatchHistory,
   SubscriptionsIcon,
   Settingsicon,
+  CommunityIcon,
 } from "../../assets/index.js";
 import SidebarItem from "./SidebarItem.jsx";
 import { useSelector } from "react-redux";
@@ -37,6 +37,11 @@ const Sidebar = () => {
             to="/subscriptions"
             icon={SubscriptionsIcon}
             text="Subscriptions"
+          />
+          <SidebarItem
+            to="/tweets"
+            icon={CommunityIcon}
+            text="Community"
           />
         </div>
 

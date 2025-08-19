@@ -23,6 +23,7 @@ import HistoryComponent from "./components/History/HistoryComponent.jsx";
 import ChanePasswordPage from "./components/ChangePassword/ChanePasswordPage.jsx";
 import SubscriptionsPage from "./components/Subscriptions/SubscriptionsPage.jsx";
 import PlaylistPage from "./components/Playlist/PlaylistPage.jsx";
+import TweetsPage from "./components/Tweets/TweetsPage.jsx";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -56,6 +57,7 @@ createRoot(document.getElementById("root")).render(
               <Route path="video/:videoId" element={<VideoPage />} />                
               <Route path="dashboard" element={<Dashboard />} />                
               <Route path="change-password" element={<ChanePasswordPage />} />                
+              <Route path="tweets" element={<TweetsPage />} />                
               <Route path="playlist/:playlistId" element={<PlaylistPage />} />                
             </Route>
           </Routes>
