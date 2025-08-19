@@ -3,6 +3,7 @@ import axiosInstance from "../../api/axios";
 
 const initialState = {
   videos: [],
+  likedVideos: [],
   totalViews: 0,
   pagination: {
     totalItems: 0,
@@ -80,7 +81,15 @@ export const togglePublishThunk = createAsyncThunk(
   }
 );
 
-
+export const fetchLikedVideos = createAsyncThunk("dashboard/fetchLikedVideos", async (_,{rejectWithValue}) => {
+  try {
+    const res = await axiosInstance.get("/likes/videos");
+    console.log("liked videos: ", res.data.data);
+    return res.data.data; 
+  } catch (error) {
+    rejectWithValue("Failed to fetch liked videos.");
+  }
+});
 
 const dashboardSlice = createSlice({
   name: "dashboard",
@@ -140,7 +149,19 @@ const dashboardSlice = createSlice({
         state.status = "failed";
         state.error = action.payload || "Something went wrong";
       })
-     
+      //  fetch all liked videos
+      .addCase(fetchLikedVideos.pending, (state) => {
+        state.status = "loading";
+        state.error = null;
+      })
+      .addCase(fetchLikedVideos.fulfilled, (state, action) => {
+        state.status = "succeeded";
+        state.likedVideos = action.payload.reverse(); // newest first
+      })
+      .addCase(fetchLikedVideos.rejected, (state, action) => {
+        state.status = "failed";
+        state.error = action.error.message;
+      });
   },
 });
 

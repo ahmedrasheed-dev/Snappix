@@ -67,13 +67,41 @@ const toggleTweetLike = asyncHandler(async (req, res) => {
 });
 
 const getAllLikedVideos = asyncHandler(async (req, res) => {
-  const likes = await Like.find({ likedBy: req.user._id });
+  const likesWithVideos = await Like.aggregate([
+    { $match: { likedBy: req.user._id } }, // only likes of current user
+    {
+      $lookup: {
+        from: "videos", // collection name in MongoDB
+        localField: "video",
+        foreignField: "_id",
+        as: "videoDetails",
+      },
+    },
+    { $unwind: "$videoDetails" }, // flatten the array from lookup
+    {
+      $project: {
+        _id: 1,
+        likedBy: 1,
+        createdAt: 1,
+        updatedAt: 1,
+        video: {
+          _id: "$videoDetails._id",
+          title: "$videoDetails.title",
+          description: "$videoDetails.description",
+          thumbnail: "$videoDetails.thumbnail",
+          isPublished: "$videoDetails.isPublished",
+          views: "$videoDetails.views",
+        },
+      },
+    },
+    { $sort: { createdAt: -1 } }, // newest first
+  ]);
 
-  if (!likes || likes.length === 0) {
+  if (!likesWithVideos || likesWithVideos.length === 0) {
     throw new ApiError(404, "No liked videos found");
   }
 
-  return new ApiResponse(200, likes, "Liked videos fetched successfully").send(res);
+  return new ApiResponse(200, likesWithVideos, "Liked videos fetched successfully").send(res);
 });
 
 const getIfLikedVideosById = asyncHandler(async (req, res) => {
