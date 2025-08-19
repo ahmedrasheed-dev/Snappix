@@ -7,6 +7,7 @@ import commentReducer from "./features/commentSlice";
 import subscriptionReducer from "./features/subscriptionSlice";
 import channelReducers from "./features/channelSlice";
 import dashboardReducers from "./features/dashboardSlice";
+import subscriptionsReducer from "./features/subscriptionsSlice";
 import { setReduxStore } from "@/api/axios";
 export const store = configureStore({
   reducer: {
@@ -18,6 +19,7 @@ export const store = configureStore({
     subscription: subscriptionReducer,
     channel: channelReducers,
     dashboard: dashboardReducers,
+    subscriptions: subscriptionsReducer,
   },
 });
 setReduxStore(store);

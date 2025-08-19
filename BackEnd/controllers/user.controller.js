@@ -10,7 +10,6 @@ import dotenv from "dotenv";
 import path from "path";
 import { sendOTPEmail, sendPasswordResetEmail } from "../utils/NodeMailer.js";
 import { uploadToCloudinary, deleteFromCloudinary, extractPublicId } from "../utils/cloudinary.js";
-import { capitalizeFirstLetter, convertMillisToMinutes } from "../utils/utilFunctions.js";
 import { imageComp } from "../utils/ImageCompressionUtils.js";
 import { deleteLocalFile } from "../utils/DeleteLocalfile.js";
 
@@ -18,7 +17,7 @@ dotenv.config({ path: "../env" });
 
 const cookieOptions = {
   httpOnly: true,
-  secure: false, //for local host
+  secure: process.env.ENVIRONMENT === "development" ? false : true, //for local host
   age: 24 * 60 * 60 * 1000,
   sameSite: "lax",
 };
@@ -82,7 +81,6 @@ export const login = asyncHandler(async (req, res) => {
 
   const isPasswordValid = await DBuser.isPasswordrect(password);
   if (!isPasswordValid) {
-    console.log("About to throw ApiError: Invalid email or password");
     throw new ApiError(401, "Invalid email or password");
   }
 

@@ -21,6 +21,7 @@ import VideoPage from "./components/VideoPage/VideoPage.jsx";
 import Dashboard from "./components/Dashboard/Dashboard.jsx";
 import HistoryComponent from "./components/History/HistoryComponent.jsx";
 import ChanePasswordPage from "./components/ChangePassword/ChanePasswordPage.jsx";
+import SubscriptionsPage from "./components/Subscriptions/SubscriptionsPage.jsx";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -41,7 +42,7 @@ createRoot(document.getElementById("root")).render(
               <Route index element={<Home />} />
               <Route path="channel/:username" element={<Profile />} />
               <Route path="history" element={<HistoryComponent />} />
-              <Route path="subscriptions" element={<Home />} />
+              <Route path="subscriptions" element={<SubscriptionsPage />} />
               <Route path="settings" element={<Home />} />
               <Route path="register" element={<RegisterPage />} />
               <Route path="login" element={<LoginPage />} />

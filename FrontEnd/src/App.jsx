@@ -16,7 +16,7 @@ function App() {
   }, [dispatch]);
 
   return (
-    <div className="grid grid-cols-[80px_1fr] bg-gray-900 h-screen overflow-y-scroll">
+    <div className="grid grid-cols-[80px_1fr] bg-gradient-to-tr from-gray-900 to-black h-screen overflow-y-scroll">
       <Sidebar />
       <ToastContainer
         position="top-right"
