@@ -19,7 +19,7 @@ import {
 } from "@tanstack/react-query";
 import VideoPage from "./components/VideoPage/VideoPage.jsx";
 import Dashboard from "./components/Dashboard/Dashboard.jsx";
-import HistoryPage from "./components/History/HistoryPage.jsx";
+import HistoryComponent from "./components/History/HistoryComponent.jsx";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -40,7 +40,7 @@ createRoot(document.getElementById("root")).render(
               {/* Child routes that will be rendered inside the Outlet */}
               <Route index element={<Home />} />
               <Route path="channel/:username" element={<Profile />} />
-              <Route path="history" element={<HistoryPage />} />
+              <Route path="history" element={<HistoryComponent />} />
               <Route path="subscriptions" element={<Home />} />
               <Route path="settings" element={<Home />} />
               <Route path="register" element={<RegisterPage />} />

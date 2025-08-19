@@ -1,37 +1,32 @@
-import React from "react";
+import React, { useState } from "react";
 import { Clock, Trash2 } from "lucide-react";
+import { Link } from "react-router-dom";
+import moment from "moment";
+import axiosInstance from "@/api/axios";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
-const dummyHistory = [
-  {
-    id: 1,
-    title: "Learn React in 30 Minutes",
-    channel: "CodeWithAhmad",
-    thumbnail: "https://i.ytimg.com/vi/w7ejDZ8SWv8/maxresdefault.jpg",
-    views: "120K",
-    timeAgo: "2 days ago",
-    duration: "29:58",
-  },
-  {
-    id: 2,
-    title: "MERN Stack Crash Course",
-    channel: "DevWorld",
-    thumbnail: "https://i.ytimg.com/vi/7CqJlxBYj-M/maxresdefault.jpg",
-    views: "85K",
-    timeAgo: "1 week ago",
-    duration: "2:15:22",
-  },
-  {
-    id: 3,
-    title: "Next.js 13 Tutorial for Beginners",
-    channel: "BuildFast",
-    thumbnail: "https://i.ytimg.com/vi/Y6KDk5iyrYE/maxresdefault.jpg",
-    views: "45K",
-    timeAgo: "3 weeks ago",
-    duration: "45:12",
-  },
-];
+const HistoryPage = ({ data }) => {
+  const watchHistory = data?.watchHistory || [];
+  const [open, setOpen] = useState(false);
 
-const HistoryPage = () => {
+  const handleDelete = async () => {
+    try {
+      await axiosInstance.delete("users/watchHistory/clear");
+      setOpen(false);
+      window.location.reload();
+    } catch (error) {
+      console.error("Error deleting watch history:", error);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-zinc-900 text-gray-200 p-6">
       {/* Header */}
@@ -40,44 +35,83 @@ const HistoryPage = () => {
           <Clock className="w-6 h-6 text-pink-500" />
           Watch History
         </h1>
-        <button className="flex items-center gap-2 px-4 py-2 bg-pink-600 hover:bg-pink-700 rounded-md text-white font-medium transition-colors">
+        <Button
+          onClick={() => setOpen(true)}
+          className="flex items-center gap-2 bg-pink-600 hover:bg-pink-700"
+        >
           <Trash2 className="w-4 h-4" />
           Clear All
-        </button>
+        </Button>
       </div>
 
       {/* History List */}
-      <div className="grid gap-6">
-        {dummyHistory.map((video) => (
-          <div
-            key={video.id}
-            className="flex gap-4 bg-zinc-800 rounded-xl overflow-hidden shadow-md hover:bg-zinc-700 transition-colors"
-          >
-            {/* Thumbnail */}
-            <div className="relative w-60 flex-shrink-0">
-              <img
-                src={video.thumbnail}
-                alt={video.title}
-                className="w-full h-32 object-cover"
-              />
-              <span className="absolute bottom-1 right-1 bg-black bg-opacity-70 text-xs px-1 rounded">
-                {video.duration}
-              </span>
-            </div>
-
-            {/* Info */}
-            <div className="flex flex-col justify-between py-2">
-              <div>
-                <h3 className="text-lg font-semibold line-clamp-2">{video.title}</h3>
-                <p className="text-sm text-gray-400">{video.channel}</p>
+      {watchHistory.length === 0 ? (
+        <p className="text-gray-400">No watch history yet.</p>
+      ) : (
+        <div className="grid gap-6">
+          {watchHistory.map((video) => (
+            <Link
+              to={`/video/${video._id}`}
+              key={video._id}
+              className="flex gap-4 bg-zinc-800 rounded-xl overflow-hidden shadow-md hover:bg-zinc-700 transition-colors"
+            >
+              {/* Thumbnail */}
+              <div className="relative w-60 flex-shrink-0">
+                <img
+                  src={video.thumbnail}
+                  alt={video.title}
+                  className="w-full h-32 object-cover"
+                />
               </div>
-              <p className="text-sm text-gray-500">
-                {video.views} views • {video.timeAgo}
-              </p>
-            </div>
-          </div>
-        ))}
-      </div>
+
+              {/* Info */}
+              <div className="flex flex-col justify-between py-2">
+                <div>
+                  <h3 className="text-lg font-semibold line-clamp-2">{video.title}</h3>
+                  <div className="flex items-center gap-2 mt-1">
+                    <img
+                      src={video.owner?.avatar}
+                      alt={video.owner?.username}
+                      className="w-6 h-6 rounded-full"
+                    />
+                    <p className="text-sm text-gray-400">{video.owner?.fullName}</p>
+                  </div>
+                </div>
+                <p className="text-sm text-gray-500">
+                  {video.views} views • {moment(video.createdAt).fromNow()}
+                </p>
+              </div>
+            </Link>
+          ))}
+        </div>
+      )}
+
+      {/* Confirm Delete Dialog */}
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="bg-zinc-800 text-gray-200 border border-zinc-700">
+          <DialogHeader>
+            <DialogTitle className="text-pink-500">Clear Watch History?</DialogTitle>
+            <DialogDescription>
+              This action cannot be undone. All your watch history will be permanently deleted.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex justify-end gap-2 mt-4">
+            <Button
+              variant="outline"
+              className="bg-zinc-700 hover:bg-zinc-600"
+              onClick={() => setOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              className="bg-red-600 hover:bg-red-700"
+              onClick={handleDelete}
+            >
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

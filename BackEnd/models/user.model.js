@@ -4,10 +4,12 @@ import jwt from "jsonwebtoken";
 
 const UserSchema = new Mongoose.Schema(
   {
-    watchHistory: {
-      type: Mongoose.Schema.Types.ObjectId,
-      ref: "video",
-    },
+    watchHistory: [
+      {
+        type: Mongoose.Schema.Types.ObjectId,
+        ref: "video",
+      },
+    ],
     username: {
       type: String,
       required: [true, "Username is required"],
@@ -110,5 +112,4 @@ UserSchema.methods.generateAccessToken = function () {
   );
 };
 
-export const User =
-  Mongoose.models.User || Mongoose.model("user", UserSchema);
+export const User = Mongoose.models.User || Mongoose.model("user", UserSchema);

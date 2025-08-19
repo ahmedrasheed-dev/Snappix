@@ -36,12 +36,12 @@ const VideoPage = () => {
   }, [videoId, dispatch]);
 
   useEffect(() => {
-    const second = setTimeout(() => {
-      dispatch(addToWatchHistory());
+    const timeoutId = setTimeout(() => {
+      dispatch(addToWatchHistory(videoId));
     }, 10000);
 
     return () => {
-      second.clearTimeout();
+      clearTimeout(timeoutId);
     };
   }, [videoId, isLoggedIn, dispatch]);
 

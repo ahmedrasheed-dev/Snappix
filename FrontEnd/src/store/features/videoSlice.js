@@ -28,10 +28,7 @@ export const toggleVideoLike = createAsyncThunk(
         return rejectWithValue("Please log in to like a video.");
       }
 
-      const response = await axiosInstance.post(
-        `/likes/v/${videoId}`,
-        {}
-      );
+      const response = await axiosInstance.post(`/likes/v/${videoId}`, {});
       return response?.data;
     } catch (error) {
       return rejectWithValue(error?.response?.message);
@@ -96,9 +93,21 @@ export const getVideoData = createAsyncThunk(
 );
 
 export const addToWatchHistory = createAsyncThunk(
-  "video/addToWatchHistory",async (videoId, { getState, rejectWithValue }) => {
+  "video/addToWatchHistory",
+  async (videoId, { getState, rejectWithValue }) => {
     // hit api to add to watch history
-  })
+    try {
+      const res = axiosInstance.post(`users/watchHistory/${videoId}`);
+      if (res.status === 200) {
+        return res.data?.data;
+      }
+    } catch (error) {
+      rejectWithValue("Failed to add video to watch history.");
+    }
+  }
+);
+
+
 const videoSlice = createSlice({
   name: "video",
   initialState,

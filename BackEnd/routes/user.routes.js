@@ -12,6 +12,8 @@ import {
   getPublicChannelDetails,
   getWatchHistory,
   getSearchSuggestions,
+  addVideoToWatchHistory,
+  clearWatchHistory
 } from "../controllers/user.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
@@ -43,7 +45,11 @@ router.post("/login", loginValidator, validate, login);
 
 router.get("/suggestions", suggestionsValidator, validate, getSearchSuggestions);
 
-router.get("/c/:username",usernameParamValidator, validate, getPublicChannelDetails);
+router.get("/c/:username", usernameParamValidator, validate, getPublicChannelDetails);
+
+router.post("/watchHistory/:videoId", verifyJWT, addVideoToWatchHistory);
+
+router.delete("/watchHistory/clear", verifyJWT, clearWatchHistory);
 
 /* ---------- AUTH ROUTES ---------- */
 router.post("/logout", verifyJWT, logout);

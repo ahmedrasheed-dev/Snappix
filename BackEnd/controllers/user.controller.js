@@ -19,7 +19,7 @@ dotenv.config({ path: "../env" });
 
 const cookieOptions = {
   httpOnly: true,
-  secure: false,//for local host
+  secure: false, //for local host
   age: 24 * 60 * 60 * 1000,
   sameSite: "lax",
 };
@@ -126,7 +126,63 @@ export const refreshToken = asyncHandler(async (req, res) => {
       .cookie("accessToken", accessToken, cookieOptions)
   );
 });
+export const sendEmailVerifyOtp = asyncHandler(async (req, res) => {
+  const user = req.user;
 
+  const otp = generateOTP();
+  user.emailVerificationOtp = otp;
+  user.emailVerificationOtpExpiresAt = Date.now() + 10 * 60 * 1000; // 10 mins
+  await user.save({ validateBeforeSave: false });
+
+  await sendOTPEmail(user.email, otp);
+
+  return new ApiResponse(200, {}, "Verification OTP sent to email").send(res);
+});
+
+export const verifyEmailOtp = asyncHandler(async (req, res) => {
+  const { otp } = req.body;
+  const user = req.user;
+
+  if (user.emailVerificationOtp !== otp || Date.now() > user.emailVerificationOtpExpiresAt) {
+    throw new ApiError(400, "Invalid or expired OTP");
+  }
+
+  user.isEmailVerified = true;
+  user.emailVerificationOtp = null;
+  user.emailVerificationOtpExpiresAt = null;
+  await user.save({ validateBeforeSave: false });
+
+  return new ApiResponse(200, {}, "Email verified successfully").send(res);
+});
+
+export const sendPasswordResetOtp = asyncHandler(async (req, res) => {
+  const user = req.user;
+
+  const otp = generateOTP();
+  user.passwordResetOtp = otp;
+  user.passwordResetOtpExpiresAt = Date.now() + 10 * 60 * 1000; // 10 mins
+  await user.save({ validateBeforeSave: false });
+
+  await sendPasswordResetEmail(user.email, otp);
+
+  return new ApiResponse(200, {}, "Password reset OTP sent to email").send(res);
+});
+
+export const verifyPasswordResetOtp = asyncHandler(async (req, res) => {
+  const { otp, newPassword } = req.body;
+  const user = req.user;
+
+  if (user.passwordResetOtp !== otp || Date.now() > user.passwordResetOtpExpiresAt) {
+    throw new ApiError(400, "Invalid or expired OTP");
+  }
+
+  user.password = newPassword;
+  user.passwordResetOtp = null;
+  user.passwordResetOtpExpiresAt = null;
+  await user.save({ validateBeforeSave: false });
+
+  return new ApiResponse(200, {}, "Password reset successful").send(res);
+});
 // ------------------- Profile -------------------
 
 export const changePassword = asyncHandler(async (req, res) => {
@@ -190,6 +246,64 @@ export const updateCoverImage = asyncHandler(async (req, res) => {
   return new ApiResponse(200, responseUser, "Cover image updated successfully").send(res);
 });
 
+export const getWatchHistory = asyncHandler(async (req, res) => {
+  const watchHistory = await User.aggregate([
+    { $match: { _id: new mongoose.Types.ObjectId(req.user._id) } },
+    {
+      $lookup: {
+        from: "videos",
+        localField: "watchHistory",
+        foreignField: "_id",
+        as: "watchHistory",
+        pipeline: [
+          {
+            $lookup: {
+              from: "users",
+              localField: "owner",
+              foreignField: "_id",
+              as: "owner",
+              pipeline: [{ $project: { fullName: 1, username: 1, avatar: 1 } }],
+            },
+          },
+          { $addFields: { owner: { $first: "$owner" } } },
+          { $project: { title: 1, thumbnail: 1, views: 1, owner: 1, createdAt: 1 } },
+        ],
+      },
+    },
+    {
+      $project: { watchHistory: 1 }, // only return watchHistory
+    },
+  ]);
+  const results = watchHistory[0];
+  return new ApiResponse(200, results, "Watch history fetched successfully").send(res);
+});
+
+export const addVideoToWatchHistory = asyncHandler(async (req, res) => {
+  const { videoId } = req.params;
+  const userId = req.user._id;
+
+  if (!mongoose.Types.ObjectId.isValid(videoId)) {
+    return new ApiError(400, "Invalid video ID");
+  }
+
+  await User.findByIdAndUpdate(userId, {
+    $addToSet: { watchHistory: videoId },
+  });
+
+  return new ApiResponse(200, null, "Video added to watch history").send(res);
+});
+
+export const clearWatchHistory = asyncHandler(async (req, res) => {
+  await User.findByIdAndUpdate(
+    req.user._id,
+    { $set: { watchHistory: [] } },
+    { new: true }
+  );
+
+  return new ApiResponse(200, {}, "Watch history cleared successfully").send(res);
+});
+
+
 // ------------------- Public -------------------
 
 export const getPublicChannelDetails = asyncHandler(async (req, res) => {
@@ -236,89 +350,6 @@ export const getPublicChannelDetails = asyncHandler(async (req, res) => {
   return new ApiResponse(200, channel[0], "User channel fetched successfully").send(res);
 });
 
-export const getWatchHistory = asyncHandler(async (req, res) => {
-  const watchHistory = await User.aggregate([
-    { $match: { _id: mongoose.Types.ObjectId(req.user._id) } },
-    {
-      $lookup: {
-        from: "videos",
-        localField: "watchHistory",
-        foreignField: "_id",
-        as: "watchHistory",
-        pipeline: [
-          {
-            $lookup: {
-              from: "users",
-              localField: "owner",
-              foreignField: "_id",
-              as: "owner",
-              pipeline: [{ $project: { fullName: 1, username: 1, avatar: 1 } }],
-            },
-          },
-          { $addFields: { owner: { $first: "$owner" } } },
-        ],
-      },
-    },
-  ]);
-  return new ApiResponse(200, watchHistory, "Watch history fetched successfully").send(res);
-});
-export const sendEmailVerifyOtp = asyncHandler(async (req, res) => {
-  const user = req.user;
-
-  const otp = generateOTP();
-  user.emailVerificationOtp = otp;
-  user.emailVerificationOtpExpiresAt = Date.now() + 10 * 60 * 1000; // 10 mins
-  await user.save({ validateBeforeSave: false });
-
-  await sendOTPEmail(user.email, otp);
-
-  return new ApiResponse(200, {}, "Verification OTP sent to email").send(res);
-});
-
-export const verifyEmailOtp = asyncHandler(async (req, res) => {
-  const { otp } = req.body;
-  const user = req.user;
-
-  if (user.emailVerificationOtp !== otp || Date.now() > user.emailVerificationOtpExpiresAt) {
-    throw new ApiError(400, "Invalid or expired OTP");
-  }
-
-  user.isEmailVerified = true;
-  user.emailVerificationOtp = null;
-  user.emailVerificationOtpExpiresAt = null;
-  await user.save({ validateBeforeSave: false });
-
-  return new ApiResponse(200, {}, "Email verified successfully").send(res);
-});
-
-export const sendPasswordResetOtp = asyncHandler(async (req, res) => {
-  const user = req.user;
-
-  const otp = generateOTP();
-  user.passwordResetOtp = otp;
-  user.passwordResetOtpExpiresAt = Date.now() + 10 * 60 * 1000; // 10 mins
-  await user.save({ validateBeforeSave: false });
-
-  await sendPasswordResetEmail(user.email, otp);
-
-  return new ApiResponse(200, {}, "Password reset OTP sent to email").send(res);
-});
-
-export const verifyPasswordResetOtp = asyncHandler(async (req, res) => {
-  const { otp, newPassword } = req.body;
-  const user = req.user;
-
-  if (user.passwordResetOtp !== otp || Date.now() > user.passwordResetOtpExpiresAt) {
-    throw new ApiError(400, "Invalid or expired OTP");
-  }
-
-  user.password = newPassword;
-  user.passwordResetOtp = null;
-  user.passwordResetOtpExpiresAt = null;
-  await user.save({ validateBeforeSave: false });
-
-  return new ApiResponse(200, {}, "Password reset successful").send(res);
-});
 export const getSearchSuggestions = asyncHandler(async (req, res) => {
   const searchTerm = req.query.q.toLowerCase();
 
