@@ -36,7 +36,7 @@ const VideoInfo = () => {
     isLiked,
   } = useSelector((state) => state.video);
   const userPlaylists = useSelector(
-    (state) => state.playlists.playlists
+    (state) => state.playlists.userPlaylists
   );
   const { videoId } = useParams();
   const {

@@ -3,7 +3,8 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axiosInstance from "../../api/axios.js";
 
 const initialState = {
-  playlists: [],
+  userPlaylists: [],
+  singlePlaylist: null,
   status: "idle",
   error: null,
 };
@@ -12,15 +13,11 @@ export const fetchUserPlaylists = createAsyncThunk(
   "playlist/fetchUserPlaylists",
   async (userID, { getState, rejectWithValue }) => {
     try {
-      const response = await axiosInstance.get(
-        `/playlists/${userID}`
-      );
+      const response = await axiosInstance.get(`/playlists/${userID}`);
       return response.data.data.docs;
     } catch (error) {
       return rejectWithValue(
-        error.response?.data?.message ||
-          error.message ||
-          "Error fetching user playlists."
+        error.response?.data?.message || error.message || "Error fetching user playlists."
       );
     }
   }
@@ -30,15 +27,10 @@ export const createPlaylist = createAsyncThunk(
   "playlists/createPlaylist",
   async ({ name, description }, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.post(
-        `/playlists/`,
-        { name, description }
-      );
+      const response = await axiosInstance.post(`/playlists/`, { name, description });
       return response.data.data;
     } catch (error) {
-      return rejectWithValue(
-        error?.response?.data?.message || "Failed to create playlist."
-      );
+      return rejectWithValue(error?.response?.data?.message || "Failed to create playlist.");
     }
   }
 );
@@ -78,10 +70,23 @@ export const addVideoToPlaylist = createAsyncThunk(
       if (error.response.status === 409) {
         return rejectWithValue("Video already in playlist");
       }
-      return rejectWithValue(
-        error?.response?.data?.message ||
-          "Error adding video to playlist."
-      );
+      return rejectWithValue(error?.response?.data?.message || "Error adding video to playlist.");
+    }
+  }
+);
+
+//get all videos of a playlist
+export const fetchSinglePlaylist = createAsyncThunk(
+  "playlists/fetchSinglePlaylist",
+  async (playlistId, { rejectWithValue }) => {
+    if (!playlistId || playlistId.length !== 24) {
+      return rejectWithValue("Invalid playlist ID.");
+    }
+    try {
+      const response = await axiosInstance.get(`/playlists/videos/${playlistId}`);
+      return response.data.data;
+    } catch (error) {
+      return rejectWithValue(error?.response?.data?.message || "Error fetching playlist.");
     }
   }
 );
@@ -89,23 +94,27 @@ export const addVideoToPlaylist = createAsyncThunk(
 const playlistSlice = createSlice({
   name: "playlist",
   initialState,
-  reducers: {},
+  reducers: {
+    clearSinglePlaylist: (state) => {
+      state.singlePlaylist = null; // reset when leaving page
+    },
+  },
   extraReducers: (builder) => {
     builder.addCase(fetchUserPlaylists.pending, (state) => {
       state.status = "loading";
     });
     builder.addCase(fetchUserPlaylists.fulfilled, (state, action) => {
       state.status = "succeeded";
-      state.playlists = action.payload;
+      state.userPlaylists = action.payload;
       state.error = null;
     });
     builder.addCase(fetchUserPlaylists.rejected, (state, action) => {
       state.status = "failed";
       state.error = action.payload;
-      state.playlists = [];
+      state.userPlaylists = [];
     });
     builder.addCase(createPlaylist.fulfilled, (state, action) => {
-      state.playlists.push(action.payload);
+      state.userPlaylists.push(action.payload);
       state.error = null;
     });
     builder.addCase(createPlaylist.rejected, (state, action) => {
@@ -113,14 +122,30 @@ const playlistSlice = createSlice({
     });
     builder.addCase(addVideoToPlaylist.fulfilled, (state, action) => {
       const updatedPlaylist = action.payload;
-      const playlistToUpdateIndex = state.playlists.findIndex(
+      const playlistToUpdateIndex = state.userPlaylists.findIndex(
         (p) => p._id === updatedPlaylist._id
       );
 
       if (playlistToUpdateIndex !== -1) {
-        state.playlists[playlistToUpdateIndex] = updatedPlaylist;
+        state.userPlaylists[playlistToUpdateIndex] = updatedPlaylist;
       }
+    });
+    /* ===== Single playlist ===== */
+    builder.addCase(fetchSinglePlaylist.pending, (state) => {
+      state.status = "loading";
+      state.error = null;
+    });
+    builder.addCase(fetchSinglePlaylist.fulfilled, (state, action) => {
+      state.status = "succeeded";
+      state.singlePlaylist = action.payload;
+      state.error = null;
+    });
+    builder.addCase(fetchSinglePlaylist.rejected, (state, action) => {
+      state.status = "failed";
+      state.error = action.payload;
+      state.singlePlaylist = null;
     });
   },
 });
+export const { clearSinglePlaylist } = playlistSlice.actions;
 export default playlistSlice.reducer;

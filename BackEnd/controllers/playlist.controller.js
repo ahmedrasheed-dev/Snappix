@@ -90,7 +90,7 @@ const getUserPlaylists = asyncHandler(async (req, res) => {
 
   return new ApiResponse(200, playlists, "Playlists fetched successfully").send(res);
 });
-
+//public playlits of a chanel 
 const getChannelPlaylists = asyncHandler(async (req, res) => {
   const { username } = req.params;
   const { page = 1, limit = 10 } = req.query;
@@ -152,6 +152,40 @@ const getChannelPlaylists = asyncHandler(async (req, res) => {
   });
 
   return new ApiResponse(200, playlists, "Channel playlists fetched successfully").send(res);
+});
+
+//get all videos of a single playlisst
+export const getSinglePlaylist = asyncHandler(async (req, res) => {
+  const { playlistId } = req.params;
+
+  if (!playlistId || playlistId.length !== 24) {
+    throw new ApiError(400, "Invalid playlist ID");
+  }
+
+  const playlist = await Playlist.findById(playlistId)
+    .populate({
+      path: "owner",
+      select: "fullName username avatar",
+    })
+    .populate({
+      path: "videos",
+      populate: {
+        path: "owner",
+        select: "fullName username avatar",
+      },
+      select: "title views thumbnail owner",
+    });
+
+  if (!playlist) throw new ApiError(404, "Playlist not found");
+
+  // check privacy
+  if (!playlist.isPublic) {
+    if (!req.user || req.user._id.toString() !== playlist.owner._id.toString()) {
+      throw new ApiError(403, "This playlist is private");
+    }
+  }
+
+  return new ApiResponse(200, playlist, "Playlist fetched successfully").send(res);
 });
 
 const getPlaylistById = asyncHandler(async (req, res) => {

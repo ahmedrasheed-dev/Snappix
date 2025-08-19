@@ -19,6 +19,7 @@ import {
   updatePlaylist,
   getPlaylistsByVideoId,
   getChannelPlaylists,
+  getSinglePlaylist,
 } from "../controllers/playlist.controller.js";
 
 const router = Router();
@@ -34,6 +35,8 @@ router.get(
   validate,
   getChannelPlaylists
 );
+//get all videos of a single playlist
+router.get("/videos/:playlistId", verifyJWTOptional, getSinglePlaylist);
 
 // Playlist by ID
 router.get("/:playlistId", verifyJWT, playlistIdParamValidator, validate, getPlaylistById);
