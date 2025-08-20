@@ -22,7 +22,7 @@ export const fetchSubscriptionStatus = createAsyncThunk(
       const response = await axiosInstance.get(`subscriptions/status/${channelId}`);
 
       const channelData = response.data.data;
-
+      console.log("sub data: ", response.data)
       return {
         isSubscribed: channelData.isSubscribed,
         subscriberCount: channelData.subscriberCount || 0,

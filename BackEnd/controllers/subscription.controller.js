@@ -89,7 +89,13 @@ export const getSubscriptionStatus = asyncHandler(async (req, res) => {
     subscriber: viewerId
   });
 
-  return new ApiResponse(200, { isSubscribed: !!exists }, "Subscription status fetched").send(res);
+  const subscribers = await Subscription.aggregate([
+  { $match: { channel: new mongoose.Types.ObjectId(channelId) } },
+  { $count: "subscriberCount" }
+]);
+
+
+  return new ApiResponse(200, { isSubscribed: !!exists, subscriberCount: subscribers[0]?.subscriberCount || 0 }, "Subscription status fetched").send(res);
 });
 
 export { toggleSubscription, getUserChannelSubscribers, getSubscribedChannels };
