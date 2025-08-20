@@ -12,6 +12,7 @@ const axiosInstance = axios.create({
 
 // ===== Refresh Token Logic =====
 let isRefreshing = false;
+//awaiting for refresh
 let failedQueue = [];
 
 const processQueue = (error, token = null) => {
@@ -78,11 +79,13 @@ axiosInstance.interceptors.response.use(
     if (error.response?.status === 401 && !originalRequest._retry && !isAuthFreeRoute) {
       originalRequest._retry = true;
 
+      //refresh is already running push to failedQueue until new token arrives
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
         })
           .then((token) => {
+            // Once resolved with new token, retry the request
             originalRequest.headers.Authorization = `Bearer ${token}`;
             return axiosInstance(originalRequest);
           })

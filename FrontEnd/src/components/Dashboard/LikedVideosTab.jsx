@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchLikedVideos } from "../../store/features/dashboardSlice";
-import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
-
+import { useNavigate } from "react-router-dom";
 const LikedVideosTab = () => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { likedVideos, status } = useSelector((state) => state.dashboard);
 
   const [selectedVideo, setSelectedVideo] = useState(null);
@@ -13,8 +12,6 @@ const LikedVideosTab = () => {
   useEffect(() => {
     dispatch(fetchLikedVideos());
   }, [dispatch]);
-
-  
 
   if (status === "loading") {
     return <div className="text-center text-gray-400 text-lg">Loading liked videos...</div>;
@@ -34,34 +31,37 @@ const LikedVideosTab = () => {
             <tr>
               <th className="px-4 py-3 text-left">Video</th>
               <th className="px-4 py-3 text-left">Date Liked</th>
-              <th className="px-4 py-3 text-left">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-zinc-700">
             {likedVideos.map((like) => {
               const video = like.video;
               return (
-                <Link to={`/video/${video._id}`}>
-                <tr key={video._id} className="hover:bg-zinc-800/50 transition">
-                  <td className="px-4 py-3 flex gap-3 items-center">
-                    <img
-                      src={video.thumbnail}
-                      alt={video.title}
-                      className="w-24 h-14 object-cover rounded"
-                    />
-                    <div className="flex flex-col">
-                      <span className="font-semibold text-gray-100 truncate w-48">{video.title}</span>
-                      <span className="text-xs text-gray-400 truncate w-48">
-                        {video.description || "No description"}
-                      </span>
-                    </div>
-                  </td>
+                  <tr
+                    key={video._id}
+                    className="hover:bg-zinc-800/50 transition cursor-pointer"
+                    onClick={() => navigate(`/video/${video._id}`)}
+                  >
+                    <td className="px-4 py-3 flex gap-3 items-center">
+                      <img
+                        src={video.thumbnail}
+                        alt={video.title}
+                        className="w-24 h-14 object-cover rounded"
+                      />
+                      <div className="flex flex-col">
+                        <span className="font-semibold text-gray-100 truncate w-48">
+                          {video.title}
+                        </span>
+                        <span className="text-xs text-gray-400 truncate w-48">
+                          {video.description || "No description"}
+                        </span>
+                      </div>
+                    </td>
 
-                  <td className="px-4 py-3 text-gray-400">
-                    {new Date(like.createdAt || like.likedAt).toLocaleDateString()}
-                  </td>
-                </tr>
-                </Link>
+                    <td className="px-4 py-3 text-gray-400">
+                      {new Date(like.createdAt || like.likedAt).toLocaleDateString()}
+                    </td>
+                  </tr>
               );
             })}
           </tbody>
