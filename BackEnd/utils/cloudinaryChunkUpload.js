@@ -15,15 +15,8 @@ cloudinary.config({
 /**
  * Upload file in 5MB chunks to Cloudinary
  * Emits progress via Socket.IO
- *
- * @param {string} filePath - path to local file
- * @param {string} socketId - socket.id of client
- * @param {object} io - socket.io server instance
- * @param {object} options - { resource_type: "video" | "image", folder: "..." }
  */
-
 export async function uploadFileInChunks(filePath, socketId, io, options = {}) {
-
   const fileStat = fs.statSync(filePath);
   const totalBytes = fileStat.size;
   const CHUNK_SIZE = Number(process.env.VIDEO_UPLOAD_CHUNK_SIZE) || 5 * 1024 * 1024;
@@ -32,13 +25,13 @@ export async function uploadFileInChunks(filePath, socketId, io, options = {}) {
   let uploadedBytes = 0;
 
   return new Promise((resolve, reject) => {
-    const uploadStream = cloudinary.uploader.upload_large(
+    // Cloudinary chunked stream
+    const uploadStream = cloudinary.uploader.upload_chunked_stream(
       {
         ...options,
         resource_type: "video",
         public_id: uploadId,
-        // chunk_size: CHUNK_SIZE,
-        chunk_size: 5 * 1024 * 1024,
+        chunk_size: CHUNK_SIZE,
         folder: options.folder || "uploads",
       },
       (error, result) => {
@@ -51,8 +44,9 @@ export async function uploadFileInChunks(filePath, socketId, io, options = {}) {
       }
     );
 
-    // Track progress manually
+    // Read file in chunks and push to Cloudinary stream
     const readStream = fs.createReadStream(filePath, { highWaterMark: CHUNK_SIZE });
+
     readStream.on("data", (chunk) => {
       uploadedBytes += chunk.length;
       const percent = Math.min(100, Math.round((uploadedBytes / totalBytes) * 100));
@@ -65,13 +59,14 @@ export async function uploadFileInChunks(filePath, socketId, io, options = {}) {
 
       uploadStream.write(chunk);
     });
+
     readStream.on("end", () => {
       uploadStream.end();
     });
+
     readStream.on("error", (err) => {
       io.to(socketId).emit(actions.UPLOAD_ERROR, { message: "Read stream error" });
       reject(err);
     });
-
   });
 }
