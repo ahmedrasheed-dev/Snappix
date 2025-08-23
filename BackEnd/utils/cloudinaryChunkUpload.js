@@ -2,8 +2,7 @@ import fs from "fs";
 import path from "path";
 import { v2 as cloudinary } from "cloudinary";
 import dotenv from "dotenv";
-import { upload } from "../middlewares/multer.middleware";
-import { actions } from "../constants";
+import { actions } from "../constants.js";
 
 dotenv.config();
 
@@ -26,54 +25,51 @@ cloudinary.config({
 export async function uploadFileInChunks(filePath, socketId, io, options = {}) {
   const fileStat = fs.statSync(filePath);
   const totalBytes = fileStat.size;
-  const CHUNK_SIZE = process.env.VIDEO_UPLOAD_CHUNK_SIZE || 5 * 1024 * 1024;
+  const CHUNK_SIZE = Number(process.env.VIDEO_UPLOAD_CHUNK_SIZE) || 5 * 1024 * 1024;
 
-  const totalChunks = Math.ceil(fileSize / CHUNK_SIZE);
   const uploadId = `${Date.now()}-${path.basename(filePath)}`;
-
   let uploadedBytes = 0;
-  let partNumber = 0;
-  let uploadResult = null;
 
-  const readStream = fs.createReadStream(filePath, { highWaterMark: CHUNK_SIZE });
+  return new Promise((resolve, reject) => {
+    const uploadStream = cloudinary.uploader.upload_chunked_stream(
+      {
+        ...options,
+        resource_type: options.resource_type || "video",
+        public_id: uploadId,
+        chunk_size: CHUNK_SIZE,
+        folder: options.folder || "uploads",
+      },
+      (error, result) => {
+        if (error) {
+          io.to(socketId).emit(actions.UPLOAD_ERROR, { message: error.message });
+          return reject(error);
+        }
+        io.to(socketId).emit(actions.UPLOAD_COMPLETE, result);
+        resolve(result);
+      }
+    );
 
-  for await (const chunk of readStream) {
-    partNumber++;
-    try {
-      uploadResult = await new Promise((resolve, reject) => {
-        const uploadStream = cloudinary.uploader.upload_chunked_stream(
-          {
-            ...options,
-            resource_type: options.resource_type || "video",
-            public_id: uploadId,
-            chunk_size: CHUNK_SIZE,
-          },
-          (err, result) => {
-            if (err) {
-              reject(err);
-            } else {
-              resolve(result);
-            }
-          }
-        );
+    // Track progress manually
+    const readStream = fs.createReadStream(filePath, { highWaterMark: CHUNK_SIZE });
+    readStream.on("data", (chunk) => {
+      uploadedBytes += chunk.length;
+      const percent = Math.min(100, Math.round((uploadedBytes / totalBytes) * 100));
 
-        uploadStream.end(chunk);
-
-        uploadedBytes += chunk.length;
-
-        const percent = Math.min(100, Math.round((uploadedBytes / totalBytes) * 100));
-
-        io.to(socketId).emit(actions.UPLOAD_PROGRESS, {
-         uploaded: uploadedBytes,
-         total: totalBytes,
-         percent,
-         partNumber,
-         totalChunks,
-        });
+      io.to(socketId).emit(actions.UPLOAD_PROGRESS, {
+        uploaded: uploadedBytes,
+        total: totalBytes,
+        percent,
       });
-    } catch (error) {
 
-        
-    }
-  }
+      uploadStream.write(chunk);
+    });
+    readStream.on("end", () => {
+      uploadStream.end();
+    });
+    readStream.on("error", (err) => {
+      io.to(socketId).emit(actions.UPLOAD_ERROR, { message: "Read stream error" });
+      reject(err);
+    });
+
+  });
 }

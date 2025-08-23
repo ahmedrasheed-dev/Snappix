@@ -5,6 +5,7 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { Video } from "../models/video.model.js";
 import ffmpeg from "fluent-ffmpeg";
 import { uploadToCloudinary, deleteFromCloudinary, extractPublicId } from "../utils/cloudinary.js";
+import { uploadFileInChunks } from "../utils/cloudinaryChunkUpload.js";
 import path from "path";
 import { imageComp } from "../utils/ImageCompressionUtils.js";
 import { deleteLocalFile } from "../utils/DeleteLocalfile.js";
@@ -200,7 +201,7 @@ const getMyVideos = asyncHandler(async (req, res) => {
 });
 
 const publishAVideo = asyncHandler(async (req, res) => {
-  const { title, description } = req.body;
+  const { title, description, socketId  } = req.body;
 
   if (!title || !description || title.trim() === "" || description.trim() === "") {
     throw new ApiError(400, "Title and description are required");
@@ -212,6 +213,8 @@ const publishAVideo = asyncHandler(async (req, res) => {
   if (!videoLocalPath || !thumbnailLocalPath) {
     throw new ApiError(400, "Video and thumbnail are required");
   }
+  const io = req.app.get("io"); // get socket.io instance
+
 
   const compressedVideoPath = `${videoLocalPath}-compressed.mp4`;
   const compressedThumbnailPath = path.join(
@@ -223,7 +226,10 @@ const publishAVideo = asyncHandler(async (req, res) => {
     await compressVideo(videoLocalPath, compressedVideoPath);
     await imageComp(thumbnailLocalPath, compressedThumbnailPath);
 
-    const video = await uploadToCloudinary(compressedVideoPath);
+    const video = await uploadFileInChunks(compressedVideoPath, socketId, io, {
+      resource_type: "video",
+      folder: "uploads",
+    });
     const thumbnail = await uploadToCloudinary(compressedThumbnailPath);
 
     const newVideo = await Video.create({
@@ -240,10 +246,10 @@ const publishAVideo = asyncHandler(async (req, res) => {
     console.error("Compression/upload error: ", err);
     res.status(500).json(new ApiError(500, "Video processing failed", err));
   } finally {
-    await deleteLocalFile(videoLocalPath);
-    await deleteLocalFile(compressedVideoPath);
-    await deleteLocalFile(thumbnailLocalPath);
-    await deleteLocalFile(compressedThumbnailPath);
+    // await deleteLocalFile(videoLocalPath);
+    // await deleteLocalFile(compressedVideoPath);
+    // await deleteLocalFile(thumbnailLocalPath);
+    // await deleteLocalFile(compressedThumbnailPath);
   }
 });
 

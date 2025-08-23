@@ -23,11 +23,23 @@ app.use(cookieParser());
 const server = http.createServer(app);
 const io = new SocketIOServer(server, {
   cors: {
-    origin: "*",
+   origin: "http://localhost:5173", // vite dev server
+    methods: ["GET", "POST"],
   },
 });
 //socket available to all routes
+
 app.set("io", io);
+
+
+io.on("connection", (socket) => {
+  console.log("Client connected:", socket.id);
+  socket.on("disconnect", () => {
+    console.log("Client disconnected:", socket.id);
+  });
+});
+
+
 //routes import`
 import userRouter from "./routes/user.routes.js";
 import videoRouter from "./routes/video.routes.js";
@@ -48,4 +60,4 @@ app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/subscriptions", subscriptionRouter);
 
 app.use(errorHandler);
-export default app;
+export default server;
