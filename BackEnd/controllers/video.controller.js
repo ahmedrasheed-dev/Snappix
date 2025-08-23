@@ -209,6 +209,9 @@ const publishAVideo = asyncHandler(async (req, res) => {
 
   const videoLocalPath = req.files?.video?.[0]?.path;
   const thumbnailLocalPath = req.files?.thumbnail?.[0]?.path;
+  console.log("video local path: ", videoLocalPath);
+  console.log("thumbnail local path: ", thumbnailLocalPath);
+
 
   if (!videoLocalPath || !thumbnailLocalPath) {
     throw new ApiError(400, "Video and thumbnail are required");
@@ -224,13 +227,13 @@ const publishAVideo = asyncHandler(async (req, res) => {
 
   try {
     await compressVideo(videoLocalPath, compressedVideoPath);
-    await imageComp(thumbnailLocalPath, compressedThumbnailPath);
+    // await imageComp(thumbnailLocalPath, compressedThumbnailPath);
 
     const video = await uploadFileInChunks(compressedVideoPath, socketId, io, {
       resource_type: "video",
-      folder: "uploads",
+      folder: "public/temp",
     });
-    const thumbnail = await uploadToCloudinary(compressedThumbnailPath);
+    const thumbnail = await uploadToCloudinary(thumbnailLocalPath);
 
     const newVideo = await Video.create({
       videoFile: video.secure_url,
@@ -246,10 +249,10 @@ const publishAVideo = asyncHandler(async (req, res) => {
     console.error("Compression/upload error: ", err);
     res.status(500).json(new ApiError(500, "Video processing failed", err));
   } finally {
-    // await deleteLocalFile(videoLocalPath);
-    // await deleteLocalFile(compressedVideoPath);
-    // await deleteLocalFile(thumbnailLocalPath);
-    // await deleteLocalFile(compressedThumbnailPath);
+    await deleteLocalFile(videoLocalPath);
+    await deleteLocalFile(compressedVideoPath);
+    await deleteLocalFile(thumbnailLocalPath);
+    await deleteLocalFile(compressedThumbnailPath);
   }
 });
 

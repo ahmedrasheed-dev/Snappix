@@ -34,7 +34,7 @@ export async function uploadFileInChunks(filePath, socketId, io, options = {}) {
     const uploadStream = cloudinary.uploader.upload_chunked_stream(
       {
         ...options,
-        resource_type: options.resource_type || "video",
+        resource_type: "video",
         public_id: uploadId,
         chunk_size: CHUNK_SIZE,
         folder: options.folder || "uploads",
