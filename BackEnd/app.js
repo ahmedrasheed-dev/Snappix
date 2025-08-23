@@ -1,8 +1,10 @@
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import http from "http";
+import { Server as SocketIOServer } from "socket.io";
 import dotenv from "dotenv";
-import {errorHandler} from "./middlewares/errorHandler.middleware.js";
+import { errorHandler } from "./middlewares/errorHandler.middleware.js";
 dotenv.config({
   path: "./.env",
 });
@@ -18,7 +20,15 @@ app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use(express.static("public"));
 app.use(cookieParser());
 
-//routes import
+const server = http.createServer(app);
+const io = new SocketIOServer(server, {
+  cors: {
+    origin: "*",
+  },
+});
+//socket available to all routes
+app.set("io", io);
+//routes import`
 import userRouter from "./routes/user.routes.js";
 import videoRouter from "./routes/video.routes.js";
 import commentRouter from "./routes/comment.routes.js";
@@ -36,8 +46,6 @@ app.use("/api/v1/tweets", tweetRouter);
 app.use("/api/v1/playlists", playlistRouter);
 app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/subscriptions", subscriptionRouter);
-
-
 
 app.use(errorHandler);
 export default app;
