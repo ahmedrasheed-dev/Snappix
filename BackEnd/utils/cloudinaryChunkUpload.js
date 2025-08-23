@@ -23,6 +23,7 @@ cloudinary.config({
  */
 
 export async function uploadFileInChunks(filePath, socketId, io, options = {}) {
+
   const fileStat = fs.statSync(filePath);
   const totalBytes = fileStat.size;
   const CHUNK_SIZE = Number(process.env.VIDEO_UPLOAD_CHUNK_SIZE) || 5 * 1024 * 1024;
@@ -31,12 +32,13 @@ export async function uploadFileInChunks(filePath, socketId, io, options = {}) {
   let uploadedBytes = 0;
 
   return new Promise((resolve, reject) => {
-    const uploadStream = cloudinary.uploader.upload_chunked_stream(
+    const uploadStream = cloudinary.uploader.upload_large(
       {
         ...options,
         resource_type: "video",
         public_id: uploadId,
-        chunk_size: CHUNK_SIZE,
+        // chunk_size: CHUNK_SIZE,
+        chunk_size: 5 * 1024 * 1024,
         folder: options.folder || "uploads",
       },
       (error, result) => {

@@ -29,14 +29,15 @@ const UploadVideo = () => {
     socket.on("connect", () => {
       console.log("Connected to server:", socket.id);
     });
-
     socket.on("upload-progress", ({ uploaded, total }) => {
-      const percent = Math.min(100, Math.round((uploaded / total) * 100));
+      const percent = Math.round((uploaded / total) * 100);
+      console.log("Progress event:", percent); // debug log
       setProgress(percent);
     });
 
     socket.on("upload-complete", (data) => {
       console.log("Upload finished:", data);
+      setProgress(100);
       setisSubmiting(false);
       notifySuccess("Upload complete!");
     });
@@ -46,7 +47,6 @@ const UploadVideo = () => {
       setisSubmiting(false);
       notifyError("Upload failed");
     });
-
     return () => {
       socket.off("connect");
       socket.off("upload-progress");
@@ -105,9 +105,8 @@ const UploadVideo = () => {
     } catch (error) {
       console.error("Error uploading video:", error?.data?.message);
       notifyError();
-    } finally {
       setisSubmiting(false);
-    }
+    } 
   };
 
   const clearVideo = () => {

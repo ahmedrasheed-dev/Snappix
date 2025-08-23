@@ -216,7 +216,7 @@ const publishAVideo = asyncHandler(async (req, res) => {
   if (!videoLocalPath || !thumbnailLocalPath) {
     throw new ApiError(400, "Video and thumbnail are required");
   }
-  const io = req.app.get("io"); // get socket.io instance
+  const io = req.app.get("io"); // get socket.io instance, this is being passed to file uplaod chunked
 
 
   const compressedVideoPath = `${videoLocalPath}-compressed.mp4`;
@@ -233,6 +233,7 @@ const publishAVideo = asyncHandler(async (req, res) => {
       resource_type: "video",
       folder: "public/temp",
     });
+    console.log("fucking video to cloudinary: ", video);
     const thumbnail = await uploadToCloudinary(thumbnailLocalPath);
 
     const newVideo = await Video.create({
