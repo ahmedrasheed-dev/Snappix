@@ -110,7 +110,7 @@ const VideoPage = () => {
   return (
     <>
       <div
-        className={`min-h-screen bg-gray-900 text-white p-4 md:p-8 flex flex-col lg:flex-row gap-6 lg:max-w-screen-2xl lg:mx-auto`}
+        className={`min-h-screen bg-[#0f0f0f] text-white p-4 md:p-8 flex flex-col lg:flex-row gap-6 lg:max-w-screen-2xl lg:mx-auto`}
       >
         {/* Main Video Section */}
         <div className={`flex-1 min-w-0 ${!isTheaterMode ? "lg:max-w-[70%]" : ""}`}>

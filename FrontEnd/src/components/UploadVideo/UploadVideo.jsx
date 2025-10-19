@@ -7,7 +7,6 @@ import { Loadericon } from "../../assets/index.js";
 import { Progress } from "@/components/ui/progress";
 import axiosInstance from "@/api/axios";
 import { notifyError, notifySuccess } from "@/utils/toasts.js";
-import socket from "../../utils/socket.js";
 const UploadVideo = () => {
   const {
     register,
@@ -25,35 +24,7 @@ const UploadVideo = () => {
 
   const thumbnailFile = watch("thumbnail");
   const videoFile = watch("video");
-  useEffect(() => {
-    socket.on("connect", () => {
-      console.log("Connected to server:", socket.id);
-    });
-    socket.on("upload-progress", ({ uploaded, total }) => {
-      const percent = Math.round((uploaded / total) * 100);
-      console.log("Progress event:", percent); // debug log
-      setProgress(percent);
-    });
-
-    socket.on("upload-complete", (data) => {
-      console.log("Upload finished:", data);
-      setProgress(100);
-      setisSubmiting(false);
-      notifySuccess("Upload complete!");
-    });
-
-    socket.on("upload-error", (err) => {
-      console.error("Upload failed:", err);
-      setisSubmiting(false);
-      notifyError("Upload failed");
-    });
-    return () => {
-      socket.off("connect");
-      socket.off("upload-progress");
-      socket.off("upload-complete");
-      socket.off("upload-error");
-    };
-  }, []);
+ 
 
   useEffect(() => {
     if (thumbnailFile && thumbnailFile.length > 0) {
@@ -87,9 +58,6 @@ const UploadVideo = () => {
 
     formData.append("video", data.video[0]);
     formData.append("thumbnail", data.thumbnail[0]);
-
-    formData.append("socketId", socket.id);
-    console.log("Socket ID:", socket.id);
 
     try {
       const res = await axiosInstance.post("/videos/upload", formData, {

@@ -3,7 +3,8 @@ import axiosInstance from "@/api/axios";
 
 const initialState = {
   comments: [],
-  status: "idle",
+  commentFetchStatus: "idle",
+  addCommentStatus: "",
   error: null,
 };
 
@@ -65,10 +66,10 @@ const commentsSlice = createSlice({
   extraReducers: (builder) => {
     builder
       .addCase(fetchComments.pending, (state) => {
-        state.status = "loading";
+        state.commentFetchStatus = "loading";
       })
       .addCase(fetchComments.fulfilled, (state, action) => {
-        state.status = "succeeded";
+        state.commentFetchStatus = "succeeded";
         state.comments = action.payload.map((c) => ({
           ...c,
           commentOwners: c.commentOwners?.[0] || {},
@@ -76,11 +77,11 @@ const commentsSlice = createSlice({
         state.error = null;
       })
       .addCase(fetchComments.rejected, (state, action) => {
-        state.status = "failed";
+        state.commentFetchStatus = "failed";
         state.error = action.payload;
       })
       .addCase(addCommentToVideo.pending, (state) => {
-        state.status = "loading";
+        state.addCommentStatus = "loading";
       })
       .addCase(addCommentToVideo.fulfilled, (state, action) => {
         const comment = {
@@ -90,10 +91,10 @@ const commentsSlice = createSlice({
 
         state.comments.unshift(comment);
         state.error = null;
-        state.status = "succeeded";
+        state.addCommentStatus = "succeeded";
       })
       .addCase(addCommentToVideo.rejected, (state, action) => {
-        state.status = "failed";
+        state.addCommentStatus = "failed";
         state.error = action.payload;
       })
       .addCase(addReplyToComment.fulfilled, (state, action) => {

@@ -22,6 +22,7 @@ import SubscriptionsPage from "./components/Subscriptions/SubscriptionsPage.jsx"
 import PlaylistPage from "./components/Playlist/PlaylistPage.jsx";
 import TweetsPage from "./components/Tweets/TweetsPage.jsx";
 import SettingsPage from "./components/Settings/SettingsPage.jsx";
+import Error from "./pages/Error.jsx";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -54,6 +55,7 @@ createRoot(document.getElementById("root")).render(
               <Route path="change-password" element={<ChanePasswordPage />} />
               <Route path="tweets" element={<TweetsPage />} />
               <Route path="playlist/:playlistId" element={<PlaylistPage />} />
+              <Route path="*" element={<Error />} />
             </Route>
           </Routes>
         </Provider>

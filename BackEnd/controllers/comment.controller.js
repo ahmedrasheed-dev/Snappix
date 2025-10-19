@@ -82,13 +82,14 @@ const addComment = asyncHandler(async (req, res) => {
   const { videoId } = req.params;
   const { content } = req.body;
   const userId = req.user._id;
-
+  console.log("in comment addition controler")
   const comment = await Comment.create({
     video: videoId,
     owner: userId,
     content,
     parentComment: null,
   });
+  console.log("comment is: ",comment)
 
   const createdComment = await Comment.aggregate([
     { $match: { _id: comment._id } },

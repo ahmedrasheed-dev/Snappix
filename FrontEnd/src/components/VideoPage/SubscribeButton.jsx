@@ -36,8 +36,6 @@ const SubscribeButton = ({ channelUsername, channelId }) => {
     }
   };
 
-  if (isOwnChannel) return <h1>cant sub to own channel</h1>; // or render nothing / a different UI
-
   const buttonText = isSubscribed ? "UnSubscribe" : "Subscribe";
   const buttonDisabled = status === "loading" || !isLoggedIn;
 

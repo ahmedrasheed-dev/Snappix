@@ -139,7 +139,7 @@ const VideoInfo = () => {
 
   return (
     <div className={`mt-6`}>
-      <h1 className="text-2xl md:text-3xl font-bold text-pink-500">
+      <h1 className="text-2xl md:text-3xl font-bold text-pink-500 overflow-hidden w-full">
         {video?.title}
       </h1>
       <div className="flex items-center justify-between mt-2">

@@ -49,7 +49,7 @@ const RelatedVideos = ({ isTheaterMode, videoId }) => {
             <Link
               key={relatedVideo._id}
               to={`/video/${relatedVideo._id}`}
-              className="flex gap-4 p-2 rounded-lg hover:bg-gray-800 transition-colors duration-200"
+              className="flex gap-4 p-2 rounded-lg hover:bg-gray-800 transition-colors duration-200 overflow-hidden text-ellipsis"
             >
               <img
                 src={relatedVideo.thumbnail}
@@ -57,7 +57,7 @@ const RelatedVideos = ({ isTheaterMode, videoId }) => {
                 className="w-32 h-18 object-cover rounded-lg"
               />
               <div className="flex-1">
-                <h4 className="text-sm font-semibold line-clamp-2">
+                <h4 className="text-sm font-semibold line-clamp-2 text-ellipsis">
                   {relatedVideo.title}
                 </h4>
                 <p className="text-xs text-gray-400 mt-1">

@@ -12,7 +12,7 @@ export const errorHandler = (err, req, res, next) => {
   console.log("ErrorHandler caught ApiError:", err.message);
   return res.status(500).json({
     success: false,
-    message: "Internal Server Error",
+    message: err?.message,
     errors: [],
   });
 };

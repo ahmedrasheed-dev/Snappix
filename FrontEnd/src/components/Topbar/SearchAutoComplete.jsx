@@ -113,7 +113,7 @@ const SearchAutocomplete = () => {
                       )}`
                     } // Use actual thumbnail or placeholder
                     alt={item.title}
-                    className="w-16 h-9 object-cover rounded-md flex-shrink-0"
+                    className="w-16 h-9 object-cover rounded-md flex-shrink-0 overflow-hidden"
                   />
                 ) : (
                   <div className="w-9 h-9 flex items-center justify-center bg-pink-600 rounded-full text-white text-sm font-bold flex-shrink-0">
@@ -121,7 +121,7 @@ const SearchAutocomplete = () => {
                       <img
                         src={item.avatar}
                         alt={item.title}
-                        className="w-full h-full rounded-full object-cover"
+                        className="w-full h-full rounded-full object-cover overflow-hidden"
                       />
                     ) : (
                       item.title.charAt(0).toUpperCase()

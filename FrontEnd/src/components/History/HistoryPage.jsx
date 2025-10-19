@@ -67,12 +67,12 @@ const HistoryPage = ({ data }) => {
               {/* Info */}
               <div className="flex flex-col justify-between py-2">
                 <div>
-                  <h3 className="text-lg font-semibold line-clamp-2">{video.title}</h3>
+                  <h3 className="text-lg font-semibold line-clamp-2 overflow-hidden">{video.title}</h3>
                   <div className="flex items-center gap-2 mt-1">
                     <img
                       src={video.owner?.avatar}
                       alt={video.owner?.username}
-                      className="w-6 h-6 rounded-full"
+                      className="w-6 h-6 rounded-full overflow-hidden"
                     />
                     <p className="text-sm text-gray-400">{video.owner?.fullName}</p>
                   </div>

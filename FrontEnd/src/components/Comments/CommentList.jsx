@@ -8,37 +8,11 @@ import {
 import CommentNested from "./CommentNested.jsx";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { toast, Bounce } from "react-toastify";
-
+import {notifySuccess, notifyError} from "@/utils/toasts.js"
 const CommentList = ({ videoId }) => {
-  const notifySuccess = (success) => {
-    toast.success(success, {
-      position: "top-right",
-      autoClose: 5000,
-      hideProgressBar: false,
-      closeOnClick: false,
-      pauseOnHover: true,
-      draggable: true,
-      progress: undefined,
-      theme: "colored",
-      transition: Bounce,
-    });
-  };
-  const notifyError = (error) => {
-    toast.error(error, {
-      position: "top-right",
-      autoClose: 5000,
-      hideProgressBar: false,
-      closeOnClick: false,
-      pauseOnHover: true,
-      draggable: true,
-      progress: undefined,
-      theme: "colored",
-      transition: Bounce,
-    });
-  };
+  
   const dispatch = useDispatch();
-  const { comments, status, error } = useSelector(
+  const { comments, commentFetchStatus,error } = useSelector(
     (state) => state.comments
   );
   const { isLoggedIn } = useSelector((state) => state.user);
@@ -62,7 +36,6 @@ const CommentList = ({ videoId }) => {
       dispatch(fetchComments(videoId));
     }
   }, [videoId, dispatch]);
-
   return (
     <div className="mt-8 border-t border-gray-700 pt-8">
       <h3 className="text-xl font-bold text-pink-500">
@@ -78,7 +51,7 @@ const CommentList = ({ videoId }) => {
           className="bg-gray-800 text-white border-gray-700 focus:border-pink-500"
         />
         <Button
-          disabled={!isLoggedIn || newCommentContent.trim() === ""}
+          disabled={!isLoggedIn || newCommentContent.trim() === "" || newCommentContent.length <= 3}
           title={
             !isLoggedIn
               ? "Please log in to add a comment."
@@ -92,18 +65,12 @@ const CommentList = ({ videoId }) => {
       </div>
 
       <div className="mt-4 space-y-6">
-        {status === "loading" && (
+        {commentFetchStatus === "loading" && (
           <div className="text-center text-gray-400">
             Loading comments...
           </div>
         )}
-        {status === "failed" && (
-          <div className="text-center text-red-500">
-            Error: {error}
-          </div>
-        )}
-        {status === "succeeded" && comments.length > 0
-          ? comments.map((comment) => (
+        {commentFetchStatus === "succeeded" && comments.length > 0 ? comments.map((comment) => (
               <CommentNested
                 key={comment._id}
                 comment={comment}
