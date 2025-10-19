@@ -13,7 +13,6 @@ const LogoutPage = () => {
     const logUserOut = async () => {
       try {
         await dispatch(performLogout()).unwrap();
-        notifySuccess("Logout successful!");
         setTimeout(() => {
           navigate("/login");
         }, 1000);

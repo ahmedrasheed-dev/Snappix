@@ -56,6 +56,7 @@ const VideoPage = () => {
 
   const handleSubscribe = () => {};
 
+  // if (videoStatus === "loading" || !video) {
   if (videoStatus === "loading" || !video) {
     return (
       <>

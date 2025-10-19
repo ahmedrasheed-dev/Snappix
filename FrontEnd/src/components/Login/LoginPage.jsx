@@ -29,7 +29,6 @@ const LoginPage = () => {
 
     try {
       const data = await dispatch(perfomLogin(loginData)).unwrap();
-      notifySuccess("Login successful!");
       navigate("/");
     } catch (error) {
       console.log("login error: ", error)
