@@ -6,10 +6,10 @@ const VideoItemSkeleton = () => {
     <div
       className="
         flex flex-col
-        w-[360px]                /* YouTube-like width */
         cursor-pointer
         overflow-hidden
         rounded-2xl
+        w-full
       "
     >
       {/* Thumbnail Skeleton */}

@@ -11,7 +11,7 @@ const VideoSection = () => {
   });
   if (isLoading) {
     return (
-      <div className="grid sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 p-4">
+      <div className="grid sm:grid-cols-3 md:grid-cols-4 gap-4 p-4">
         {Array.from({ length: 12 }).map((_, index) => (
           <VideoItemSkeleton key={index} />
         ))}
