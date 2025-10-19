@@ -14,7 +14,7 @@ const Sidebar = () => {
   const { isLoggedIn } = useSelector((state) => state.user);
   const user = useSelector((state) => state.user.user);
   return (
-    <section className="fixed left-0 z-20 justify-between flex flex-col items-center min-h-screen  w-20 bg-gray-900/70r  bg-[#0f0f0f]">
+    <section className="fixed left-0 z-20 justify-between flex flex-col items-center min-h-screen  w-20 bg-gray-900/70r  bg-[#0f0f0f] ">
       <div>
         <div className="mb-16 flex flex-col items-center ">
           <Logo color="#e8317e" />

@@ -1,14 +1,12 @@
 import React from "react";
 import HeroImage from "../../assets/HeroImage.jpg";
-import Topbar from "../Topbar/Topbar";
 const HeroSection = () => {
   return (
     <>
       <div
-        className="relative w-full min-h-96 bg-cover bg-center p-11 overflow-hidden"
+        className="relative w-full min-h-96 bg-cover bg-center p-18 overflow-hidden"
         style={{ backgroundImage: `url(${HeroImage})` }}
       >
-        {/* <Topbar classes={""}/> */}
 
         {/* Gradient Overlay for the BOTTOM fade */}
         <div className="absolute inset-x-0 bottom-0 h-1/4 bg-gradient-to-t from-main-black to-transparent"></div>

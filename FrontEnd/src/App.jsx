@@ -33,7 +33,7 @@ function App() {
       />
       <div className="flex flex-col w-full bg-[#0f0f0f]">
         <Topbar classes="fixed top-0 left-[80px] right-0 py-4 w-[calc(100%-80px)] backdrop-blur-lg border-b border-white/10 z-50  h-16" />
-        <main className="flex-1 overflow-auto mt-16">
+        <main className="flex-1 overflow-auto ">
           <Outlet />
         </main>
       </div>
