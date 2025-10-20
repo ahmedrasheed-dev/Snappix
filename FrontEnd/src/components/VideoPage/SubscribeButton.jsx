@@ -29,7 +29,6 @@ const SubscribeButton = ({ channelUsername, channelId }) => {
 
     try {
       const result = await dispatch(toggleSubscription(channelId)).unwrap();
-      notifySuccess(result.subscribed ? "Subscribed successfully!" : "Unsubscribed successfully!");
     } catch (err) {
       notifyError(err);
       console.error("Failed to toggle subscription:", err);
