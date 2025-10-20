@@ -5,19 +5,29 @@ import { ToastContainer, Bounce } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { fetchLoggedInUser } from "./store/features/userSlice";
 import { useDispatch } from "react-redux";
-import { useEffect } from "react";
+import { useEffect, useState } from "react"; // ✅ import useState
 import Topbar from "./components/Topbar/Topbar";
 
 function App() {
   const dispatch = useDispatch();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false); // ✅ control sidebar visibility
 
   useEffect(() => {
     dispatch(fetchLoggedInUser());
   }, [dispatch]);
 
+  const handleMenuClick = () => {
+    setIsSidebarOpen((prev) => !prev);
+  };
+
   return (
-    <div className="grid grid-cols-[80px_1fr] bg-gradient-to-tr from-gray-900 to-black h-screen overflow-y-scroll">
-      <Sidebar />
+    <div className="relative md:grid md:grid-cols-[80px_1fr]  h-screen overflow-y-scroll">
+      
+      <Sidebar
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
+      />
+
       <ToastContainer
         position="top-right"
         autoClose={5000}
@@ -31,12 +41,23 @@ function App() {
         theme="colored"
         transition={Bounce}
       />
+
       <div className="flex flex-col w-full bg-[#0f0f0f]">
-        <Topbar classes="fixed top-0 left-[80px] right-0 py-4 w-[calc(100%-80px)] backdrop-blur-lg border-b border-white/10 z-50  h-16" />
-        <main className="flex-1 overflow-auto ">
+        <Topbar
+          onMenuClick={handleMenuClick} 
+          classes="fixed top-0 left-0 md:left-[80px] right-0 py-4 md:w-[calc(100%-80px)] backdrop-blur-lg border-b border-white/10 z-50 h-16"
+        />
+        <main className="flex-1 overflow-auto">
           <Outlet />
         </main>
       </div>
+
+      {isSidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-30 md:hidden"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
     </div>
   );
 }
