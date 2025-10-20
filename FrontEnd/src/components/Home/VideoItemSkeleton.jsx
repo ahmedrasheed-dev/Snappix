@@ -9,7 +9,7 @@ const VideoItemSkeleton = () => {
         cursor-pointer
         overflow-hidden
         rounded-2xl
-        w-full
+        w-full max-w-[360px]
       "
     >
       {/* Thumbnail Skeleton */}
