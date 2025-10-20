@@ -158,7 +158,7 @@ const VideoInfo = () => {
             ) : (
               <FaRegHeart />
             )}
-            <span>{likesCount} Likes</span>
+            <span>{likesCount > 0 ? likesCount : 0} Likes</span>
           </Button>
 
           <Dialog
