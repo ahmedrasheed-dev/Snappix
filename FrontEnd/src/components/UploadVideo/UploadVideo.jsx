@@ -43,6 +43,25 @@ const UploadVideo = () => {
     }
   }, [videoFile]);
 
+  const getVideoDuration = (file) => {
+    return new Promise((resolve, reject) => {
+      if (!file || !(file instanceof Blob)) {
+        return reject("Invalid file provided for duration extraction");
+      }
+
+      const video = document.createElement("video");
+      video.preload = "metadata";
+
+      video.onloadedmetadata = () => {
+        URL.revokeObjectURL(video.src);
+        resolve(video.duration);
+      };
+
+      video.onerror = () => reject("Failed to load video metadata");
+      video.src = URL.createObjectURL(file);
+    });
+  };
+
   const uploadToS3 = async (file, category, setProgress) => {
     // Ask backend for presigned URL
     const res = await axiosInstance.post("/videos/presign", {
@@ -72,7 +91,16 @@ const UploadVideo = () => {
     try {
       setisSubmiting(true);
       setProgress(0);
+      
+      const videoFile = data.video?.[0];
+      console.log("Video file for duration:", videoFile);
 
+      if (!videoFile) {
+        throw new Error("No video file selected");
+      }
+
+      const duration = await getVideoDuration(videoFile);
+      console.log("Video duration:", duration);
       // Upload each file
       const videoUrl = await uploadToS3(data.video[0], "video", setProgress);
       const thumbnailUrl = await uploadToS3(data.thumbnail[0], "thumbnail");
@@ -83,6 +111,7 @@ const UploadVideo = () => {
         description: data.description,
         videoUrl,
         thumbnailUrl,
+        duration,
       };
 
       const res = await axiosInstance.post("/videos/upload", payload);

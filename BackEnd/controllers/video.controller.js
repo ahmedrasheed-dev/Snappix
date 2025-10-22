@@ -62,9 +62,9 @@ export const getPresignedUrl = async (req, res, next) => {
 };
 
 const publishAVideo = asyncHandler(async (req, res) => {
-  const { title, description, videoUrl, thumbnailUrl } = req.body;
+  const { title, description, videoUrl, thumbnailUrl, duration  } = req.body;
 
-  if (!title || !description || !videoUrl || !thumbnailUrl)
+  if (!title || !description || !videoUrl || !thumbnailUrl || !duration)
     throw new ApiError(400, "All fields are required");
 
   const newVideo = await Video.create({
@@ -73,7 +73,7 @@ const publishAVideo = asyncHandler(async (req, res) => {
     owner: req.user._id,
     title,
     description,
-    duration: 0,
+    duration,
   });
 
   return new ApiResponse(201, newVideo, "Video published successfully").send(res);
