@@ -137,7 +137,7 @@ const UploadVideo = () => {
     setValue("thumbnail", null);
     setThumbnailPreview(null);
   };
-
+1
   return (
     <div className="min-h-screen bg-gray-900 flex items-center justify-center p-6">
       <div className="w-full max-w-5xl bg-gray-800 rounded-xl shadow-2xl p-8 text-white">
@@ -221,7 +221,7 @@ const UploadVideo = () => {
                   <div>
                     <label
                       htmlFor="thumbnail"
-                      className="flex flex-col items-center justify-center w-full h-40 border-2 border-gray-600 border-dashed rounded-lg cursor-pointer bg-gray-700 hover:bg-gray-600 transition duration-200"
+                      className="flex flex-col items-center justify-center w-full h-`40 border-2 border-gray-600 border-dashed rounded-lg cursor-pointer bg-gra`y-700 hover:bg-gray-600 transition duration-200"
                     >
                       <FaUpload className="w-10 h-10 text-gray-400 mb-3" />
                       <p className="mb-2 text-sm text-gray-400">

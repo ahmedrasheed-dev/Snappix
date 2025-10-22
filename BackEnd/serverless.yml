@@ -1,0 +1,41 @@
+service: snappix-backend
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: eu-north-1
+  memorySize: 512
+  timeout: 10
+  environment:
+    MONGO_URI: ${env:MONGO_URI}
+    JWT_SECRET: ${env:JWT_SECRET}
+    REFRESH_TOKEN_SECRET: ${env: REFRESH_TOKEN_SECRET}
+    REFRESH_TOKEN_EXPIRES_IN : ${env: REFRESH_TOKEN_EXPIRES_IN}
+    ACCESS_TOKEN_EXPIRES_IN: ${env: ACCESS_TOKEN_EXPIRES_IN}
+    ACCESS_TOKEN_SECRET: ${env: ACCESS_TOKEN_SECRET}
+    ENVIRONMENT : ${env: ENVIRONMENT}
+    VIDEO_UPLOAD_CHUNK_SIZE : ${env : VIDEO_UPLOAD_CHUNK_SIZE}
+    MONGODB_URI : ${env: MONGODB_URI}
+    MONGO_COMPASS_URI : ${env : MONGO_COMPASS_URI}
+    CORS_ORIGIN : ${env : CORS_ORIGIN}
+    PORT : ${env : PORT}
+    GOOGLE_CLIENT_ID : ${env : GOOGLE_CLIENT_ID}
+    GOOGLE_CLIENT_SECRET : ${env : GOOGLE_CLIENT_SECRET}
+    GOOGLE_REFRESH_TOKEN : ${env : GOOGLE_REFRESH_TOKEN}
+    GMAIL_USER : ${env : GMAIL_USER}
+    AWS_ACCESS_KEY_ID : ${env : AWS_ACCESS_KEY_ID}
+    AWS_SECRET_ACCESS_KEY : ${env: AWS_SECRET_ACCESS_KEY}
+    AWS_REGION : ${env: AWS_REGION}
+    AWS_BUCKET_NAME : ${env : AWS_BUCKET_NAME}
+    S3_PRESIGNED_URL_EXPIRY : ${env: S3_PRESIGNED_URL_EXPIRY}
+
+functions:
+  api:
+    handler: handler.handler
+    events:
+      - httpApi: '*'
+
+plugins:
+  - serverless-dotenv-plugin
+  - serverless-offline
