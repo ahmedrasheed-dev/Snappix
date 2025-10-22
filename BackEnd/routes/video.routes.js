@@ -9,7 +9,7 @@ import {
   increaseVideoViews,
   getMyVideos,
   UpdateThumbnail,
-  getPresignedUrl
+  getPresignedUrl,
 } from "../controllers/video.controller.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 import { upload } from "../middlewares/multer.middleware.js";
@@ -28,17 +28,7 @@ import {
 const router = Router();
 
 // Upload and publish a video
-router.post(
-  "/upload",
-  verifyJWT,
-  upload.fields([
-    { name: "video", maxCount: 1 },
-    { name: "thumbnail", maxCount: 1 },
-  ]),
-  publishVideoValidator,
-  validate,
-  publishAVideo
-);
+router.post("/upload", verifyJWT, publishAVideo);
 
 // Get all videos with filters, pagination, search
 router.get("/", getAllVideosValidator, validate, getAllVideos);
@@ -53,7 +43,7 @@ router.get("/:videoId", getVideoByIdValidator, validate, getVideoById);
 router.patch("/:videoId/views", increaseViewsValidator, validate, increaseVideoViews);
 
 //get presigned url for upload to s3
-router.get("/presign", verifyJWT, getPresignedUrl)
+router.post("/presign", verifyJWT, getPresignedUrl);
 
 // Update video details (title, description, isPublished)
 router.patch("/:videoId", verifyJWT, updateVideoValidator, validate, updateVideo);

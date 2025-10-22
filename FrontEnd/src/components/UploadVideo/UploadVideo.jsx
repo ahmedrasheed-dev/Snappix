@@ -55,7 +55,7 @@ const UploadVideo = () => {
     const { uploadUrl, fileUrl } = res.data;
 
     // Upload file directly to S3
-    await axios.put(uploadUrl, file, {
+    await axiosInstance.put(uploadUrl, file, {
       headers: { "Content-Type": file.type },
       onUploadProgress: (progressEvent) => {
         if (setProgress && category === "video") {

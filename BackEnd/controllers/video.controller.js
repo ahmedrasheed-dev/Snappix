@@ -13,7 +13,7 @@ import mongoose from "mongoose";
 
 import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import s3 from "../config/s3.config.js";
+import { s3 } from "../config/s3.config.js";
 
 export const getPresignedUrl = async (req, res, next) => {
   try {
@@ -43,12 +43,14 @@ export const getPresignedUrl = async (req, res, next) => {
     const folder = fileCategory === "video" ? "videos" : "thumbnails";
 
     // Give unique name
-    const key = `${folder}/${Date.now()}-${fileName}`;
+    const cleanName = file.name.replace(/\s+/g, "_");
+    const key = `${folder}/${Date.now()}-${cleanName}`;
 
     const command = new PutObjectCommand({
       Bucket: process.env.AWS_BUCKET_NAME,
       Key: key,
       ContentType: fileType,
+      ACL: "public-read",
     });
 
     const uploadUrl = await getSignedUrl(s3, command, { expiresIn: 3600 });
@@ -60,7 +62,7 @@ export const getPresignedUrl = async (req, res, next) => {
   }
 };
 
-export const publishAVideo = asyncHandler(async (req, res) => {
+const publishAVideo = asyncHandler(async (req, res) => {
   const { title, description, videoUrl, thumbnailUrl } = req.body;
 
   if (!title || !description || !videoUrl || !thumbnailUrl)
@@ -72,6 +74,7 @@ export const publishAVideo = asyncHandler(async (req, res) => {
     owner: req.user._id,
     title,
     description,
+    duration: 0,
   });
 
   return new ApiResponse(201, newVideo, "Video published successfully").send(res);
