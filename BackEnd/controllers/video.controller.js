@@ -43,14 +43,13 @@ export const getPresignedUrl = async (req, res, next) => {
     const folder = fileCategory === "video" ? "videos" : "thumbnails";
 
     // Give unique name
-    const cleanName = file.name.replace(/\s+/g, "_");
+    const cleanName = fileName.replace(/\s+/g, "_");
     const key = `${folder}/${Date.now()}-${cleanName}`;
 
     const command = new PutObjectCommand({
       Bucket: process.env.AWS_BUCKET_NAME,
       Key: key,
       ContentType: fileType,
-      ACL: "public-read",
     });
 
     const uploadUrl = await getSignedUrl(s3, command, { expiresIn: 3600 });
