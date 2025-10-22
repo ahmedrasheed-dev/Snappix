@@ -11,6 +11,73 @@ import { imageComp } from "../utils/ImageCompressionUtils.js";
 import { deleteLocalFile } from "../utils/DeleteLocalfile.js";
 import mongoose from "mongoose";
 
+import { PutObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import s3 from "../config/s3.config.js";
+
+export const getPresignedUrl = async (req, res, next) => {
+  try {
+    const { fileName, fileType, fileCategory, fileSize } = req.body;
+
+    if (!fileName || !fileType || !fileCategory || !fileSize)
+      throw new ApiError(400, "Missing required fields");
+
+    // Size limits
+    const MAX_VIDEO_SIZE = 60 * 1024 * 1024; // 60 MB
+    const MAX_IMAGE_SIZE = 2 * 1024 * 1024; // 2 MB
+
+    const allowedVideoTypes = ["video/mp4", "video/mov", "video/webm"];
+    const allowedImageTypes = ["image/jpeg", "image/png", "image/webp"];
+
+    if (fileCategory === "video" && !allowedVideoTypes.includes(fileType))
+      throw new ApiError(400, "Invalid video type");
+    if (fileCategory === "thumbnail" && !allowedImageTypes.includes(fileType))
+      throw new ApiError(400, "Invalid thumbnail type");
+
+    if (fileCategory === "video" && fileSize > MAX_VIDEO_SIZE)
+      throw new ApiError(400, "Video exceeds 60 MB limit");
+    if (fileCategory === "thumbnail" && fileSize > MAX_IMAGE_SIZE)
+      throw new ApiError(400, "Thumbnail exceeds 2 MB limit");
+
+    // Folder routing
+    const folder = fileCategory === "video" ? "videos" : "thumbnails";
+
+    // Give unique name
+    const key = `${folder}/${Date.now()}-${fileName}`;
+
+    const command = new PutObjectCommand({
+      Bucket: process.env.AWS_BUCKET_NAME,
+      Key: key,
+      ContentType: fileType,
+    });
+
+    const uploadUrl = await getSignedUrl(s3, command, { expiresIn: 3600 });
+    const publicUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
+
+    res.json({ uploadUrl, fileUrl: publicUrl });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const publishAVideo = asyncHandler(async (req, res) => {
+  const { title, description, videoUrl, thumbnailUrl } = req.body;
+
+  if (!title || !description || !videoUrl || !thumbnailUrl)
+    throw new ApiError(400, "All fields are required");
+
+  const newVideo = await Video.create({
+    videoFile: videoUrl,
+    thumbnail: thumbnailUrl,
+    owner: req.user._id,
+    title,
+    description,
+  });
+
+  return new ApiResponse(201, newVideo, "Video published successfully").send(res);
+});
+
+//retire this controller
 const compressVideo = (inputPath, outputPath) => {
   return new Promise((resolve, reject) => {
     ffmpeg(inputPath)
@@ -198,63 +265,6 @@ const getMyVideos = asyncHandler(async (req, res) => {
     },
     "Your videos fetched successfully"
   ).send(res);
-});
-
-const publishAVideo = asyncHandler(async (req, res) => {
-  const { title, description, socketId  } = req.body;
-
-  if (!title || !description || title.trim() === "" || description.trim() === "") {
-    throw new ApiError(400, "Title and description are required");
-  }
-
-  const videoLocalPath = req.files?.video?.[0]?.path;
-  const thumbnailLocalPath = req.files?.thumbnail?.[0]?.path;
-  console.log("video local path: ", videoLocalPath);
-  console.log("thumbnail local path: ", thumbnailLocalPath);
-
-
-  if (!videoLocalPath || !thumbnailLocalPath) {
-    throw new ApiError(400, "Video and thumbnail are required");
-  }
-  const io = req.app.get("io"); // get socket.io instance, this is being passed to file uplaod chunked
-
-
-  const compressedVideoPath = `${videoLocalPath}-compressed.mp4`;
-  const compressedThumbnailPath = path.join(
-    path.dirname(thumbnailLocalPath),
-    `${path.parse(thumbnailLocalPath).name}-compressed.jpg`
-  );
-
-  try {
-    await compressVideo(videoLocalPath, compressedVideoPath);
-    // await imageComp(thumbnailLocalPath, compressedThumbnailPath);
-
-    const video = await uploadFileInChunks(compressedVideoPath, socketId, io, {
-      resource_type: "video",
-      folder: "public/temp",
-    });
-    console.log("fucking video to cloudinary: ", video);
-    const thumbnail = await uploadToCloudinary(thumbnailLocalPath);
-
-    const newVideo = await Video.create({
-      videoFile: video.secure_url,
-      thumbnail: thumbnail.secure_url,
-      owner: req.user._id,
-      title,
-      description,
-      duration: video.duration || 0, // handle undefined
-    });
-
-    return new ApiResponse(201, newVideo, "Video published successfully").send(res);
-  } catch (err) {
-    console.error("Compression/upload error: ", err);
-    res.status(500).json(new ApiError(500, "Video processing failed", err));
-  } finally {
-    await deleteLocalFile(videoLocalPath);
-    await deleteLocalFile(compressedVideoPath);
-    await deleteLocalFile(thumbnailLocalPath);
-    await deleteLocalFile(compressedThumbnailPath);
-  }
 });
 
 const getVideoById = asyncHandler(async (req, res) => {

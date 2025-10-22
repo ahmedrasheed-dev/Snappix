@@ -8,7 +8,8 @@ import {
   togglePublishStatus,
   increaseVideoViews,
   getMyVideos,
-  UpdateThumbnail
+  UpdateThumbnail,
+  getPresignedUrl
 } from "../controllers/video.controller.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 import { upload } from "../middlewares/multer.middleware.js";
@@ -50,6 +51,9 @@ router.get("/:videoId", getVideoByIdValidator, validate, getVideoById);
 
 // Increase video views
 router.patch("/:videoId/views", increaseViewsValidator, validate, increaseVideoViews);
+
+//get presigned url for upload to s3
+router.get("/presign", verifyJWT, getPresignedUrl)
 
 // Update video details (title, description, isPublished)
 router.patch("/:videoId", verifyJWT, updateVideoValidator, validate, updateVideo);

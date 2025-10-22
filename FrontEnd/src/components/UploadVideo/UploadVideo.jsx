@@ -24,7 +24,6 @@ const UploadVideo = () => {
 
   const thumbnailFile = watch("thumbnail");
   const videoFile = watch("video");
- 
 
   useEffect(() => {
     if (thumbnailFile && thumbnailFile.length > 0) {
@@ -44,37 +43,61 @@ const UploadVideo = () => {
     }
   }, [videoFile]);
 
+  const uploadToS3 = async (file, category, setProgress) => {
+    // Ask backend for presigned URL
+    const res = await axiosInstance.post("/videos/presign", {
+      fileName: file.name,
+      fileType: file.type,
+      fileCategory: category, // "video" or "thumbnail"
+      fileSize: file.size,
+    });
+
+    const { uploadUrl, fileUrl } = res.data;
+
+    // Upload file directly to S3
+    await axios.put(uploadUrl, file, {
+      headers: { "Content-Type": file.type },
+      onUploadProgress: (progressEvent) => {
+        if (setProgress && category === "video") {
+          const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          setProgress(percent);
+        }
+      },
+    });
+
+    return fileUrl;
+  };
+
   const onSubmit = async (data) => {
-    setisSubmiting(true);
-    const formData = new FormData();
-    formData.append("title", data.title);
-    formData.append("description", data.description);
-    if (
-      (!data.video && data.video.length == 0) ||
-      (!data.thumbnail && data.thumbnail.length == 0)
-    ) {
-      return;
-    }
-
-    formData.append("video", data.video[0]);
-    formData.append("thumbnail", data.thumbnail[0]);
-
     try {
-      const res = await axiosInstance.post("/videos/upload", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
-      console.log(res.data);
+      setisSubmiting(true);
+      setProgress(0);
+
+      // Upload each file
+      const videoUrl = await uploadToS3(data.video[0], "video", setProgress);
+      const thumbnailUrl = await uploadToS3(data.thumbnail[0], "thumbnail");
+
+      // Send metadata to backend
+      const payload = {
+        title: data.title,
+        description: data.description,
+        videoUrl,
+        thumbnailUrl,
+      };
+
+      const res = await axiosInstance.post("/videos/upload", payload);
+
       if (res.status === 201) {
-        // navigate("/");
-        notifySuccess();
+        notifySuccess("Video uploaded successfully!");
+        navigate("/");
       }
-    } catch (error) {
-      console.error("Error uploading video:", error?.data?.message);
-      notifyError();
+    } catch (err) {
+      console.error(err);
+      notifyError(err.response?.data?.message || "Upload failed");
+    } finally {
       setisSubmiting(false);
-    } 
+      setProgress(0);
+    }
   };
 
   const clearVideo = () => {
