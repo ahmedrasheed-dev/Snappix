@@ -84,7 +84,7 @@ const VideoItem = ({
         {/* Info Section */}
         <div className="flex mt-3 space-x-3">
           <Avatar className="w-9 h-9 rounded-full shrink-0 cursor-pointer">
-            <AvatarImage src={avatar} />
+            <AvatarImage src={avatar} className="w-9 h-9 rounded-full"/>
             <AvatarFallback className="flex justify-center items-center text-white bg-pink-600 rounded-full w-9 h-9">
               {owner?.charAt(0)?.toUpperCase()}
             </AvatarFallback>

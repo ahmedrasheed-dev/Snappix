@@ -1,14 +1,14 @@
 import asyncHandler from "../utils/asyncHandler.js";
-import fs from "fs";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { Video } from "../models/video.model.js";
-import ffmpeg from "fluent-ffmpeg";
-import { uploadToCloudinary, deleteFromCloudinary, extractPublicId } from "../utils/cloudinary.js";
-import { uploadFileInChunks } from "../utils/cloudinaryChunkUpload.js";
+//move to s3
+// import { uploadToCloudinary, deleteFromCloudinary, extractPublicId } from "../utils/cloudinary.js";
 import path from "path";
 import { imageComp } from "../utils/ImageCompressionUtils.js";
-import { deleteLocalFile } from "../utils/DeleteLocalfile.js";
+
+//move to s3
+// import { deleteLocalFile } from "../utils/DeleteLocalfile.js";
 import mongoose from "mongoose";
 
 import { PutObjectCommand } from "@aws-sdk/client-s3";
@@ -79,19 +79,6 @@ const publishAVideo = asyncHandler(async (req, res) => {
   return new ApiResponse(201, newVideo, "Video published successfully").send(res);
 });
 
-//retire this controller
-const compressVideo = (inputPath, outputPath) => {
-  return new Promise((resolve, reject) => {
-    ffmpeg(inputPath)
-      .videoCodec("libx264")
-      .size("?x720")
-      .outputOptions("-crf 28")
-      .outputOptions("-preset veryfast")
-      .save(outputPath)
-      .on("end", () => resolve(outputPath))
-      .on("error", (err) => reject(err));
-  });
-};
 
 const getAllVideos = asyncHandler(async (req, res) => {
   const {
@@ -323,7 +310,6 @@ const getVideoById = asyncHandler(async (req, res) => {
 });
 
 const updateVideo = asyncHandler(async (req, res) => {
-  //TODO: update video details like title, description
   const { videoId } = req.params;
   const { title, description } = req.body;
 
@@ -345,44 +331,72 @@ const updateVideo = asyncHandler(async (req, res) => {
   return new ApiResponse(200, responeVideo, "Video updated successfully").send(res);
 });
 
-const UpdateThumbnail = asyncHandler(async (req, res) => {
-  const { videoId } = req.params;
-  const thumbnailLocalPath = req.file?.path;
-  if (!thumbnailLocalPath) {
-    throw new ApiError(400, "Thumbnail is required");
-  }
-  if (!videoId) {
-    throw new ApiError(400, "Video id is required");
-  }
-  const video = await Video.findById(videoId);
-  if (!video) {
-    throw new ApiError(404, "Video not found");
-  }
-
-  const oldThumbnail = video.thumbnail;
-  const compressedThumbnailPath = path.join(
-    path.dirname(thumbnailLocalPath),
-    `${path.parse(thumbnailLocalPath).name}-compressed.jpg`
-  );
+//moving to s3
+export const getThumbnailUploadUrl = async (req, res) => {
   try {
-    const publicId = extractPublicId(oldThumbnail);
-    await deleteFromCloudinary(publicId);
+    const { videoId, fileType } = req.body;
 
-    await imageComp(thumbnailLocalPath, compressedThumbnailPath);
+    if (!videoId) throw new ApiError(400, "videoId is required");
+    if (!fileType) throw new ApiError(400, "fileType is required");
 
-    const thumbnail = await uploadToCloudinary(compressedThumbnailPath);
-    video.thumbnail = thumbnail.secure_url;
-    await video.save();
-    const responeVideo = await Video.findById(videoId);
-    return new ApiResponse(200, responeVideo, "Thumbnail updated successfully").send(res);
+    const video = await Video.findById(videoId);
+    if (!video) throw new ApiError(404, "Video not found");
+
+    const fileKey = `thumbnails/${videoId}-${Date.now()}.jpg`;
+
+    const command = new PutObjectCommand({
+      Bucket: process.env.AWS_BUCKET_NAME,
+      Key: fileKey,
+      ContentType: fileType,
+    });
+
+    const uploadUrl = await getSignedUrl(s3, command, { expiresIn: 300 }); // 5 mins
+
+    return new ApiResponse(200, { uploadUrl, fileKey }, "Presigned URL generated").send(res);
   } catch (error) {
-    console.error("Compression/upload error: ", error);
-    return new ApiError(500, "Thumbnail processing failed", error).send(res);
-  } finally {
-    deleteLocalFile(thumbnailLocalPath);
-    deleteLocalFile(compressedThumbnailPath);
+    console.error(error);
+    return new ApiError(500, "Failed to generate presigned URL", error).send(res);
   }
-});
+};
+// save thumbnail to DB (after client upload)
+export const updateThumbnailRecord = async (req, res) => {
+  try {
+    const { videoId, fileKey } = req.body;
+    if (!videoId || !fileKey) throw new ApiError(400, "videoId and fileKey required");
+
+    const video = await Video.findById(videoId);
+    if (!video) throw new ApiError(404, "Video not found");
+
+    //  step 1: delete old thumbnail from S3 if exists 
+    if (video.thumbnail) {
+      try {
+        const oldKey = video.thumbnail.split(".amazonaws.com/")[1];
+        if (oldKey) {
+          await s3.send(
+            new DeleteObjectCommand({
+              Bucket: process.env.AWS_BUCKET_NAME,
+              Key: oldKey,
+            })
+          );
+          console.log("Old thumbnail deleted:", oldKey);
+        }
+      } catch (delErr) {
+        console.warn("Failed to delete old thumbnail:", delErr);
+      }
+    }
+
+    // --- Step 2: save new thumbnail URL in DB ---
+    const thumbnailUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileKey}`;
+
+    video.thumbnail = thumbnailUrl;
+    await video.save();
+
+    return new ApiResponse(200, video, "Thumbnail updated successfully").send(res);
+  } catch (error) {
+    console.error(error);
+    return new ApiError(500, "Failed to update thumbnail record", error).send(res);
+  }
+};
 
 const deleteVideo = asyncHandler(async (req, res) => {
   const { videoId } = req.params;
@@ -446,6 +460,5 @@ export {
   deleteVideo,
   togglePublishStatus,
   increaseVideoViews,
-  getMyVideos,
-  UpdateThumbnail,
+  getMyVideos
 };

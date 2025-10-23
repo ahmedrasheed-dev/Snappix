@@ -8,14 +8,13 @@ import {
   togglePublishStatus,
   increaseVideoViews,
   getMyVideos,
-  UpdateThumbnail,
   getPresignedUrl,
+  getThumbnailUploadUrl,
+  updateThumbnailRecord,
 } from "../controllers/video.controller.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
-import { upload } from "../middlewares/multer.middleware.js";
 import { validate } from "../middlewares/validateRequest.middleware.js";
 import {
-  publishVideoValidator,
   videoIdParamValidator,
   getAllVideosValidator,
   updateVideoValidator,
@@ -49,7 +48,9 @@ router.post("/presign", verifyJWT, getPresignedUrl);
 router.patch("/:videoId", verifyJWT, updateVideoValidator, validate, updateVideo);
 
 //updaet thumbnil
-router.post("/thumbnail/:videoId", verifyJWT, upload.single("thumbnail"), UpdateThumbnail);
+//moving to s3
+router.post("/thumbnail/presigned", verifyJWT, videoIdParamValidator, validate, getThumbnailUploadUrl);
+router.post("/thumbnail/update", verifyJWT, videoIdParamValidator, validate, updateThumbnailRecord);
 
 // Delete video
 router.delete("/:videoId", verifyJWT, deleteVideoValidator, validate, deleteVideo);

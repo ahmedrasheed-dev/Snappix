@@ -1,14 +1,11 @@
 import { Router } from "express";
 import {
-  registerUser,
   login,
   logout,
   refreshToken,
   changePassword,
   updateProfile,
   getCurrentUser,
-  updateAvatar,
-  updateCoverImage,
   getPublicChannelDetails,
   getWatchHistory,
   getSearchSuggestions,
@@ -19,8 +16,11 @@ import {
   sendEmailVerifyOtp,
   verifyEmailOtp,
   setNewPassword,
+  getUploadUrl,
+  registerUser,
+  updateAvatarRecord,
+  updateCoverRecord,
 } from "../controllers/user.controller.js";
-import { upload } from "../middlewares/multer.middleware.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 import { validate } from "../middlewares/validateRequest.middleware.js";
 import {
@@ -35,16 +35,11 @@ import {
 const router = Router();
 
 /* ---------- PUBLIC ROUTES ----------- */
-router.post(
-  "/register",
-  upload.fields([
-    { name: "avatar", maxCount: 1 },
-    { name: "coverImage", maxCount: 1 },
-  ]),
-  registerUserValidator,
-  validate,
-  registerUser
-);
+
+//move to s3
+// Register new user (after uploading avatar & cover to S3)
+router.post("/presigned-url/public", getUploadUrl);
+router.post("/register", registerUserValidator, validate, registerUser);
 
 router.post("/login", loginValidator, validate, login);
 
@@ -65,9 +60,12 @@ router.post("/update-profile", verifyJWT, updateProfileValidator, validate, upda
 
 router.get("/profile", verifyJWT, getCurrentUser);
 
-router.post("/update-avatar", verifyJWT, upload.single("avatar"), updateAvatar);
+// get Private Pre-signed url for uploading cover or avatar
+router.post("/presigned-url", verifyJWT, getUploadUrl);
 
-router.post("/update-cover-image", verifyJWT, upload.single("coverImage"), updateCoverImage);
+router.post("/update-avatar", verifyJWT, updateAvatarRecord);
+
+router.post("/update-cover", verifyJWT, updateCoverRecord);
 
 router.get("/watch-history", verifyJWT, getWatchHistory);
 

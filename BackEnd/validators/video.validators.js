@@ -16,7 +16,6 @@ export const publishVideoValidator = [
     .isLength({ min: 10 })
     .withMessage("Description must be at least 10 characters long"),
 
-  // Files validation will still be done in controller or multer check
 ];
 
 export const videoIdParamValidator = [

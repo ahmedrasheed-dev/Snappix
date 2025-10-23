@@ -11,7 +11,10 @@ import path from "path";
 import { sendOTPEmail, sendPasswordResetEmail } from "../utils/NodeMailer.js";
 import { uploadToCloudinary, deleteFromCloudinary, extractPublicId } from "../utils/cloudinary.js";
 import { imageComp } from "../utils/ImageCompressionUtils.js";
-import { deleteLocalFile } from "../utils/DeleteLocalfile.js";
+//moving to s3
+import { S3Client, PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { s3 } from "../config/s3.config.js";
 
 dotenv.config({ path: "../env" });
 
@@ -37,42 +40,71 @@ const generateOTP = () => crypto.randomInt(100000, 1000000).toString();
 
 // ------------------- Auth -------------------
 
-export const registerUser = asyncHandler(async (req, res) => {
-  const { username, fullName, email, password } = req.body;
-  const avatarPath = req.files?.avatar?.[0]?.path;
-  const coverImagePath = req.files?.coverImage?.[0]?.path;
-  const compressedAvatarPath = path.join(
-    path.dirname(avatarPath),
-    `compressed-${path.basename(avatarPath)}`
-  );
-
+export const getUploadUrl = async (req, res) => {
   try {
-    const existingUser = await User.findOne({
-      $or: [{ username }, { email }],
-    });
-    if (existingUser) throw new ApiError(400, "Username or email already exists");
+    const { fileName, fileType, fileCategory } = req.body;
 
-    await imageComp(avatarPath, compressedAvatarPath);
-    const avatar = await uploadToCloudinary(compressedAvatarPath);
-    const coverImage = coverImagePath ? await uploadToCloudinary(coverImagePath) : null;
+    if (!fileName || !fileType || !fileCategory)
+      throw new ApiError(400, "fileName, fileType, and fileCategory are required");
+
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+    if (!allowedTypes.includes(fileType))
+      throw new ApiError(400, "Invalid image type");
+
+    // Decide folder directly
+    if (!["avatar", "cover"].includes(fileCategory))
+      throw new ApiError(400, "Invalid file category");
+
+    const folder = fileCategory === "avatar" ? "users/avatars" : "users/covers";
+    const cleanName = fileName.replace(/\s+/g, "_");
+    const key = `${folder}/${Date.now()}-${cleanName}`;
+
+    const command = new PutObjectCommand({
+      Bucket: process.env.AWS_BUCKET_NAME,
+      Key: key,
+      ContentType: fileType,
+    });
+
+    const uploadUrl = await getSignedUrl(s3, command, { expiresIn: 300 }); // 5 mins
+    const fileUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
+
+    return new ApiResponse(
+      200,
+      { uploadUrl, fileUrl, key },
+      "Presigned URL generated successfully"
+    ).send(res);
+  } catch (error) {
+    console.error(error);
+    return new ApiError(500, "Failed to generate presigned URL");
+  }
+};
+// Register user after upload
+export const registerUser = async (req, res) => {
+  try {
+    const { username, fullName, email, password, avatarUrl, coverImageUrl } = req.body;
+
+    if (!username || !fullName || !email || !password || !avatarUrl)
+      throw new ApiError(400, "Missing required fields");
+
+    const existingUser = await User.findOne({ $or: [{ username }, { email }] });
+    if (existingUser) throw new ApiError(400, "Username or email already exists");
 
     const newUser = await User.create({
       username: username.toLowerCase(),
       fullName,
       email,
       password,
-      avatar: avatar.secure_url,
-      coverImage: coverImage?.secure_url || "",
+      avatar: avatarUrl,
+      coverImage: coverImageUrl || "",
     });
 
     const responseUser = await User.findById(newUser._id).select("-password -refreshToken");
     return new ApiResponse(201, responseUser, "User registered successfully").send(res);
-  } finally {
-    await deleteLocalFile(avatarPath);
-    await deleteLocalFile(coverImagePath);
-    await deleteLocalFile(compressedAvatarPath);
+  } catch (error) {
+    console.error(error);
+    return new ApiError(500, "Failed to register user", error);
   }
-});
+};
 
 export const login = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
@@ -241,31 +273,77 @@ export const getCurrentUser = asyncHandler(async (req, res) => {
   return new ApiResponse(200, responseUser).send(res);
 });
 
-export const updateAvatar = asyncHandler(async (req, res) => {
-  const avatarLocalPath = req.file?.path;
-  const publicId = extractPublicId(req.user.avatar);
-  if (publicId) await deleteFromCloudinary(publicId);
+//move to s3
+// Update avatar
+export const updateAvatarRecord = async (req, res) => {
+  try {
+    const { fileKey } = req.body;
+    const userId = req.user._id;
 
-  const avatar = await uploadToCloudinary(avatarLocalPath);
-  req.user.avatar = avatar.secure_url;
-  await req.user.save({ validateBeforeSave: false });
+    if (!fileKey) throw new ApiError(400, "fileKey required");
 
-  const responseUser = await User.findById(req.user._id).select("-password -refreshToken");
-  return new ApiResponse(200, responseUser, "Avatar updated successfully").send(res);
-});
+    const user = await User.findById(userId);
+    if (!user) throw new ApiError(404, "User not found");
 
-export const updateCoverImage = asyncHandler(async (req, res) => {
-  const coverLocalPath = req.file?.path;
-  const publicId = extractPublicId(req.user.coverImage);
-  if (publicId) await deleteFromCloudinary(publicId);
+    // Delete old avatar
+    if (user.avatar) {
+      try {
+        const oldKey = user.avatar.split(".amazonaws.com/")[1];
+        if (oldKey) {
+          await s3.send(
+            new DeleteObjectCommand({ Bucket: process.env.AWS_BUCKET_NAME, Key: oldKey })
+          );
+          console.log("Old avatar deleted:", oldKey);
+        }
+      } catch (err) {
+        console.warn("Failed to delete old avatar:", err);
+      }
+    }
+    user.avatar = fileKey;
+    await user.save({ validateBeforeSave: false });
 
-  const coverImage = await uploadToCloudinary(coverLocalPath);
-  req.user.coverImage = coverImage.secure_url;
-  await req.user.save({ validateBeforeSave: false });
+    const updatedUser = await User.findById(userId).select("-password -refreshToken");
+    return new ApiResponse(200, updatedUser, "Avatar updated successfully").send(res);
+  } catch (error) {
+    console.error(error);
+    return new ApiError(500, "Failed to update avatar", error);
+  }
+};
+// Update cover image
+export const updateCoverRecord = async (req, res) => {
+  try {
+    const { fileKey } = req.body;
+    const userId = req.user._id;
 
-  const responseUser = await User.findById(req.user._id).select("-password -refreshToken");
-  return new ApiResponse(200, responseUser, "Cover image updated successfully").send(res);
-});
+    if (!fileKey) throw new ApiError(400, "fileKey required");
+
+    const user = await User.findById(userId);
+    if (!user) throw new ApiError(404, "User not found");
+
+    // Delete old cover image
+    if (user.coverImage) {
+      try {
+        const oldKey = user.coverImage.split(".amazonaws.com/")[1];
+        if (oldKey) {
+          await s3.send(
+            new DeleteObjectCommand({ Bucket: process.env.AWS_BUCKET_NAME, Key: oldKey })
+          );
+          console.log("Old cover image deleted:", oldKey);
+        }
+      } catch (err) {
+        console.warn("Failed to delete old cover:", err);
+      }
+    }
+    user.coverImage = fileKey;
+    await user.save({ validateBeforeSave: false });
+
+    const updatedUser = await User.findById(userId).select("-password -refreshToken");
+    return new ApiResponse(200, updatedUser, "Cover image updated successfully").send(res);
+  } catch (error) {
+    console.error(error);
+    return new ApiError(500, "Failed to update cover image", error);
+  }
+};
 
 export const getWatchHistory = asyncHandler(async (req, res) => {
   const watchHistory = await User.aggregate([

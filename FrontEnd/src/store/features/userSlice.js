@@ -1,4 +1,5 @@
 import axiosInstance from "@/api/axios";
+import axios from "axios";
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
@@ -73,26 +74,57 @@ export const updateAvatar = createAsyncThunk(
   "dashboard/updateAvatar",
   async (file, { rejectWithValue }) => {
     try {
-      const formData = new FormData();
-      formData.append("avatar", file);
-      const response = await axiosInstance.post("/users/update-avatar", formData);
-      return response.data.data; // updated user
+      // Get presigned URL from backend (private route)
+      const presignRes = await axiosInstance.post("/users/presigned-url", {
+        fileName: file.name,
+        fileType: file.type,
+        fileCategory: "avatar",
+      });
+
+      const { uploadUrl, fileUrl: fileKey } = presignRes.data.data;
+
+      // Upload file directly to S3 using the presigned URL
+      await axios.put(uploadUrl, file, {
+        headers: { "Content-Type": file.type },
+      });
+
+      // Notify backend to update the user's avatar record
+      const updateRes = await axiosInstance.post("/users/update-avatar", { fileKey });
+
+      return updateRes.data.data; // Updated user object
     } catch (error) {
+      console.error(error);
       return rejectWithValue(error.response?.data?.message || "Failed to update avatar.");
     }
   }
 );
+
 
 // Update Cover Image
 export const updateCoverImage = createAsyncThunk(
   "dashboard/updateCover",
   async (file, { rejectWithValue }) => {
     try {
-      const formData = new FormData();
-      formData.append("coverImage", file);
-      const response = await axiosInstance.post("/users/update-cover-image", formData);
-      return response.data.data;
+      //  Get presigned URL for cover
+      const presignRes = await axiosInstance.post("/users/presigned-url", {
+        fileName: file.name,
+        fileType: file.type,
+        fileCategory: "cover",
+      });
+
+      const { uploadUrl, fileUrl: fileKey } = presignRes.data.data;
+
+      //  Upload to S3
+      await axios.put(uploadUrl, file, {
+        headers: { "Content-Type": file.type },
+      });
+
+      //  Update cover in DB
+      const updateRes = await axiosInstance.post("/users/update-cover", { fileKey });
+
+      return updateRes.data.data;
     } catch (error) {
+      console.error(error);
       return rejectWithValue(error.response?.data?.message || "Failed to update cover image.");
     }
   }
