@@ -23,7 +23,7 @@ const ChangeWithCurrentPass = ({ onForgotPassword }) => {
       return;
     }
     try {
-      const res = await axiosInstance.post("/users/change-password", {
+      const res = await axiosInstance.post(`${import.meta.env.VITE_BASE_URL}/users/change-password`, {
         currentPassword: data.currentPassword,
         newPassword: data.newPassword,
       });

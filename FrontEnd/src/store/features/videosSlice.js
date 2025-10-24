@@ -15,7 +15,7 @@ export const fetchRelatedVideos = createAsyncThunk(
     }
 
     try {
-      const response = await axiosInstance.get("/videos", {
+      const response = await axiosInstance.get(`${import.meta.env.VITE_BASE_URL}/videos`, {
         params: {
           page,
           limit,

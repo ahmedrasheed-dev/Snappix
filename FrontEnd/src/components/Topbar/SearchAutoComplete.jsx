@@ -36,7 +36,7 @@ const SearchAutocomplete = () => {
         setLoading(true);
         try {
           const response = await axiosInstance.get(
-            `/users/suggestions?q=${searchTerm}`
+            `${import.meta.env.VITE_BASE_URL}/users/suggestions?q=${searchTerm}`
           );
           setSuggestions(response.data.data);
           console.log("Search suggestions:", response.data.data);

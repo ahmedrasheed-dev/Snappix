@@ -21,7 +21,7 @@ const ForgotPassword = ({ onCancel }) => {
   const handleSendOtp = async () => {
     setOtpSending(true);
     try {
-      await axiosInstance.post("/users/password-reset/send-otp");
+      await axiosInstance.post(`${import.meta.env.VITE_BASE_URL}/users/password-reset/send-otp`);
       notifySuccess("OTP sent to your email");
       setOtpSent(true);
     } catch (err) {
@@ -44,7 +44,7 @@ const ForgotPassword = ({ onCancel }) => {
 
     setOtpVerifying(true);
     try {
-      await axiosInstance.post("/users/password-reset/verify-otp", { otp });
+      await axiosInstance.post(`${import.meta.env.VITE_BASE_URL}/users/password-reset/verify-otp`, { otp });
       notifySuccess("OTP verified. Now set your new password.");
       setOtpVerified(true);
     } catch (err) {
@@ -66,7 +66,7 @@ const ForgotPassword = ({ onCancel }) => {
     }
 
     try {
-      await axiosInstance.post("/users/password-reset/set-password", {
+      await axiosInstance.post(`${import.meta.env.VITE_BASE_URL}/users/password-reset/set-password`, {
         newPassword: otpNewPassword,
       });
       notifySuccess("Password reset successfully");

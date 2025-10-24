@@ -19,7 +19,7 @@ const HistoryPage = ({ data }) => {
 
   const handleDelete = async () => {
     try {
-      await axiosInstance.delete("users/watchHistory/clear");
+      await axiosInstance.delete(`${import.meta.env.VITE_BASE_URL}/users/watchHistory/clear`);
       setOpen(false);
       window.location.reload();
     } catch (error) {

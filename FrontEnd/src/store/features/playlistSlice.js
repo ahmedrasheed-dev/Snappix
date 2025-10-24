@@ -13,7 +13,7 @@ export const fetchUserPlaylists = createAsyncThunk(
   "playlist/fetchUserPlaylists",
   async (userID, { getState, rejectWithValue }) => {
     try {
-      const response = await axiosInstance.get(`/playlists/${userID}`);
+      const response = await axiosInstance.get(`${import.meta.env.VITE_BASE_URL}/playlists/${userID}`);
       return response.data.data.docs;
     } catch (error) {
       return rejectWithValue(
@@ -27,7 +27,7 @@ export const createPlaylist = createAsyncThunk(
   "playlists/createPlaylist",
   async ({ name, description }, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.post(`/playlists/`, { name, description });
+      const response = await axiosInstance.post(`${import.meta.env.VITE_BASE_URL}/playlists/`, { name, description });
       return response.data.data;
     } catch (error) {
       return rejectWithValue(error?.response?.data?.message || "Failed to create playlist.");
@@ -46,7 +46,7 @@ export const addVideoToPlaylist = createAsyncThunk(
     }
     try {
       const response = await axiosInstance.post(
-        `/playlists/add-video/${playlistId}/${videoId}`,
+        `${import.meta.env.VITE_BASE_URL}/playlists/add-video/${playlistId}/${videoId}`,
         {}
       );
       // {
@@ -80,7 +80,7 @@ export const deletePlaylistThunk = createAsyncThunk(
   "playlists/deletePlaylist",
   async (playlistId, { rejectWithValue }) => {
     try {
-      await axiosInstance.delete(`/playlists/${playlistId}`);
+      await axiosInstance.delete(`${import.meta.env.VITE_BASE_URL}/playlists/${playlistId}`);
       return playlistId;
     } catch (error) {
       return rejectWithValue(error?.response?.data?.message || "Failed to delete playlist.");
@@ -93,7 +93,7 @@ export const updatePlaylistThunk = createAsyncThunk(
   "playlists/updatePlaylist",
   async ({ playlistId, data }, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.patch(`/playlists/${playlistId}`, data);
+      const response = await axiosInstance.patch(`${import.meta.env.VITE_BASE_URL}/playlists/${playlistId}`, data);
       return response.data.data;
     } catch (error) {
       return rejectWithValue(error?.response?.data?.message || "Failed to update playlist.");
@@ -106,7 +106,7 @@ export const togglePlaylistThunk = createAsyncThunk(
   "playlists/togglePlaylist",
   async (playlistId, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.patch(`/playlists/toggle/${playlistId}`);
+      const response = await axiosInstance.patch(`${import.meta.env.VITE_BASE_URL}/playlists/toggle/${playlistId}`);
       return response.data.data;
     } catch (error) {
       return rejectWithValue(
@@ -124,7 +124,7 @@ export const fetchSinglePlaylist = createAsyncThunk(
       return rejectWithValue("Invalid playlist ID.");
     }
     try {
-      const response = await axiosInstance.get(`/playlists/videos/${playlistId}`);
+      const response = await axiosInstance.get(`${import.meta.env.VITE_BASE_URL}/playlists/videos/${playlistId}`);
       return response.data.data;
     } catch (error) {
       return rejectWithValue(error?.response?.data?.message || "Error fetching playlist.");

@@ -13,7 +13,7 @@ export const fetchComments = createAsyncThunk(
   async (videoId, { rejectWithValue }) => {
     try {
       const response = await axiosInstance.get(
-        `/comments/${videoId}`
+        `${import.meta.env.VITE_BASE_URL}/comments/${videoId}`
       );
       return response.data.data.docs;
     } catch (error) {
@@ -28,7 +28,7 @@ export const addCommentToVideo = createAsyncThunk(
   async ({ videoId, content }, { rejectWithValue }) => {
     try {
       const response = await axiosInstance.post(
-        `/comments/${videoId}`,
+        `${import.meta.env.VITE_BASE_URL}/comments/${videoId}`,
         { content }
       );
       return response.data.data;
@@ -44,7 +44,7 @@ export const addReplyToComment = createAsyncThunk(
   async ({ videoId, commentId, content }, { rejectWithValue }) => {
     try {
       const response = await axiosInstance.post(
-        `/comments/reply/${videoId}/${commentId}`,
+        `${import.meta.env.VITE_BASE_URL}/comments/reply/${videoId}/${commentId}`,
         { content }
       );
       return {

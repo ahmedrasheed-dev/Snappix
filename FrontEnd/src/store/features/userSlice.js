@@ -14,7 +14,7 @@ export const fetchLoggedInUser = createAsyncThunk(
   "user/fetchLoggedInUser",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.get(`/users/profile`, { withCredentials: true });
+      const response = await axiosInstance.get(`${import.meta.env.VITE_BASE_URL}/users/profile`, { withCredentials: true });
       if (response.data?.data) {
         return response.data.data;
       }
@@ -31,7 +31,7 @@ export const performLogout = createAsyncThunk(
   "user/performLogout",
   async (_, { rejectWithValue, dispatch }) => {
     try {
-      const res = await axiosInstance.post(`/users/logout`);
+      const res = await axiosInstance.post(`${import.meta.env.VITE_BASE_URL}/users/logout`);
       console.log("logout Res: ", res);
       if (res?.status === 200) {
         return { success: true };
@@ -53,7 +53,7 @@ export const perfomLogin = createAsyncThunk(
   "user/performLogin",
   async ({ email, password }, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.post(`/users/login`, { email, password });
+      const response = await axiosInstance.post(`${import.meta.env.VITE_BASE_URL}/users/login`, { email, password });
 
       if (response?.status === 200 && response?.data?.data) {
         const { user, accessToken, refreshToken } = response?.data?.data;
@@ -75,7 +75,7 @@ export const updateAvatar = createAsyncThunk(
   async (file, { rejectWithValue }) => {
     try {
       // Get presigned URL from backend (private route)
-      const presignRes = await axiosInstance.post("/users/presigned-url", {
+      const presignRes = await axiosInstance.post(`${import.meta.env.VITE_BASE_URL}/users/presigned-url`, {
         fileName: file.name,
         fileType: file.type,
         fileCategory: "avatar",
@@ -89,7 +89,7 @@ export const updateAvatar = createAsyncThunk(
       });
 
       // Notify backend to update the user's avatar record
-      const updateRes = await axiosInstance.post("/users/update-avatar", { fileKey });
+      const updateRes = await axiosInstance.post(`${import.meta.env.VITE_BASE_URL}/users/update-avatar`, { fileKey });
 
       return updateRes.data.data; // Updated user object
     } catch (error) {
@@ -106,7 +106,7 @@ export const updateCoverImage = createAsyncThunk(
   async (file, { rejectWithValue }) => {
     try {
       //  Get presigned URL for cover
-      const presignRes = await axiosInstance.post("/users/presigned-url", {
+      const presignRes = await axiosInstance.post(`${import.meta.env.VITE_BASE_URL}/users/presigned-url`, {
         fileName: file.name,
         fileType: file.type,
         fileCategory: "cover",
@@ -120,7 +120,7 @@ export const updateCoverImage = createAsyncThunk(
       });
 
       //  Update cover in DB
-      const updateRes = await axiosInstance.post("/users/update-cover", { fileKey });
+      const updateRes = await axiosInstance.post(`${import.meta.env.VITE_BASE_URL}/users/update-cover`, { fileKey });
 
       return updateRes.data.data;
     } catch (error) {
@@ -135,7 +135,7 @@ export const updateProfile = createAsyncThunk(
   "dashboard/updateProfile",
   async ({ username, fullName }, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.post("/users/update-profile", { username, fullName });
+      const response = await axiosInstance.post(`${import.meta.env.VITE_BASE_URL}/users/update-profile`, { username, fullName });
       return response.data.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || "Failed to update profile.");

@@ -95,7 +95,7 @@ const UploadVideo = () => {
     }
 
     //backend call to get presigned URL
-    const res = await axiosInstance.post("/videos/presign", {
+    const res = await axiosInstance.post(`${import.meta.env.VITE_BASE_URL}/videos/presign`, {
       fileName: file.name,
       fileType: file.type,
       fileCategory: category,
@@ -140,7 +140,7 @@ const UploadVideo = () => {
         duration,
       };
 
-      const res = await axiosInstance.post("/videos/upload", payload);
+      const res = await axiosInstance.post(`${import.meta.env.VITE_BASE_URL}/videos/upload`, payload);
 
       if (res.status === 201) {
         notifySuccess("Video uploaded successfully!");

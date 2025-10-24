@@ -21,7 +21,7 @@ export const fetchMyVideos = createAsyncThunk(
   "dashboard/fetchMyVideos",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.get("videos/myvideos");
+      const response = await axiosInstance.get(`${import.meta.env.VITE_BASE_URL}/videos/myvideos`);
       console.log("videos: ", response?.data?.data);
       return response.data.data;
     } catch (error) {
@@ -35,7 +35,7 @@ export const updateVideoThunk = createAsyncThunk(
   "dashboard/updateVideo",
   async ({ videoId, data }, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.patch(`videos/${videoId}`, data);
+      const response = await axiosInstance.patch(`${import.meta.env.VITE_BASE_URL}/videos/${videoId}`, data);
       return response.data.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || "Failed to update video.");
@@ -48,7 +48,7 @@ export const UpdateThumbnail = createAsyncThunk(
     try {
       const formData = new FormData();
       formData.append("thumbnail", file);
-      const response = await axiosInstance.post(`videos/thumbnail/${videoId}`, formData);
+      const response = await axiosInstance.post(`${import.meta.env.VITE_BASE_URL}/videos/thumbnail/${videoId}`, formData);
       return { updatedThumbnail: response.data.data, _id: videoId };
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || "Failed to update video.");
@@ -60,7 +60,7 @@ export const deleteVideoThunk = createAsyncThunk(
   "dashboard/deleteVideo",
   async (videoId, { rejectWithValue }) => {
     try {
-      await axiosInstance.delete(`videos/${videoId}`);
+      await axiosInstance.delete(`${import.meta.env.VITE_BASE_URL}/videos/${videoId}`);
       return videoId; // return deleted video id
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || "Failed to delete video.");
@@ -73,7 +73,7 @@ export const togglePublishThunk = createAsyncThunk(
   "dashboard/togglePublish",
   async (videoId, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.patch(`videos/toggle-publish/${videoId}`);
+      const response = await axiosInstance.patch(`${import.meta.env.VITE_BASE_URL}/videos/toggle-publish/${videoId}`);
       return response.data.data; // updated video
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || "Failed to update status.");
@@ -83,7 +83,7 @@ export const togglePublishThunk = createAsyncThunk(
 
 export const fetchLikedVideos = createAsyncThunk("dashboard/fetchLikedVideos", async (_,{rejectWithValue}) => {
   try {
-    const res = await axiosInstance.get("/likes/videos");
+    const res = await axiosInstance.get(`${import.meta.env.VITE_BASE_URL}/likes/videos`);
     console.log("liked videos: ", res.data.data);
     return res.data.data; 
   } catch (error) {

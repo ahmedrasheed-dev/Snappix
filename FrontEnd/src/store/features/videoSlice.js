@@ -28,7 +28,7 @@ export const toggleVideoLike = createAsyncThunk(
         return rejectWithValue("Please log in to like a video.");
       }
 
-      const response = await axiosInstance.post(`/likes/v/${videoId}`, {});
+      const response = await axiosInstance.post(`${import.meta.env.VITE_BASE_URL}/likes/v/${videoId}`, {});
       return response?.data;
     } catch (error) {
       return rejectWithValue(error?.response?.message);
@@ -47,16 +47,16 @@ export const getVideoData = createAsyncThunk(
 
     try {
       // Mandatory: video details
-      const videoRes = await axiosInstance.get(`/videos/${videoId}`);
+      const videoRes = await axiosInstance.get(`${import.meta.env.VITE_BASE_URL}/videos/${videoId}`);
       const videoData = videoRes.data.data;
 
       // Patch views (non-blocking, no await)
-      axiosInstance.patch(`/videos/${videoId}/views`).catch(() => {});
+      axiosInstance.patch(`${import.meta.env.VITE_BASE_URL}/videos/${videoId}/views`).catch(() => {});
 
       // Optional: likes count
       let likesCount = 0;
       try {
-        const allLikesRes = await axiosInstance.get(`/likes/v/likes/${videoId}`);
+        const allLikesRes = await axiosInstance.get(`${import.meta.env.VITE_BASE_URL}/likes/v/likes/${videoId}`);
         likesCount = allLikesRes.data.data.length;
       } catch (err) {
         console.warn("Likes count fetch failed:", err);
@@ -68,8 +68,8 @@ export const getVideoData = createAsyncThunk(
       if (isLoggedIn) {
         try {
           const [isLikedVideoStatus, playlistsWithVideoRes] = await Promise.all([
-            axiosInstance.get(`/likes/v/${videoId}`),
-            axiosInstance.get(`/playlists/video/${videoId}/`),
+            axiosInstance.get(`${import.meta.env.VITE_BASE_URL}/likes/v/${videoId}`),
+            axiosInstance.get(`${import.meta.env.VITE_BASE_URL}/playlists/video/${videoId}/`),
           ]);
 
           isLiked = !!isLikedVideoStatus.data.data;
@@ -97,7 +97,7 @@ export const addToWatchHistory = createAsyncThunk(
   async (videoId, { getState, rejectWithValue }) => {
     // hit api to add to watch history
     try {
-      const res = axiosInstance.post(`users/watchHistory/${videoId}`);
+      const res = axiosInstance.post(`${import.meta.env.VITE_BASE_URL}/users/watchHistory/${videoId}`);
       if (res.status === 200) {
         return res.data?.data;
       }

@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 
 export const getVideos = async (params = {}) => {
   try {
-    const res = await axiosInstance.get(`/videos?page=1&limit=12`, {
+    const res = await axiosInstance.get(`${import.meta.env.VITE_BASE_URL}/videos?page=1&limit=12`, {
       params: {
         page: params.page,
         limit: params.limit,

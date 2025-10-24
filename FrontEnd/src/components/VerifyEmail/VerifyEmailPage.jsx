@@ -21,7 +21,7 @@ const VerifyEmailPage = () => {
 
   const onSubmit = async (data) => {
     try {
-      const response = await axiosInstance.post(`/auth/send-verification-code`, {
+      const response = await axiosInstance.post(`${import.meta.env.VITE_BASE_URL}/auth/send-verification-code`, {
         email: data.email,
       });
       console.log("OTP sent:  ", response?.data?.message);
@@ -36,7 +36,7 @@ const VerifyEmailPage = () => {
     try {
       const otpValue = otp.join("");
       const res = await axiosInstance.post(
-        "/auth/verify-email",
+        `${import.meta.env.VITE_BASE_URL}/auth/verify-email`,
         { otp: otpValue },
         {
           headers: {

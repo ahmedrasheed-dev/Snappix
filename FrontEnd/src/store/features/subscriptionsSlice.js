@@ -14,7 +14,7 @@ export const fetchSubscribers = createAsyncThunk(
   "subscriptions/fetchSubscribers",
   async (channelId, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.get(`/subscriptions/${channelId}`);
+      const response = await axiosInstance.get(`${import.meta.env.VITE_BASE_URL}/subscriptions/${channelId}`);
       return response.data?.data; 
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || "Failed to fetch subscribers");
@@ -27,7 +27,7 @@ export const fetchSubscribedChannels = createAsyncThunk(
   "subscriptions/fetchSubscribedChannels",
   async (subscriberId, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.get(`/subscriptions/channels/${subscriberId}`);
+      const response = await axiosInstance.get(`${import.meta.env.VITE_BASE_URL}/subscriptions/channels/${subscriberId}`);
       return response.data?.data; 
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || "Failed to fetch subscribed channels");

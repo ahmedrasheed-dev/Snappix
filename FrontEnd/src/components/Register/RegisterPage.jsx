@@ -77,7 +77,7 @@ const RegisterPage = () => {
       formData.append("avatar", data.avatar);
 
       const response = await axiosInstance.post(
-        `/users/register`,
+        `${import.meta.env.VITE_BASE_URL}/users/register`,
         formData,
         {
           headers: {

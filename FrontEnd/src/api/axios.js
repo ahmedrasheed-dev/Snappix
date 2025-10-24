@@ -6,7 +6,7 @@ export const setReduxStore = (store) => {
 };
 
 const axiosInstance = axios.create({
-  baseURL: "/api/v1",
+  baseURL: import.meta.env.VITE_BASE_URL,
   withCredentials: true,
 });
 
@@ -27,7 +27,7 @@ const refreshAccessToken = async () => {
 
   try {
     const refreshResponse = await axios.post(
-      "/api/v1/users/refresh-token",
+      `${import.meta.env.VITE_BASE_URL}/users/refresh-token`,
       {},
       { withCredentials: true }
     );

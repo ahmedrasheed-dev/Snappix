@@ -19,7 +19,7 @@ export const fetchSubscriptionStatus = createAsyncThunk(
       if (!isLoggedIn) {
         return { isSubscribed: false, subscriberCount: 0 };
       }
-      const response = await axiosInstance.get(`subscriptions/status/${channelId}`);
+      const response = await axiosInstance.get(`${import.meta.env.VITE_BASE_URL}/subscriptions/status/${channelId}`);
 
       const channelData = response.data.data;
       console.log("sub data: ", response.data)
@@ -47,7 +47,7 @@ export const toggleSubscription = createAsyncThunk(
     }
 
     try {
-      const response = await axiosInstance.post(`/subscriptions/toggle/${channelId}`);
+      const response = await axiosInstance.post(`${import.meta.env.VITE_BASE_URL}/subscriptions/toggle/${channelId}`);
       return response.data.data;
     } catch (error) {
       return rejectWithValue(error.response.data.message || "Failed to toggle subscription.");

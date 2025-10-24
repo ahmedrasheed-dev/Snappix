@@ -13,7 +13,7 @@ export const getChannelProfile = createAsyncThunk(
   "user/getChannelProfile",
   async (username, { rejectWithValue, getState }) => {
     try {
-      const res = await axiosInstance.get(`/users/c/${username}`);
+      const res = await axiosInstance.get(`${import.meta.env.VITE_BASE_URL}/users/c/${username}`);
       console.log("userChannelProfile: ", res?.data?.data);
       return res?.data?.data;
     } catch (error) {
@@ -27,7 +27,7 @@ export const getChannelVideos = createAsyncThunk(
   "user/getChannelVideos",
   async (userId, { rejectWithValue, getState }) => {
     try {
-      const res = await axiosInstance.get(`/videos?owner=${userId}`);
+      const res = await axiosInstance.get(`${import.meta.env.VITE_BASE_URL}/videos?owner=${userId}`);
       return res?.data?.data?.docs;
     } catch (error) {
       rejectWithValue(
@@ -41,7 +41,7 @@ export const getChannelPlaylists = createAsyncThunk(
   async (username, { rejectWithValue, getState }) => {
     try {
       const res = await axiosInstance.get(
-        `playlists/channel/${username}`
+        `${import.meta.env.VITE_BASE_URL}/playlists/channel/${username}`
       );
       return res?.data?.data?.docs;
     } catch (error) {

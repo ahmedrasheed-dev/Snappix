@@ -9,17 +9,17 @@ const initialState = {
 
 // Thunks
 export const fetchTweets = createAsyncThunk("tweets/fetchTweets", async () => {
-  const res = await axiosInstance.get("/tweets");
+  const res = await axiosInstance.get(`${import.meta.env.VITE_BASE_URL}/tweets`);
   return res.data.data;
 });
 
 export const createTweetThunk = createAsyncThunk("tweets/createTweet", async (content) => {
-  const res = await axiosInstance.post("/tweets", { content });
+  const res = await axiosInstance.post(`${import.meta.env.VITE_BASE_URL}/tweets`, { content });
   return res.data.data;
 });
 
 export const deleteTweetThunk = createAsyncThunk("tweets/deleteTweet", async (tweetId) => {
-  const res = await axiosInstance.delete(`/tweets/${tweetId}`);
+  const res = await axiosInstance.delete(`${import.meta.env.VITE_BASE_URL}/tweets/${tweetId}`);
   return res.data.data;
 });
 
