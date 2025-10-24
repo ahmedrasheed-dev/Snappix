@@ -1,0 +1,40 @@
+service: snappix-serverless
+
+provider:
+  name: aws
+  runtime: nodejs22.x
+  stage: "dev"
+  region: eu-north-1
+  tracing:
+    lambda: true 
+    apiGateway: true 
+
+  deploymentBucket:
+    name: snappix-app
+
+functions:
+  app:
+    handler: handler.handler
+    timeout: 20
+    environment:
+      MONGODB_URI: ${env:MONGODB_URI}
+      REFRESH_TOKEN_SECRET: ${env:REFRESH_TOKEN_SECRET}
+      REFRESH_TOKEN_EXPIRES_IN: ${env:REFRESH_TOKEN_EXPIRES_IN}
+      ACCESS_TOKEN_EXPIRES_IN: ${env:ACCESS_TOKEN_EXPIRES_IN}
+      ACCESS_TOKEN_SECRET: ${env:ACCESS_TOKEN_SECRET}
+      CORS_ORIGIN: ${env:CORS_ORIGIN}
+      PORT: ${env:PORT}
+      GOOGLE_CLIENT_ID: ${env:GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${env:GOOGLE_CLIENT_SECRET}
+      GOOGLE_REFRESH_TOKEN: ${env:GOOGLE_REFRESH_TOKEN}
+      GMAIL_USER: ${env:GMAIL_USER}
+      AWS_BUCKET_NAME: ${env:AWS_BUCKET_NAME}
+      S3_PRESIGNED_URL_EXPIRY: ${env:S3_PRESIGNED_URL_EXPIRY}
+      RUNTIME: ${env:RUNTIME}
+    events:
+      - http:
+          path: /api/v1/{proxy+}
+          method: any
+
+plugins:
+  - serverless-offline # Optional: For local testing of your serverless API

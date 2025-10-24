@@ -2,10 +2,6 @@ import asyncHandler from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { Video } from "../models/video.model.js";
-//move to s3
-// import { uploadToCloudinary, deleteFromCloudinary, extractPublicId } from "../utils/cloudinary.js";
-import path from "path";
-import { imageComp } from "../utils/ImageCompressionUtils.js";
 
 //move to s3
 // import { deleteLocalFile } from "../utils/DeleteLocalfile.js";

@@ -7,10 +7,7 @@ import mongoose from "mongoose";
 import crypto from "crypto";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
-import path from "path";
 import { sendOTPEmail, sendPasswordResetEmail } from "../utils/NodeMailer.js";
-import { uploadToCloudinary, deleteFromCloudinary, extractPublicId } from "../utils/cloudinary.js";
-import { imageComp } from "../utils/ImageCompressionUtils.js";
 //moving to s3
 import { S3Client, PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
