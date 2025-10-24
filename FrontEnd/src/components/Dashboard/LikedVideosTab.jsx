@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchLikedVideos } from "../../store/features/dashboardSlice";
 import { useNavigate } from "react-router-dom";
+
 const LikedVideosTab = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -37,31 +38,31 @@ const LikedVideosTab = () => {
             {likedVideos.map((like) => {
               const video = like.video;
               return (
-                  <tr
-                    key={video._id}
-                    className="hover:bg-zinc-800/50 transition cursor-pointer"
-                    onClick={() => navigate(`/video/${video._id}`)}
-                  >
-                    <td className="px-4 py-3 flex gap-3 items-center">
-                      <img
-                        src={video.thumbnail}
-                        alt={video.title}
-                        className="w-24 h-14 object-cover rounded"
-                      />
-                      <div className="flex flex-col">
-                        <span className="font-semibold text-gray-100 truncate w-48">
-                          {video.title}
-                        </span>
-                        <span className="text-xs text-gray-400 truncate w-48">
-                          {video.description || "No description"}
-                        </span>
-                      </div>
-                    </td>
+                <tr
+                  key={video._id}
+                  className="hover:bg-zinc-800/50 transition cursor-pointer overflow-hidden"
+                  onClick={() => navigate(`/video/${video._id}`)}
+                >
+                  <td className="px-4 py-3 flex flex-col sm:flex-row gap-3 items-center">
+                    <img
+                      src={video.thumbnail}
+                      alt={video.title}
+                      className="w-24 h-14 object-cover rounded"
+                    />
+                    <div className="flex flex-col sm:ml-4">
+                      <span className="font-semibold text-gray-100 truncate w-full sm:w-48">
+                        {video.title}
+                      </span>
+                      <span className="text-xs text-gray-400 truncate w-full sm:w-48">
+                        {video.description || "No description"}
+                      </span>
+                    </div>
+                  </td>
 
-                    <td className="px-4 py-3 text-gray-400">
-                      {new Date(like.createdAt || like.likedAt).toLocaleDateString()}
-                    </td>
-                  </tr>
+                  <td className="px-4 py-3 text-gray-400">
+                    {new Date(like.createdAt || like.likedAt).toLocaleDateString()}
+                  </td>
+                </tr>
               );
             })}
           </tbody>

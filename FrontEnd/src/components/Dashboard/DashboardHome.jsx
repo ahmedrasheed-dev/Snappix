@@ -84,12 +84,12 @@ const DashboardHome = () => {
             {videos.slice(0, 4).map((video) => (
               <div
                 key={video._id}
-                className="flex items-center gap-4 p-4 bg-zinc-700 bg-opacity-30 backdrop-blur-md border border-zinc-600 rounded-xl shadow hover:shadow-pink-500/40 transition-shadow duration-300"
+                className="flex items-center gap-4 p-4 bg-zinc-700 bg-opacity-30 backdrop-blur-md border border-zinc-600 rounded-xl shadow hover:shadow-pink-500/40 transition-shadow duration-300 overflow-hidden text-ellipsis"
               >
                 <img
                   src={video.thumbnail}
                   alt={video.title}
-                  className="w-24 h-14 object-cover rounded-md"
+                  className="w-2/5 relative h-22 flex-shrink-0 object-cover rounded-md overflow-hidden text-ellipsis"
                 />
                 <div className="flex-1">
                   <h4 className="text-lg font-semibold text-gray-100 truncate">{video.title}</h4>

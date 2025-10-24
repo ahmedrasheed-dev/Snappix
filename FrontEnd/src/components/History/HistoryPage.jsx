@@ -48,7 +48,7 @@ const HistoryPage = ({ data }) => {
       {watchHistory.length === 0 ? (
         <p className="text-gray-400">No watch history yet.</p>
       ) : (
-        <div className="grid gap-6">
+        <div className="grid gap-4">
           {watchHistory.map((video) => (
             <Link
               to={`/video/${video._id}`}
@@ -56,7 +56,7 @@ const HistoryPage = ({ data }) => {
               className="flex gap-4 bg-zinc-800 rounded-xl overflow-hidden shadow-md hover:bg-zinc-700 transition-colors"
             >
               {/* Thumbnail */}
-              <div className="relative w-60 flex-shrink-0">
+              <div className="relative w-2/5 flex-shrink-0">
                 <img
                   src={video.thumbnail}
                   alt={video.title}

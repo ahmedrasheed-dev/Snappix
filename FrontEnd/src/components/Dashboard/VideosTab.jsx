@@ -107,7 +107,7 @@ const VideosTab = () => {
             {videos.map((video) => (
               <tr key={video._id} className="hover:bg-zinc-800/50 transition">
                 {/* Video thumbnail + title */}
-                <td className="px-4 py-3 flex gap-3 items-center">
+                <td className="px-4 py-3 flex gap-3 items-center truncate max-w-xs">
                   <img
                     src={video.thumbnail}
                     alt={video.title}

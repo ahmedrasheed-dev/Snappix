@@ -24,6 +24,7 @@ import TweetsPage from "./components/Tweets/TweetsPage.jsx";
 import SettingsPage from "./components/Settings/SettingsPage.jsx";
 import Error from "./pages/Error.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
+import LoginProtection from "./components/LoginProtection.jsx";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -39,10 +40,10 @@ createRoot(document.getElementById("root")).render(
           <Routes>
             <Route path="/" element={<App />}>
               <Route index element={<Home />} />
-              
-              {/* ✅ Protected routes wrapper */}
+
+              {/* Protected routes wrapper */}
               <Route element={<ProtectedRoute />}>
-              <Route path="channel/:username" element={<Profile />} />
+                <Route path="channel/:username" element={<Profile />} />
                 <Route path="history" element={<HistoryComponent />} />
                 <Route path="subscriptions" element={<SubscriptionsPage />} />
                 <Route path="settings" element={<SettingsPage />} />
@@ -54,7 +55,14 @@ createRoot(document.getElementById("root")).render(
 
               {/* Public routes */}
               <Route path="register" element={<RegisterPage />} />
-              <Route path="login" element={<LoginPage />} />
+              <Route
+                path="login"
+                element={
+                  <LoginProtection>
+                    <LoginPage />
+                  </LoginProtection>
+                }
+              />
               <Route path="logout" element={<LogoutPage />} />
               <Route path="video/:videoId" element={<VideoPage />} />
               <Route path="tweets" element={<TweetsPage />} />

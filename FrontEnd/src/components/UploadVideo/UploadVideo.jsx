@@ -7,6 +7,7 @@ import { Loadericon } from "../../assets/index.js";
 import { Progress } from "@/components/ui/progress";
 import axiosInstance from "@/api/axios";
 import { notifyError, notifySuccess } from "@/utils/toasts.js";
+
 const UploadVideo = () => {
   const {
     register,
@@ -14,6 +15,7 @@ const UploadVideo = () => {
     formState: { errors },
     watch,
     setValue,
+    trigger,
   } = useForm();
 
   const [isSubmiting, setisSubmiting] = useState(false);
@@ -63,17 +65,45 @@ const UploadVideo = () => {
   };
 
   const uploadToS3 = async (file, category, setProgress) => {
-    // Ask backend for presigned URL
+    // Enforce size limits before making the API call
+    const MAX_VIDEO_SIZE = 60 * 1024 * 1024; // 60 MB
+    const MAX_IMAGE_SIZE = 2 * 1024 * 1024; // 2 MB
+
+    // Check file size on frontend before uploading
+    if (category === "video" && file.size > MAX_VIDEO_SIZE) {
+      alert("Video exceeds the 60 MB size limit.");
+      return;
+    }
+
+    if (category === "thumbnail" && file.size > MAX_IMAGE_SIZE) {
+      alert("Thumbnail exceeds the 2 MB size limit.");
+      return;
+    }
+
+    // Check file type
+    const allowedVideoTypes = ["video/mp4", "video/mov", "video/webm"];
+    const allowedImageTypes = ["image/jpeg", "image/png", "image/webp"];
+
+    if (category === "video" && !allowedVideoTypes.includes(file.type)) {
+      alert("Invalid video type. Allowed types are: MP4, MOV, WEBM.");
+      return;
+    }
+
+    if (category === "thumbnail" && !allowedImageTypes.includes(file.type)) {
+      alert("Invalid thumbnail type. Allowed types are: JPG, PNG, WEBP.");
+      return;
+    }
+
+    //backend call to get presigned URL
     const res = await axiosInstance.post("/videos/presign", {
       fileName: file.name,
       fileType: file.type,
-      fileCategory: category, // "video" or "thumbnail"
+      fileCategory: category,
       fileSize: file.size,
     });
 
     const { uploadUrl, fileUrl } = res.data;
 
-    // Upload file directly to S3
     await axiosInstance.put(uploadUrl, file, {
       headers: { "Content-Type": file.type },
       onUploadProgress: (progressEvent) => {
@@ -91,21 +121,17 @@ const UploadVideo = () => {
     try {
       setisSubmiting(true);
       setProgress(0);
-      
+
       const videoFile = data.video?.[0];
-      console.log("Video file for duration:", videoFile);
 
       if (!videoFile) {
         throw new Error("No video file selected");
       }
 
       const duration = await getVideoDuration(videoFile);
-      console.log("Video duration:", duration);
-      // Upload each file
       const videoUrl = await uploadToS3(data.video[0], "video", setProgress);
       const thumbnailUrl = await uploadToS3(data.thumbnail[0], "thumbnail");
 
-      // Send metadata to backend
       const payload = {
         title: data.title,
         description: data.description,
@@ -133,11 +159,32 @@ const UploadVideo = () => {
     setValue("video", null);
     setVideoPreview(null);
   };
+
   const clearThumbnail = () => {
     setValue("thumbnail", null);
     setThumbnailPreview(null);
   };
-1
+
+  const handleFileChange = (event, type) => {
+    const file = event.target.files[0];
+
+    if (type === "video" && file && file.size > 40 * 1024 * 1024) {
+      // If video is larger than 40MB, show error
+      setValue("video", []);
+      trigger("video");
+      notifyError("Video file must be smaller than 40MB.");
+    } else if (type === "thumbnail" && file && file.size > 2 * 1024 * 1024) {
+      // If thumbnail is larger than 2MB, show error
+      setValue("thumbnail", []);
+      trigger("thumbnail");
+      notifyError("Thumbnail file must be smaller than 2MB.");
+    } else {
+      // If file is valid, set the value
+      setValue(type, event.target.files);
+      trigger(type);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-900 flex items-center justify-center p-6">
       <div className="w-full max-w-5xl bg-gray-800 rounded-xl shadow-2xl p-8 text-white">
@@ -177,19 +224,13 @@ const UploadVideo = () => {
                       <p className="mb-2 text-sm text-gray-400">
                         <span className="font-semibold">Click to upload</span> or drag and drop
                       </p>
-                      <p className="text-xs text-gray-500">MP4, MOV (MAX. 500MB)</p>
+                      <p className="text-xs text-gray-500">MP4, MOV (MAX. 40MB)</p>
                       <input
                         id="video"
                         type="file"
                         className="hidden"
                         accept="video/mp4,video/mov,video/ogg,video/webm"
-                        {...register("video", {
-                          required: "Video file is required",
-                          validate: {
-                            isVideo: (value) =>
-                              value[0]?.type.startsWith("video/") || "Only video files are allowed",
-                          },
-                        })}
+                        onChange={(e) => handleFileChange(e, "video")}
                       />
                     </label>
                     {errors.video && (
@@ -221,25 +262,19 @@ const UploadVideo = () => {
                   <div>
                     <label
                       htmlFor="thumbnail"
-                      className="flex flex-col items-center justify-center w-full h-`40 border-2 border-gray-600 border-dashed rounded-lg cursor-pointer bg-gra`y-700 hover:bg-gray-600 transition duration-200"
+                      className="flex flex-col items-center justify-center w-full h-64 border-2 border-gray-600 border-dashed rounded-lg cursor-pointer bg-gray-700 hover:bg-gray-600 transition duration-200"
                     >
                       <FaUpload className="w-10 h-10 text-gray-400 mb-3" />
                       <p className="mb-2 text-sm text-gray-400">
                         <span className="font-semibold">Click to upload</span> or drag and drop
                       </p>
-                      <p className="text-xs text-gray-500">JPG, PNG, WEBP</p>
+                      <p className="text-xs text-gray-500">JPG, PNG, WEBP (MAX 2MB)</p>
                       <input
                         id="thumbnail"
                         type="file"
                         className="hidden"
                         accept="image/jpeg,image/png,image/webp"
-                        {...register("thumbnail", {
-                          required: "Thumbnail is required",
-                          validate: {
-                            isImage: (value) =>
-                              value[0]?.type.startsWith("image/") || "Only image files are allowed",
-                          },
-                        })}
+                        onChange={(e) => handleFileChange(e, "thumbnail")}
                       />
                     </label>
                     {errors.thumbnail && (
@@ -304,7 +339,7 @@ const UploadVideo = () => {
               <p className="text-center text-gray-400 mt-2">{`Uploading: ${progress}%`}</p>
             </div>
           )}
-          {/* Submit Button */}
+
           <Button
             type="submit"
             disabled={isSubmiting}

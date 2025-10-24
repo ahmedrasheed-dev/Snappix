@@ -4,12 +4,13 @@ import { Link, useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { perfomLogin } from "../../store/features/userSlice";
 import { Loadericon } from "../../assets/index.js";
 import { notifyError, notifySuccess } from "@/utils/toasts";
 
 const LoginPage = () => {
+  const { isLoggedIn } = useSelector((state) => state.user);
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [errorMessage, setErrorMessage] = useState(""); // Renamed for clarity
@@ -31,7 +32,7 @@ const LoginPage = () => {
       const data = await dispatch(perfomLogin(loginData)).unwrap();
       navigate("/");
     } catch (error) {
-      console.log("login error: ", error)
+      console.log("login error: ", error);
       notifyError(error);
       setErrorMessage(error);
     }
