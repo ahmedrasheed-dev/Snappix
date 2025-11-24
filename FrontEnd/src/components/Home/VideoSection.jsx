@@ -1,7 +1,8 @@
-import React from "react";
+import React, { useEffect } from "react";
 import VideoItem from "./VideoItem";
 import { useGetVideos } from "../../hooks/useGetAllVideos";
 import VideoItemSkeleton from "./VideoItemSkeleton";
+import axios from "axios";
 
 const VideoSection = () => {
   const { data, isLoading, isError, error } = useGetVideos({
@@ -9,6 +10,19 @@ const VideoSection = () => {
     limit: 12,
   });
 
+const getStatus = async () => {
+    try {
+      const res = await axios.get('https://qc02m0485e.execute-api.eu-north-1.amazonaws.com/dev/api/v1/videos');
+      console.log('Response:', res.data); 
+      console.log("TEST ENV: ", import.meta.env.VITE_BASE_URL)
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  };
+
+  useEffect(() => {
+    getStatus();
+  }, []);
   if (isLoading) {
     return (
       <div

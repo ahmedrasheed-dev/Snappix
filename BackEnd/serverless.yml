@@ -31,6 +31,9 @@ functions:
       AWS_BUCKET_NAME: ${env:AWS_BUCKET_NAME}
       S3_PRESIGNED_URL_EXPIRY: ${env:S3_PRESIGNED_URL_EXPIRY}
       RUNTIME: ${env:RUNTIME}
+      # Added these based on our previous discussion to fix the S3 upload 403 error
+      MY_S3_ACCESS_KEY: ${env:MY_S3_ACCESS_KEY}
+      MY_S3_SECRET_KEY: ${env:MY_S3_SECRET_KEY}
     events:
       - http:
           path: /api/v1/{proxy+}
@@ -38,3 +41,30 @@ functions:
 
 plugins:
   - serverless-offline # Optional: For local testing of your serverless API
+
+# 🔑 NEW SECTION: Fixes CORS for 4XX and 5XX Gateway Errors
+resources:
+  Resources:
+    GatewayResponseDefault4XX:
+      Type: 'AWS::ApiGateway::GatewayResponse'
+      Properties:
+        ResponseParameters:
+          # Standardize origin to your production frontend (No wildcard /*)
+          gatewayresponse.header.Access-Control-Allow-Origin: "'http://snappix-frontend.s3-website.eu-north-1.amazonaws.com'"
+          gatewayresponse.header.Access-Control-Allow-Credentials: "'true'"
+          gatewayresponse.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+        ResponseType: DEFAULT_4XX
+        RestApiId:
+          Ref: ApiGatewayRestApi
+
+    GatewayResponseDefault5XX:
+      Type: 'AWS::ApiGateway::GatewayResponse'
+      Properties:
+        ResponseParameters:
+          # Standardize origin to your production frontend (No wildcard /*)
+          gatewayresponse.header.Access-Control-Allow-Origin: "'http://snappix-frontend.s3-website.eu-north-1.amazonaws.com'"
+          gatewayresponse.header.Access-Control-Allow-Credentials: "'true'"
+          gatewayresponse.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+        ResponseType: DEFAULT_5XX
+        RestApiId:
+          Ref: ApiGatewayRestApi

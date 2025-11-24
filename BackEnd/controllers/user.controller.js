@@ -78,10 +78,12 @@ export const getUploadUrl = async (req, res) => {
 // Register user after upload
 export const registerUser = async (req, res) => {
   try {
-    const { username, fullName, email, password, avatarUrl, coverImageUrl } = req.body;
+    const { username, fullName, email, password, avatar, coverImage } = req.body;
 
-    if (!username || !fullName || !email || !password || !avatarUrl)
+    if (!username || !fullName || !email || !password || !avatar) {
+      // Throwing here sends it to the catch block
       throw new ApiError(400, "Missing required fields");
+    }
 
     const existingUser = await User.findOne({ $or: [{ username }, { email }] });
     if (existingUser) throw new ApiError(400, "Username or email already exists");
@@ -91,8 +93,8 @@ export const registerUser = async (req, res) => {
       fullName,
       email,
       password,
-      avatar: avatarUrl,
-      coverImage: coverImageUrl || "",
+      avatar: avatar, 
+      coverImage: coverImage || "",
     });
 
     const responseUser = await User.findById(newUser._id).select("-password -refreshToken");

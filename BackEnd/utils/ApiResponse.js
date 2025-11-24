@@ -9,7 +9,7 @@ class ApiResponse {
   }
   send(res) {
     return res.status(this.statusCode).json({
-      success: true,
+      success: this.success,
       message: this.message,
       data: this.data,
     });

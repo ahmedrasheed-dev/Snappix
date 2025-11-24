@@ -68,24 +68,50 @@ const RegisterPage = () => {
   };
 
   const onSubmit = async (data) => {
+    console.log("Data is: ", data.avatar);
+    const avatarFile = data.avatar;
+    if (!avatarFile) {
+      return notifyError("Please select an avatar image.");
+    }
     try {
-      const formData = new FormData();
-      formData.append("username", data.username);
-      formData.append("fullName", data.fullName);
-      formData.append("email", data.email);
-      formData.append("password", data.password);
-      formData.append("avatar", data.avatar);
-
-      const response = await axiosInstance.post(
-        `${import.meta.env.VITE_BASE_URL}/users/register`,
-        formData,
+      let avatarFileUrl = null;
+      console.log("generating presigned url");
+      const presignedUrlResponse = await axiosInstance.post(
+        `${import.meta.env.VITE_BASE_URL}/users/presigned-url/public`,
         {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
+          fileName: avatarFile.name,
+          fileType: avatarFile.type,
+          fileCategory: "avatar",
+          fileSize: avatarFile.size,
         }
       );
+
+      const { uploadUrl, fileUrl } = presignedUrlResponse.data.data;
+      console.log("presigned url is: ", uploadUrl);
+      avatarFileUrl = fileUrl;
+
+      //uplod to s3
+      await axiosInstance.put(uploadUrl, avatarFile, {
+        headers: {
+          "Content-Type": avatarFile.type,
+        },
+      });
+      console.log("Avatar uploaded successfully.");
+
+      const registrationBody = {
+        username: data.username,
+        fullName: data.fullName,
+        email: data.email,
+        password: data.password,
+        avatar: avatarFileUrl,
+      };
+      const response = await axiosInstance.post(
+        `${import.meta.env.VITE_BASE_URL}/users/register`,
+        registrationBody
+      );
+
       console.log("Registration Response:", response);
+
       setUser((prevUser) => ({
         ...prevUser,
         username: data.username,
@@ -106,20 +132,12 @@ const RegisterPage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 to-indigo-900 flex items-center justify-center px-4 sm:px-6 lg:px-8">
       <div className="bg-black bg-opacity-60 backdrop-filter backdrop-blur-lg rounded-xl shadow-xl p-8 w-full max-w-md">
-        <h2 className="mt-6 text-center text-3xl font-bold text-white">
-          Create an Account
-        </h2>
+        <h2 className="mt-6 text-center text-3xl font-bold text-white">Create an Account</h2>
 
-        <form
-          className="mt-8 space-y-6"
-          onSubmit={handleSubmit(onSubmit)}
-        >
+        <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
           {/* Avatar Uplo Field (no Shadcn) */}
           <div className="flex flex-col items-center gap-4">
-            <Label
-              htmlFor="avatar"
-              className="text-white text-sm font-medium"
-            >
+            <Label htmlFor="avatar" className="text-white text-sm font-medium">
               Profile Photo
             </Label>
 
@@ -132,9 +150,7 @@ const RegisterPage = () => {
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <span className="text-pink-500 font-bold text-lg">
-                  IMG
-                </span>
+                <span className="text-pink-500 font-bold text-lg">IMG</span>
               )}
             </div>
 
@@ -149,15 +165,11 @@ const RegisterPage = () => {
                     type="file"
                     accept="image/*"
                     className="hidden" // Hide the default input
-                    onChange={(e) =>
-                      handleAvatarChange(e.target.files[0], onChange)
-                    }
+                    onChange={(e) => handleAvatarChange(e.target.files[0], onChange)}
                   />
                   <button
                     type="button"
-                    onClick={() =>
-                      document.getElementById("avatar").click()
-                    }
+                    onClick={() => document.getElementById("avatar").click()}
                     className="flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gray-800 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500 transition-colors duration-200"
                   >
                     Choose File
@@ -165,9 +177,7 @@ const RegisterPage = () => {
                   {avatarPreview && (
                     <button
                       type="button"
-                      onClick={() =>
-                        handleAvatarChange(null, onChange)
-                      }
+                      onClick={() => handleAvatarChange(null, onChange)}
                       className="flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 mt-2 transition-colors duration-200"
                     >
                       Remove
@@ -176,21 +186,14 @@ const RegisterPage = () => {
                 </div>
               )}
             />
-            {errors.avatar && (
-              <p className="text-pink-500 text-xs mt-1">
-                {errors.avatar.message}
-              </p>
-            )}
+            {errors.avatar && <p className="text-pink-500 text-xs mt-1">{errors.avatar.message}</p>}
           </div>
 
           <Separator className="bg-gray-700" />
 
           <div className="space-y-4">
             <div>
-              <Label
-                htmlFor="username"
-                className="text-white block text-sm font-medium"
-              >
+              <Label htmlFor="username" className="text-white block text-sm font-medium">
                 Username
               </Label>
               <Input
@@ -200,24 +203,18 @@ const RegisterPage = () => {
                   required: "Username is required",
                   pattern: {
                     value: /^[A-Za-z0-9$_]+$/,
-                    message:
-                      "Username can only contain letters, numbers, $, and _",
+                    message: "Username can only contain letters, numbers, $, and _",
                   },
                 })}
                 className="mt-1 block w-full rounded-md shadow-sm bg-gray-800 border-gray-700 text-white focus:border-pink-500 focus:ring-pink-500"
               />
               {errors.username && (
-                <p className="text-pink-500 text-xs mt-1">
-                  {errors.username.message}
-                </p>
+                <p className="text-pink-500 text-xs mt-1">{errors.username.message}</p>
               )}
             </div>
 
             <div>
-              <Label
-                htmlFor="fullName"
-                className="text-white block text-sm font-medium"
-              >
+              <Label htmlFor="fullName" className="text-white block text-sm font-medium">
                 Full Name
               </Label>
               <Input
@@ -229,17 +226,12 @@ const RegisterPage = () => {
                 className="mt-1 block w-full rounded-md shadow-sm bg-gray-800 border-gray-700 text-white focus:border-pink-500 focus:ring-pink-500"
               />
               {errors.fullName && (
-                <p className="text-pink-500 text-xs mt-1">
-                  {errors.fullName.message}
-                </p>
+                <p className="text-pink-500 text-xs mt-1">{errors.fullName.message}</p>
               )}
             </div>
 
             <div>
-              <Label
-                htmlFor="email"
-                className="text-white block text-sm font-medium"
-              >
+              <Label htmlFor="email" className="text-white block text-sm font-medium">
                 Email address
               </Label>
               <Input
@@ -251,18 +243,11 @@ const RegisterPage = () => {
                 })}
                 className="mt-1 block w-full rounded-md shadow-sm bg-gray-800 border-gray-700 text-white focus:border-pink-500 focus:ring-pink-500"
               />
-              {errors.email && (
-                <p className="text-pink-500 text-xs mt-1">
-                  {errors.email.message}
-                </p>
-              )}
+              {errors.email && <p className="text-pink-500 text-xs mt-1">{errors.email.message}</p>}
             </div>
 
             <div>
-              <Label
-                htmlFor="password"
-                className="text-white block text-sm font-medium"
-              >
+              <Label htmlFor="password" className="text-white block text-sm font-medium">
                 Password
               </Label>
               <Input
@@ -278,9 +263,7 @@ const RegisterPage = () => {
                 className="mt-1 block w-full rounded-md shadow-sm bg-gray-800 border-gray-700 text-white focus:border-pink-500 focus:ring-pink-500"
               />
               {errors.password && (
-                <p className="text-pink-500 text-xs mt-1">
-                  {errors.password.message}
-                </p>
+                <p className="text-pink-500 text-xs mt-1">{errors.password.message}</p>
               )}
             </div>
           </div>
@@ -304,10 +287,7 @@ const RegisterPage = () => {
         </form>
         <div className="mt-6 text-center text-sm text-gray-300">
           Already have an account?{" "}
-          <Link
-            to="/login"
-            className="font-medium text-pink-500 hover:text-pink-400"
-          >
+          <Link to="/login" className="font-medium text-pink-500 hover:text-pink-400">
             Log in
           </Link>
         </div>

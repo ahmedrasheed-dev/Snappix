@@ -7,18 +7,43 @@ dotenv.config({
   path: "./.env",
 });
 const app = express();
-app.use(
-  cors({
-    origin: process.env.CORS_ORIGIN,
-    credentials: true,
-  })
-);
+
+// Define allowed origins (NO trailing slashes here)
+const ALLOWED_ORIGINS = [
+  "http://localhost:5173", // Localhost Vite default
+  "http://localhost:3000", // Localhost CRA default
+  "http://snappix-frontend.s3-website.eu-north-1.amazonaws.com", // Production
+];
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    // 1. Allow requests with no origin (like Postman or server-to-server)
+    if (!origin) return callback(null, true);
+
+    // 2. Normalize the incoming origin (Remove trailing slash if present)
+    const normalizedOrigin = origin.endsWith("/") ? origin.slice(0, -1) : origin;
+
+    // 3. Check if the normalized origin is in our allowed list
+    if (ALLOWED_ORIGINS.includes(normalizedOrigin)) {
+      // 4. Send back the SPECIFIC origin that was requested (normalized)
+      // This tricks the browser into seeing an exact match.
+      callback(null, normalizedOrigin);
+    } else {
+      console.error(`CORS blocked: ${origin}`);
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true, // Vital for cookies/JWT
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+};
+// 3. Apply the CORS middleware globally
+app.use(cors(corsOptions));
+
 app.use(express.json({ limit: "500mb" }));
 app.use(express.urlencoded({ extended: true, limit: "500mb" }));
 app.use(express.static("public"));
 app.use(cookieParser());
-
-
 
 //routes import`
 import userRouter from "./routes/user.routes.js";

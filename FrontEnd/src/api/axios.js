@@ -26,7 +26,7 @@ const refreshAccessToken = async () => {
   const { setTokens, logoutUser } = await import("../store/features/userSlice");
 
   try {
-    const refreshResponse = await axios.post(
+    const refreshResponse = await axiosInstance.post(
       `${import.meta.env.VITE_BASE_URL}/users/refresh-token`,
       {},
       { withCredentials: true }
