@@ -35,7 +35,7 @@ const corsOptions = {
     }
   },
   credentials: true, // Vital for cookies/JWT
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
   allowedHeaders: ["Content-Type", "Authorization"],
 };
 // 3. Apply the CORS middleware globally
