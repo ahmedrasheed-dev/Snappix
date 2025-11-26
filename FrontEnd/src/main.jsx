@@ -25,6 +25,7 @@ import SettingsPage from "./components/Settings/SettingsPage.jsx";
 import Error from "./pages/Error.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import LoginProtection from "./components/LoginProtection.jsx";
+import AuthLayout from "./layout.jsx";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -37,6 +38,7 @@ createRoot(document.getElementById("root")).render(
     <QueryClientProvider client={queryClient}>
       <StrictMode>
         <Provider store={store}>
+          <AuthLayout />
           <Routes>
             <Route path="/" element={<App />}>
               <Route index element={<Home />} />
@@ -70,6 +72,7 @@ createRoot(document.getElementById("root")).render(
               <Route path="*" element={<Error />} />
             </Route>
           </Routes>
+          <AuthLayout />
         </Provider>
       </StrictMode>
     </QueryClientProvider>

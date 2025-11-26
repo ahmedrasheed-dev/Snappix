@@ -10,12 +10,14 @@ export const errorHandler = (err, req, res, next) => {
   }
 
   console.log("ErrorHandler caught ApiError:", err.message);
-  return res.status(500).set({
-    'Access-Control-Allow-Origin': 'http://snappix-frontend.s3-website.eu-north-1.amazonaws.com',
-    'Access-Control-Allow-Credentials': 'true' 
-  }).json({
+  return res.status(500).json({
     success: false,
     message: err?.message,
     errors: [],
   });
+
+  // .set({
+  //   'Access-Control-Allow-Origin': 'http://snappix-frontend.s3-website.eu-north-1.amazonaws.com',
+  //   'Access-Control-Allow-Credentials': 'true' 
+  // })
 };

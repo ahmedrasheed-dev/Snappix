@@ -13,6 +13,7 @@ const ALLOWED_ORIGINS = [
   "http://localhost:5173", // Localhost Vite default
   "http://localhost:3000", // Localhost CRA default
   "http://snappix-frontend.s3-website.eu-north-1.amazonaws.com", // Production
+  "https://dkkddb5r8mwn7.cloudfront.net", // Cloudfront URL for frontend
 ];
 
 const corsOptions = {

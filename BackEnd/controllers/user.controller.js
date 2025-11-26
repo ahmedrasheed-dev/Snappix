@@ -19,7 +19,7 @@ const cookieOptions = {
   httpOnly: true,
   secure: process.env.ENVIRONMENT === "development" ? false : true, //for local host
   age: 24 * 60 * 60 * 1000,
-  sameSite: "lax",
+  sameSite: "None",
 };
 
 const generateAccessAndRefereshTokens = async (userId) => {

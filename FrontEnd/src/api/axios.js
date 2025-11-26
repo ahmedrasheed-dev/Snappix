@@ -1,4 +1,5 @@
 import axios from "axios";
+
 let reduxStore = null;
 
 export const setReduxStore = (store) => {
@@ -12,7 +13,6 @@ const axiosInstance = axios.create({
 
 // ===== Refresh Token Logic =====
 let isRefreshing = false;
-//awaiting for refresh
 let failedQueue = [];
 
 const processQueue = (error, token = null) => {
@@ -26,13 +26,27 @@ const refreshAccessToken = async () => {
   const { setTokens, logoutUser } = await import("../store/features/userSlice");
 
   try {
+    // 1. Get token from storage (Fallback for HTTP S3 where cookies fail)
+    const storedRefreshToken = localStorage.getItem("refreshToken");
+
+    // 2. Send the request
     const refreshResponse = await axiosInstance.post(
-      `${import.meta.env.VITE_BASE_URL}/users/refresh-token`,
-      {},
+      "/users/refresh-token", // No need to repeat VITE_BASE_URL, it's in baseURL
+      {
+        refreshToken: storedRefreshToken // Send in body so backend can find it
+      },
       { withCredentials: true }
     );
-    console.log("refreshingToken: ", refreshResponse);
+
+    // 3. Log AFTER the response exists
+    console.log("refreshingToken response: ", refreshResponse);
+    
     const { accessToken, refreshToken, user } = refreshResponse.data?.data;
+
+    // 4. Update LocalStorage if a new refresh token was returned
+    if (refreshToken) {
+      localStorage.setItem("refreshToken", refreshToken);
+    }
 
     reduxStore?.dispatch(setTokens({ accessToken, refreshToken, user }));
 
@@ -40,6 +54,8 @@ const refreshAccessToken = async () => {
 
     return accessToken;
   } catch (err) {
+    // If refresh fails, clear storage and logout
+    localStorage.removeItem("refreshToken");
     reduxStore?.dispatch(logoutUser());
     throw err;
   }
@@ -69,8 +85,6 @@ axiosInstance.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    // Don’t run refresh logic if this is a login/register call
-    // as it will return 401 and interceptor will try to refresh token
     const isAuthFreeRoute =
       originalRequest.url.includes("/users/login") ||
       originalRequest.url.includes("/users/register") ||
@@ -79,13 +93,11 @@ axiosInstance.interceptors.response.use(
     if (error.response?.status === 401 && !originalRequest._retry && !isAuthFreeRoute) {
       originalRequest._retry = true;
 
-      //refresh is already running push to failedQueue until new token arrives
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
         })
           .then((token) => {
-            // Once resolved with new token, retry the request
             originalRequest.headers.Authorization = `Bearer ${token}`;
             return axiosInstance(originalRequest);
           })

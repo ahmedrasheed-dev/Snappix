@@ -13,6 +13,9 @@ const initialState = {
 export const fetchLoggedInUser = createAsyncThunk(
   "user/fetchLoggedInUser",
   async (_, { rejectWithValue }) => {
+    if(!isLoggedIn){
+      return rejectWithValue("Login to get personal profile data");
+    }
     try {
       const response = await axiosInstance.get(`${import.meta.env.VITE_BASE_URL}/users/profile`, { withCredentials: true });
       if (response.data?.data) {
