@@ -10,6 +10,7 @@ import { useDispatch } from "react-redux";
 import { setLoggedInUser } from "../../store/features/userSlice";
 import { Loadericon } from "../../assets/index.js";
 import { toast, Bounce } from "react-toastify";
+import axios from "axios";
 
 const RegisterPage = () => {
   const notifySuccess = (success) => {
@@ -91,7 +92,9 @@ const RegisterPage = () => {
       avatarFileUrl = fileUrl;
 
       //uplod to s3
-      await axiosInstance.put(uploadUrl, avatarFile, {
+      const uploadResponse = await fetch(uploadUrl, {
+        method: "PUT",
+        body: avatarFile,
         headers: {
           "Content-Type": avatarFile.type,
         },

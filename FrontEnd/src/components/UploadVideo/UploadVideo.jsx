@@ -7,6 +7,7 @@ import { Loadericon } from "../../assets/index.js";
 import { Progress } from "@/components/ui/progress";
 import axiosInstance from "@/api/axios";
 import { notifyError, notifySuccess } from "@/utils/toasts.js";
+import axios from "axios";
 
 const UploadVideo = () => {
   const {
@@ -104,8 +105,13 @@ const UploadVideo = () => {
 
     const { uploadUrl, fileUrl } = res.data;
 
-    await axiosInstance.put(uploadUrl, file, {
-      headers: { "Content-Type": file.type },
+    const uploadInstance = axios.create();
+
+    // 2. Explicitly remove the header from this specific instance's defaults to be 100% sure
+    delete uploadInstance.defaults.headers.common["Authorization"];
+
+    await uploadInstance.put(uploadUrl, file, {
+      headers: { "Content-Type": file.type},
       onUploadProgress: (progressEvent) => {
         if (setProgress && category === "video") {
           const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
@@ -140,7 +146,10 @@ const UploadVideo = () => {
         duration,
       };
 
-      const res = await axiosInstance.post(`${import.meta.env.VITE_BASE_URL}/videos/upload`, payload);
+      const res = await axiosInstance.post(
+        `${import.meta.env.VITE_BASE_URL}/videos/upload`,
+        payload
+      );
 
       if (res.status === 201) {
         notifySuccess("Video uploaded successfully!");
