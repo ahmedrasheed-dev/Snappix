@@ -393,19 +393,19 @@ export const updateThumbnailRecord = async (req, res) => {
   }
 };
 
-const deleteVideo = asyncHandler(async (req, res) => {
-  const { videoId } = req.params;
-  //TODO: delete video
-  if (!videoId) {
-    throw new ApiError(400, "Video id is required");
-  }
 
+export const deleteFromS3 = async (fileUrl) => {
   try {
-    const urlParts = new URL(fileUrl);
+    if (!fileUrl) return;
 
+    // 1. Parse the URL to get the path
+    // Example: https://my-bucket.s3.eu-north-1.amazonaws.com/videos/video.mp4
+    const urlParts = new URL(fileUrl);
+    
     // 2. Remove the leading slash to get the Key
     // pathname is "/videos/video.mp4" -> key is "videos/video.mp4"
-    const fileKey = urlParts.pathname.slice(1);
+    const fileKey = urlParts.pathname.slice(1); 
+
     const command = new DeleteObjectCommand({
       Bucket: process.env.AWS_BUCKET_NAME,
       Key: fileKey,
@@ -414,9 +414,50 @@ const deleteVideo = asyncHandler(async (req, res) => {
     await s3Client.send(command);
     console.log(`Successfully deleted from S3: ${fileKey}`);
     return new ApiResponse(200, {}, "Video deleted successfully").send(res);
+
+    
   } catch (error) {
     console.error(`Error deleting file from S3: ${error?.message}`);
   }
+};
+
+const deleteVideo = asyncHandler(async (req, res) => {
+  const { videoId } = req.params;
+
+  // 1. Validation
+  if (!videoId) {
+    throw new ApiError(400, "Video id is required");
+  }
+
+  // 2. Find the video in DB
+  const video = await Video.findById(videoId);
+
+  if (!video) {
+    throw new ApiError(404, "Video not found");
+  }
+
+  // 3. Security Check: Ensure the logged-in user owns the video
+  // Assuming req.user is set by your verifyJWT middleware
+  if (video.owner.toString() !== req.user?._id.toString()) {
+    throw new ApiError(403, "You are not authorized to delete this video");
+  }
+
+  // 4. Delete files from S3 (Video & Thumbnail)
+  // Using Promise.all is faster as it runs both requests in parallel
+  const s3DeletePromises = [
+    deleteFromS3(video.videoFile),
+    deleteFromS3(video.thumbnail)
+  ];
+
+  await Promise.all(s3DeletePromises);
+
+  // 5. Delete from Database
+  await Video.findByIdAndDelete(videoId);
+
+  // 6. Return Response
+  return res
+    .status(200)
+    .json(new ApiResponse(200, {}, "Video deleted successfully"));
 });
 
 const togglePublishStatus = asyncHandler(async (req, res) => {
