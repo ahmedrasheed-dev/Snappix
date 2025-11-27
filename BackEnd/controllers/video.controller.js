@@ -7,7 +7,7 @@ import { Video } from "../models/video.model.js";
 // import { deleteLocalFile } from "../utils/DeleteLocalfile.js";
 import mongoose from "mongoose";
 
-import { PutObjectCommand } from "@aws-sdk/client-s3";
+import { DeleteObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { s3 } from "../config/s3.config.js";
 
@@ -58,7 +58,7 @@ export const getPresignedUrl = async (req, res, next) => {
 };
 
 const publishAVideo = asyncHandler(async (req, res) => {
-  const { title, description, videoUrl, thumbnailUrl, duration  } = req.body;
+  const { title, description, videoUrl, thumbnailUrl, duration } = req.body;
 
   if (!title || !description || !videoUrl || !thumbnailUrl || !duration)
     throw new ApiError(400, "All fields are required");
@@ -74,7 +74,6 @@ const publishAVideo = asyncHandler(async (req, res) => {
 
   return new ApiResponse(201, newVideo, "Video published successfully").send(res);
 });
-
 
 const getAllVideos = asyncHandler(async (req, res) => {
   const {
@@ -363,7 +362,7 @@ export const updateThumbnailRecord = async (req, res) => {
     const video = await Video.findById(videoId);
     if (!video) throw new ApiError(404, "Video not found");
 
-    //  step 1: delete old thumbnail from S3 if exists 
+    //  step 1: delete old thumbnail from S3 if exists
     if (video.thumbnail) {
       try {
         const oldKey = video.thumbnail.split(".amazonaws.com/")[1];
@@ -401,16 +400,23 @@ const deleteVideo = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Video id is required");
   }
 
-  const video = await Video.findById(videoId);
-  if (!video) {
-    throw new ApiError(404, "Video not found");
+  try {
+    const urlParts = new URL(fileUrl);
+
+    // 2. Remove the leading slash to get the Key
+    // pathname is "/videos/video.mp4" -> key is "videos/video.mp4"
+    const fileKey = urlParts.pathname.slice(1);
+    const command = new DeleteObjectCommand({
+      Bucket: process.env.AWS_BUCKET_NAME,
+      Key: fileKey,
+    });
+
+    await s3Client.send(command);
+    console.log(`Successfully deleted from S3: ${fileKey}`);
+    return new ApiResponse(200, {}, "Video deleted successfully").send(res);
+  } catch (error) {
+    console.error(`Error deleting file from S3: ${error?.message}`);
   }
-  let publicId = extractPublicId(video.videoFile);
-  await deleteFromCloudinary(publicId);
-  publicId = extractPublicId(video.thumbnail);
-  await deleteFromCloudinary(publicId);
-  await Video.findByIdAndDelete(videoId);
-  return new ApiResponse(200, {}, "Video deleted successfully").send(res);
 });
 
 const togglePublishStatus = asyncHandler(async (req, res) => {
@@ -456,5 +462,5 @@ export {
   deleteVideo,
   togglePublishStatus,
   increaseVideoViews,
-  getMyVideos
+  getMyVideos,
 };

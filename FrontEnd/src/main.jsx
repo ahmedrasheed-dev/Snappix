@@ -38,41 +38,41 @@ createRoot(document.getElementById("root")).render(
     <QueryClientProvider client={queryClient}>
       <StrictMode>
         <Provider store={store}>
-          <AuthLayout />
-          <Routes>
-            <Route path="/" element={<App />}>
-              <Route index element={<Home />} />
+          <AuthLayout>
+            <Routes>
+              <Route path="/" element={<App />}>
+                <Route index element={<Home />} />
 
-              {/* Protected routes wrapper */}
-              <Route element={<ProtectedRoute />}>
-                <Route path="channel/:username" element={<Profile />} />
-                <Route path="history" element={<HistoryComponent />} />
-                <Route path="subscriptions" element={<SubscriptionsPage />} />
-                <Route path="settings" element={<SettingsPage />} />
-                <Route path="verify-email" element={<VerifyEmailPage />} />
-                <Route path="upload-video" element={<UploadVideo />} />
-                <Route path="dashboard" element={<Dashboard />} />
-                <Route path="change-password" element={<ChanePasswordPage />} />
+                {/* Protected routes wrapper */}
+                <Route element={<ProtectedRoute />}>
+                  <Route path="channel/:username" element={<Profile />} />
+                  <Route path="history" element={<HistoryComponent />} />
+                  <Route path="subscriptions" element={<SubscriptionsPage />} />
+                  <Route path="settings" element={<SettingsPage />} />
+                  <Route path="verify-email" element={<VerifyEmailPage />} />
+                  <Route path="upload-video" element={<UploadVideo />} />
+                  <Route path="dashboard" element={<Dashboard />} />
+                  <Route path="change-password" element={<ChanePasswordPage />} />
+                </Route>
+
+                {/* Public routes */}
+                <Route path="register" element={<RegisterPage />} />
+                <Route
+                  path="login"
+                  element={
+                    <LoginProtection>
+                      <LoginPage />
+                    </LoginProtection>
+                  }
+                />
+                <Route path="logout" element={<LogoutPage />} />
+                <Route path="video/:videoId" element={<VideoPage />} />
+                <Route path="tweets" element={<TweetsPage />} />
+                <Route path="playlist/:playlistId" element={<PlaylistPage />} />
+                <Route path="*" element={<Error />} />
               </Route>
-
-              {/* Public routes */}
-              <Route path="register" element={<RegisterPage />} />
-              <Route
-                path="login"
-                element={
-                  <LoginProtection>
-                    <LoginPage />
-                  </LoginProtection>
-                }
-              />
-              <Route path="logout" element={<LogoutPage />} />
-              <Route path="video/:videoId" element={<VideoPage />} />
-              <Route path="tweets" element={<TweetsPage />} />
-              <Route path="playlist/:playlistId" element={<PlaylistPage />} />
-              <Route path="*" element={<Error />} />
-            </Route>
-          </Routes>
-          <AuthLayout />
+            </Routes>
+          </AuthLayout>
         </Provider>
       </StrictMode>
     </QueryClientProvider>

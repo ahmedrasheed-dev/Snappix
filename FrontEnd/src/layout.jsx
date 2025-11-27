@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { setReduxStore, refreshAccessToken } from "./api/axios.js"; // Import your helper
+import { setReduxStore, refreshAccessToken } from "./api/axios.js"; 
 import { store } from "./store/index.js"; 
 import Loadericon from "./assets/icons/Loadericon";
 
@@ -7,32 +7,27 @@ const AuthLayout = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Inject store into axios interceptors
+    console.log("in authLAyout")
     setReduxStore(store);
 
     const initAuth = async () => {
-      const storedRefreshToken = localStorage.getItem("refreshToken");
-
-      if (!storedRefreshToken) {
-        setLoading(false);
-        return;
-      }
-
       try {
-        // This function will:
-        // - Call the API
-        // - Dispatch setTokens to Redux
-        // - Set the Authorization header
+        // Attempt to refresh the token immediately on app load.
+        // If an HTTP-Only cookie exists, this will succeed and populate Redux.
         await refreshAccessToken();
-        
       } catch (error) {
-        console.log("Session initialization failed:", error);
+        // If this fails, it just means the user is not logged in (Guest).
+        // We do NOT block the UI, we just catch the error and proceed.
+        console.log("User not logged in or session expired.");
       } finally {
+        // Always remove the loader so the page renders
         setLoading(false);
       }
     };
 
     initAuth();
-  }, []); // Run once on mount
+  }, []); 
 
   if (loading) {
     return (

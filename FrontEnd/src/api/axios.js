@@ -1,5 +1,6 @@
 import axios from "axios";
 
+// 1. Holder for the Redux Store
 let reduxStore = null;
 
 export const setReduxStore = (store) => {
@@ -11,7 +12,6 @@ const axiosInstance = axios.create({
   withCredentials: true,
 });
 
-// ===== Refresh Token Logic =====
 let isRefreshing = false;
 let failedQueue = [];
 
@@ -22,69 +22,54 @@ const processQueue = (error, token = null) => {
   failedQueue = [];
 };
 
+// ==========================================
+//  UPDATED REFRESH FUNCTION
+// ==========================================
 export const refreshAccessToken = async () => {
-  const { setTokens, logoutUser } = await import("../store/features/userSlice");
+  // 1. Dynamic Import to avoid Circular Dependency
+  // We import fetchLoggedInUser here, not at the top
+  const { setTokens, logoutUser, fetchLoggedInUser } = await import("../store/features/userSlice");
 
   try {
-    const storedRefreshToken = localStorage.getItem("refreshToken");
-
-    if (!storedRefreshToken) {
-      throw new Error("No refresh token found");
-    }
-
     const refreshResponse = await axiosInstance.post(
       "/users/refresh-token",
-      { refreshToken: storedRefreshToken },
+      {}, 
       { withCredentials: true }
     );
 
-    console.log("refreshingToken response: ", refreshResponse);
+    const { accessToken, user } = refreshResponse.data?.data || {};
 
-    const { accessToken, refreshToken, user } = refreshResponse.data?.data;
+    // 2. Update Tokens in Redux
+    reduxStore?.dispatch(setTokens({ accessToken, user }));
 
-    if (refreshToken) {
-      localStorage.setItem("refreshToken", refreshToken);
+    // 3. FETCH FULL USER PROFILE HERE
+    // Since the token is now fresh, we can immediately fetch the latest user data.
+    // We await it to ensure data is ready before returning.
+    if (accessToken) {
+       await reduxStore?.dispatch(fetchLoggedInUser());
     }
-
-    // Update Redux
-    reduxStore?.dispatch(setTokens({ accessToken, refreshToken, user }));
-
-    // --- REMOVED THE LINE BELOW ---
-    // We rely on the Request Interceptor to attach the token dynamically.
-    // Setting defaults.headers.common here makes it "sticky" for all future requests, 
-    // which breaks S3/Upload routes.
-    // axiosInstance.defaults.headers.common.Authorization = `Bearer ${accessToken}`; 
-    // ------------------------------
 
     return accessToken;
   } catch (err) {
-    localStorage.removeItem("refreshToken");
+    console.error("Refresh failed:", err);
     reduxStore?.dispatch(logoutUser());
     throw err;
   }
 };
 
-// ===== Request Interceptor =====
+// ... Request Interceptor remains the same ...
 axiosInstance.interceptors.request.use(
   (config) => {
     const accessToken = reduxStore?.getState()?.user?.accessToken;
     
-    // 1. Define routes that do NOT need the token
     const isAuthFreeRoute =
       config.url.includes("/users/login") ||
       config.url.includes("/users/register") ||
       config.url.includes("/users/password-reset") ||
       config.url.includes("/users/refresh-token");
 
-    // 2. Define routes that MUST NOT have the token (e.g., S3 / Cloudinary uploads)
-    // If you are using a Presigned URL, usually the entire config.url will be different,
-    // but if you are hitting your own backend route that proxies to S3, add it here.
     const isUploadRoute = config.url.includes("https://snappix-app.s3.eu-north-1.amazonaws.com/videos/"); 
 
-    // 3. Only add the header if:
-    // - We have a token
-    // - It's not an auth-free route
-    // - It's not the upload route
     if (accessToken && !isAuthFreeRoute && !isUploadRoute) {
       config.headers.Authorization = `Bearer ${accessToken}`;
     }
@@ -94,16 +79,14 @@ axiosInstance.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// ===== Response Interceptor =====
+// ... Response Interceptor remains the same ...
 axiosInstance.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
-
     const isAuthFreeRoute =
       originalRequest.url.includes("/users/login") ||
-      originalRequest.url.includes("/users/register") ||
-      originalRequest.url.includes("/users/password-reset");
+      originalRequest.url.includes("/users/register");
 
     if (error.response?.status === 401 && !originalRequest._retry && !isAuthFreeRoute) {
       originalRequest._retry = true;
@@ -124,10 +107,7 @@ axiosInstance.interceptors.response.use(
       try {
         const newToken = await refreshAccessToken();
         processQueue(null, newToken);
-        
-        // This manual override is fine because it only affects THIS retry attempt, not global defaults
         originalRequest.headers.Authorization = `Bearer ${newToken}`;
-        
         return axiosInstance(originalRequest);
       } catch (refreshErr) {
         processQueue(refreshErr, null);
