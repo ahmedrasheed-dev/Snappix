@@ -2,13 +2,16 @@ import React, { useState, useEffect, useRef } from "react";
 import { Separator } from "@/components/ui/separator";
 import { useSelector } from "react-redux";
 import { Button } from "@/components/ui/button";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AddVideoicon } from "../../assets/index.js";
 import SearchAutocomplete from "./SearchAutoComplete";
-import { Menu } from "lucide-react"; // ✅ Import hamburger icon
+import { Menu } from "lucide-react";
+import { notifyError } from "@/utils/toasts.js";
 
 const Topbar = ({ classes, onMenuClick }) => {
+  const navigate = useNavigate();
+
   const { user, isLoggedIn, status } = useSelector((state) => state.user);
 
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
@@ -82,9 +85,7 @@ const Topbar = ({ classes, onMenuClick }) => {
             <div className="relative">
               <div
                 className="cursor-pointer"
-                onClick={() =>
-                  setIsAddVideoDropdownOpen(!isAddVideoDropdownOpen)
-                }
+                onClick={() => setIsAddVideoDropdownOpen(!isAddVideoDropdownOpen)}
                 ref={addVideoIconRef}
                 title="Add a Video"
               >
@@ -95,7 +96,14 @@ const Topbar = ({ classes, onMenuClick }) => {
                   ref={addVideoDropdownRef}
                   className="absolute flex flex-col bg-gray-100 text-gray-900 rounded-sm p-2 gap-2 cursor-pointer w-40 right-0 shadow-lg transition-all z-20"
                 >
-                  <NavLink to="/upload-video">
+                  <NavLink
+                    to={user?.isEmailVerified ? "/upload-video" : "/verify-email"}
+                    onClick={(e) => {
+                      if (!user?.isEmailVerified) {
+                        notifyError("Please verify your Email to upload videos!");
+                      }
+                    }}
+                  >
                     <p className="hover:text-pink-600 transition-colors duration-200">
                       Upload a Video
                     </p>
@@ -109,15 +117,11 @@ const Topbar = ({ classes, onMenuClick }) => {
             <div className="relative">
               <Avatar
                 ref={userAvatarRef}
-                onClick={() =>
-                  setIsUserDropdownOpen(!isUserDropdownOpen)
-                }
+                onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
                 className="cursor-pointer"
               >
                 <AvatarImage src={user.avatar} />
-                <AvatarFallback>
-                  {user.username.charAt(0).toUpperCase()}
-                </AvatarFallback>
+                <AvatarFallback>{user.username.charAt(0).toUpperCase()}</AvatarFallback>
               </Avatar>
 
               {isUserDropdownOpen && (
@@ -136,15 +140,11 @@ const Topbar = ({ classes, onMenuClick }) => {
                     </>
                   )}
                   <NavLink to="/dashboard">
-                    <p className="hover:text-pink-600 transition-colors duration-200">
-                      Dashboard
-                    </p>
+                    <p className="hover:text-pink-600 transition-colors duration-200">Dashboard</p>
                   </NavLink>
                   <Separator />
                   <NavLink to="/logout">
-                    <p className="hover:text-pink-600 transition-colors duration-200">
-                      Logout
-                    </p>
+                    <p className="hover:text-pink-600 transition-colors duration-200">Logout</p>
                   </NavLink>
                 </div>
               )}

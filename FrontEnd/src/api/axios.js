@@ -36,7 +36,7 @@ export const refreshAccessToken = async () => {
       {}, 
       { withCredentials: true }
     );
-
+    console.log("referesh resposne: ", refreshResponse)
     const { accessToken, user } = refreshResponse.data?.data || {};
 
     // 2. Update Tokens in Redux
@@ -86,7 +86,8 @@ axiosInstance.interceptors.response.use(
     const originalRequest = error.config;
     const isAuthFreeRoute =
       originalRequest.url.includes("/users/login") ||
-      originalRequest.url.includes("/users/register");
+      originalRequest.url.includes("/users/register") || 
+      originalRequest.url.includes("/users/refresh-token");
 
     if (error.response?.status === 401 && !originalRequest._retry && !isAuthFreeRoute) {
       originalRequest._retry = true;

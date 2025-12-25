@@ -33,6 +33,7 @@ const AuthLayout = ({ children }) => {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-gray-900 text-white">
         <Loadericon className="animate-spin h-10 w-10" />
+
       </div>
     );
   }

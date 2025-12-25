@@ -1,6 +1,8 @@
 @import "tailwindcss";
 @import "tw-animate-css";
-
+html, body {
+  background-color: #0f0f0f; 
+}
 @custom-variant dark (&:is(.dark *));
 @font-face {
   font-family: "ClashDisplay";

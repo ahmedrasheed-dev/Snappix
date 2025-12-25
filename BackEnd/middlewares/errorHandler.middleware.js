@@ -15,9 +15,4 @@ export const errorHandler = (err, req, res, next) => {
     message: err?.message,
     errors: [],
   });
-
-  // .set({
-  //   'Access-Control-Allow-Origin': 'http://snappix-frontend.s3-website.eu-north-1.amazonaws.com',
-  //   'Access-Control-Allow-Credentials': 'true' 
-  // })
 };

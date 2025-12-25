@@ -12,6 +12,9 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { s3 } from "../config/s3.config.js";
 
 export const getPresignedUrl = async (req, res, next) => {
+  if (!req.user?.isEmailVerified) {
+    throw new ApiError(403, "Please verify your email to upload content.");
+  }
   try {
     const { fileName, fileType, fileCategory, fileSize } = req.body;
 

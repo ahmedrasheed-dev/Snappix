@@ -10,6 +10,7 @@ const initialState = {
 // Thunks
 export const fetchTweets = createAsyncThunk("tweets/fetchTweets", async () => {
   const res = await axiosInstance.get(`${import.meta.env.VITE_BASE_URL}/tweets`);
+  console.log("tweets: ", res.data.data)
   return res.data.data;
 });
 

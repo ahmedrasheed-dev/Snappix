@@ -19,10 +19,6 @@ const VideoPage = () => {
 
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [isTheaterMode, setIsTheaterMode] = useState(false);
-  const [isVideoVertical, setIsVideoVertical] = useState(false);
-  const [playerWidth, setPlayerWidth] = useState(0);
-
-  const videoContainerRef = useRef(null);
 
   // Fetch video data
   useEffect(() => {
@@ -37,30 +33,10 @@ const VideoPage = () => {
     return () => clearTimeout(timeoutId);
   }, [videoId, isLoggedIn, dispatch]);
 
-  // Detect video orientation
-  const handleLoadedMetadata = (e) => {
-    const { videoWidth, videoHeight } = e.target;
-    setIsVideoVertical(videoWidth < videoHeight);
-  };
-
   // Toggle theater mode
   const toggleTheaterMode = () => {
     if (window.innerWidth >= 1024) setIsTheaterMode((prev) => !prev);
   };
-
-  // Measure player width dynamically
-  useEffect(() => {
-    if (!videoContainerRef.current) return;
-
-    const observer = new ResizeObserver((entries) => {
-      for (let entry of entries) {
-        setPlayerWidth(entry.contentRect.width);
-      }
-    });
-
-    observer.observe(videoContainerRef.current);
-    return () => observer.disconnect();
-  }, [isTheaterMode]);
 
   if (videoStatus === "loading" || !video) {
     return (
@@ -86,25 +62,18 @@ const VideoPage = () => {
     >
       {/* Main Video Section */}
       <div className={`flex-1 min-w-0 ${!isTheaterMode ? "lg:max-w-[70%]" : "w-full"}`}>
-        {/* Video Player */}
+        
+        {/* Video Player Container */}
         <div
-          ref={videoContainerRef}
-          className={`relative rounded-xl shadow-2xl overflow-hidden bg-black mx-auto
-          ${isTheaterMode
-            ? "w-full max-h-[90vh]"
-            : isVideoVertical
-            ? "aspect-[9/16] max-w-sm"
-            : "aspect-video w-full"
-          }`}
+          className={`relative rounded-xl shadow-2xl overflow-hidden bg-black mx-auto w-full
+          ${isTheaterMode ? "h-[80vh]" : "aspect-video"}`}
         >
-          <div className="w-full h-full flex justify-center items-center overflow-hidden">
-            <video
-              src={video.videoFile}
-              controls
-              onLoadedMetadata={handleLoadedMetadata}
-              className="max-w-full max-h-[90vh] object-contain rounded-xl bg-black"
-            />
-          </div>
+          <video
+            src={video.videoFile}
+            controls
+            playsInline
+            className="w-full h-full object-contain bg-black"
+          />
 
           {/* Theater mode button */}
           <div className="hidden lg:block absolute top-4 right-4 z-10">
@@ -119,13 +88,8 @@ const VideoPage = () => {
           </div>
         </div>
 
-        {/* Video Info — width synced with video player */}
-        <div
-          className="mt-4 mx-auto transition-all duration-300"
-          style={{
-            width: playerWidth > 0 ? `${playerWidth}px` : "100%",
-          }}
-        >
+        {/* Video Info */}
+        <div className="mt-4 w-full">
           <VideoInfo video={video} />
         </div>
 
@@ -157,7 +121,7 @@ const VideoPage = () => {
             )}
           </div>
 
-          {/* Deascription */}
+          {/* Description */}
           <div className="bg-gray-800 p-4 rounded-lg mt-6 shadow-md">
             <p
               className={`whitespace-pre-line text-gray-300 ${
@@ -177,7 +141,7 @@ const VideoPage = () => {
           </div>
         </div>
 
-        {/* Comsments */}
+        {/* Comments */}
         <div className="mt-8 pt-8">
           <CommentList videoId={videoId} />
         </div>
@@ -198,7 +162,7 @@ const VideoPage = () => {
         )}
       </div>
 
-      {/* Sidebar Related Videos isible only on desktop non-theater mode */}
+      {/* Sidebar Related Videos - Visible only on desktop non-theater mode */}
       {!isTheaterMode && (
         <div className="hidden lg:block lg:w-80">
           <RelatedVideos isTheaterMode={isTheaterMode} videoId={videoId} />
@@ -208,4 +172,4 @@ const VideoPage = () => {
   );
 };
 
-export default VideoPage;
+export default VideoPage; 

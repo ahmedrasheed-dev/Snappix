@@ -15,7 +15,7 @@ import {
 
 const router = Router();
 
-router.get("/", verifyJWT, getUserTweets);
+router.get("/", getUserTweets);
 
 router.post("/", verifyJWT, createTweetValidator, validate, createTweet);
 
