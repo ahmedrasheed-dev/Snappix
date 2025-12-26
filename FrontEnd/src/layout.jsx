@@ -8,7 +8,6 @@ const AuthLayout = ({ children }) => {
 
   useEffect(() => {
     // Inject store into axios interceptors
-    console.log("in authLAyout")
     setReduxStore(store);
 
     const initAuth = async () => {
@@ -19,7 +18,6 @@ const AuthLayout = ({ children }) => {
       } catch (error) {
         // If this fails, it just means the user is not logged in (Guest).
         // We do NOT block the UI, we just catch the error and proceed.
-        console.log("User not logged in or session expired.");
       } finally {
         // Always remove the loader so the page renders
         setLoading(false);

@@ -32,7 +32,6 @@ const LoginPage = () => {
       const data = await dispatch(perfomLogin(loginData)).unwrap();
       navigate("/");
     } catch (error) {
-      console.log("login error: ", error);
       notifyError(error);
       setErrorMessage(error);
     }

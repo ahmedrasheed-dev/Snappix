@@ -9,10 +9,6 @@ export const createPlaylistValidator = [
     .trim()
     .notEmpty().withMessage("Name is required")
     .isLength({ min: 3 }).withMessage("Name must be at least 3 characters"),
-  body("description")
-    .trim()
-    .notEmpty().withMessage("Description is required")
-    .isLength({ min: 10 }).withMessage("Description must be at least 10 characters"),
   body("isPublic")
     .optional()
     .isBoolean().withMessage("isPublic must be true or false"),

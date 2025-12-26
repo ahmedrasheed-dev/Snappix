@@ -69,14 +69,12 @@ const RegisterPage = () => {
   };
 
   const onSubmit = async (data) => {
-    console.log("Data is: ", data.avatar);
     const avatarFile = data.avatar;
     if (!avatarFile) {
       return notifyError("Please select an avatar image.");
     }
     try {
       let avatarFileUrl = null;
-      console.log("generating presigned url");
       const presignedUrlResponse = await axiosInstance.post(
         `${import.meta.env.VITE_BASE_URL}/users/presigned-url/public`,
         {
@@ -88,7 +86,6 @@ const RegisterPage = () => {
       );
 
       const { uploadUrl, fileUrl } = presignedUrlResponse.data.data;
-      console.log("presigned url is: ", uploadUrl);
       avatarFileUrl = fileUrl;
 
       //uplod to s3
@@ -99,7 +96,6 @@ const RegisterPage = () => {
           "Content-Type": avatarFile.type,
         },
       });
-      console.log("Avatar uploaded successfully.");
 
       const registrationBody = {
         username: data.username,
@@ -113,7 +109,6 @@ const RegisterPage = () => {
         registrationBody
       );
 
-      console.log("Registration Response:", response);
 
       setUser((prevUser) => ({
         ...prevUser,

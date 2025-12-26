@@ -31,7 +31,6 @@ export const performLogout = createAsyncThunk(
   async (_, { rejectWithValue, dispatch }) => {
     try {
       const res = await axiosInstance.post(`${import.meta.env.VITE_BASE_URL}/users/logout`);
-      console.log("logout Res: ", res);
       if (res?.status === 200) {
         return { success: true };
       } else {
@@ -64,7 +63,6 @@ export const perfomLogin = createAsyncThunk(
         return rejectWithValue(response.data?.message || "Login failed unexpectedly.");
       }
     } catch (error) {
-      console.log("login reject thunk: ", error.response);
       return rejectWithValue(
         error.response?.data?.message || error.message || "An error occurred during login."
       );

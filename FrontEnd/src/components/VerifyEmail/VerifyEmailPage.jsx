@@ -24,7 +24,6 @@ const VerifyEmailPage = () => {
       const response = await axiosInstance.post(`${import.meta.env.VITE_BASE_URL}/auth/send-verification-code`, {
         email: data.email,
       });
-      console.log("OTP sent:  ", response?.data?.message);
       setShowOtpInput(true);
     } catch (error) {
       setError(error.response?.data?.message || "Unexpected error");

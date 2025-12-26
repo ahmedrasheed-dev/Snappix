@@ -6,7 +6,6 @@ const Playlists = ({ playlists }) => {
     return <p className="text-gray-400">No playlists found.</p>;
   }
 
-  {console.log("playlists",playlists)}
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
       {playlists.map((playlist) => (

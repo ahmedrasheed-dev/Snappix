@@ -13,8 +13,6 @@ const VideoSection = () => {
 const getStatus = async () => {
     try {
       const res = await axios.get('https://qc02m0485e.execute-api.eu-north-1.amazonaws.com/dev/api/v1/videos');
-      console.log('Response:', res.data); 
-      console.log("TEST ENV: ", import.meta.env.VITE_BASE_URL)
     } catch (error) {
       console.error('Error fetching data:', error);
     }

@@ -14,7 +14,6 @@ export const getChannelProfile = createAsyncThunk(
   async (username, { rejectWithValue, getState }) => {
     try {
       const res = await axiosInstance.get(`${import.meta.env.VITE_BASE_URL}/users/c/${username}`);
-      console.log("userChannelProfile: ", res?.data?.data);
       return res?.data?.data;
     } catch (error) {
       rejectWithValue(

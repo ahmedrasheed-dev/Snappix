@@ -7,7 +7,6 @@ const HistoryComponent = () => {
   useEffect(() => {
     const getWatchHistory = async () => {
       const res = await axiosInstance.get(`${import.meta.env.VITE_BASE_URL}/users/watch-history`);
-      console.log(res.data?.data);
       setWatchHistoryData(res.data?.data);
     };
     getWatchHistory();

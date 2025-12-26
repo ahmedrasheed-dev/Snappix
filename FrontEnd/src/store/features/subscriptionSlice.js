@@ -22,7 +22,6 @@ export const fetchSubscriptionStatus = createAsyncThunk(
       const response = await axiosInstance.get(`${import.meta.env.VITE_BASE_URL}/subscriptions/status/${channelId}`);
 
       const channelData = response.data.data;
-      console.log("sub data: ", response.data)
       return {
         isSubscribed: channelData.isSubscribed,
         subscriberCount: channelData.subscriberCount || 0,

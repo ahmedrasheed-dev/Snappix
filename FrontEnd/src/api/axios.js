@@ -36,7 +36,6 @@ export const refreshAccessToken = async () => {
       {}, 
       { withCredentials: true }
     );
-    console.log("referesh resposne: ", refreshResponse)
     const { accessToken, user } = refreshResponse.data?.data || {};
 
     // 2. Update Tokens in Redux

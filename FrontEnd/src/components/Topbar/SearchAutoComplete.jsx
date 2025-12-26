@@ -39,7 +39,6 @@ const SearchAutocomplete = () => {
             `${import.meta.env.VITE_BASE_URL}/users/suggestions?q=${searchTerm}`
           );
           setSuggestions(response.data.data);
-          console.log("Search suggestions:", response.data.data);
           setShowSuggestions(true);
         } catch (error) {
           console.error("Error fetching search suggestions:", error);

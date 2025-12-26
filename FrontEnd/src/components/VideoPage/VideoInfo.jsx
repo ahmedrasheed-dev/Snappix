@@ -196,7 +196,6 @@ const VideoInfo = () => {
                     </h4>
                     {userPlaylists &&
                       userPlaylists.map((playlist) => {
-                        // console.log("playlist maping: ", playlist);
                         const isAdded = userPlaylists.filter((p) =>
                           p.videos.some((v) => v._id === videoId)
                         );

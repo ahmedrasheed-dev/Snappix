@@ -43,7 +43,6 @@ export const deleteVideo = (videoId) => {
 };
 
 export const updateProfile = (profileData) => {
-  console.log('API call to update profile with:', profileData);
   return new Promise((resolve, reject) => {
     setTimeout(() => {
       if (profileData.username === 'takenusername') {

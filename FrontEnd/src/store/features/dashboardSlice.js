@@ -22,7 +22,6 @@ export const fetchMyVideos = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const response = await axiosInstance.get(`${import.meta.env.VITE_BASE_URL}/videos/myvideos`);
-      console.log("videos: ", response?.data?.data);
       return response.data.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || "Failed to fetch videos.");
@@ -84,7 +83,6 @@ export const togglePublishThunk = createAsyncThunk(
 export const fetchLikedVideos = createAsyncThunk("dashboard/fetchLikedVideos", async (_,{rejectWithValue}) => {
   try {
     const res = await axiosInstance.get(`${import.meta.env.VITE_BASE_URL}/likes/videos`);
-    console.log("liked videos: ", res.data.data);
     return res.data.data; 
   } catch (error) {
     rejectWithValue("Failed to fetch liked videos.");
@@ -140,7 +138,6 @@ const dashboardSlice = createSlice({
         state.error = null;
       })
       .addCase(UpdateThumbnail.fulfilled, (state, action) => {
-        console.log("updateThumbnail", action.payload);
         state.status = "succeeded";
         const index = state.videos.findIndex((v) => v._id === action.payload._id);
         if (index !== -1) state.videos[index].thumbnail = action.payload.updatedThumbnail;
