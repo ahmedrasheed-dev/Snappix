@@ -1,8 +1,10 @@
 # Snappix
 Snappix is a full-stack video sharing platform inspired by modern video streaming applications.  
 The project focuses on real-world system design, clean UI behavior, and production-style architecture rather than relying on third-party APIs.
-
 ---
+
+**Live URL** [Snappix](https://dkkddb5r8mwn7.cloudfront.net/)
+
 
 ## Features
 
